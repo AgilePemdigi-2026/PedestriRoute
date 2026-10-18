@@ -13,6 +13,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/google/redirect', [AuthController::class, 'googleRedirect']);
         Route::get('/google/callback', [AuthController::class, 'googleCallback']);
 
+        // Facebook OAuth Routes
+        Route::get('/facebook/redirect', [AuthController::class, 'facebookRedirect']);
+        Route::get('/facebook/callback', [AuthController::class, 'facebookCallback']);
+
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/logout', [AuthController::class, 'logout']);
             Route::get('/me', [AuthController::class, 'me']);
