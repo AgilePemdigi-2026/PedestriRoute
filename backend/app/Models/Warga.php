@@ -19,6 +19,7 @@ class Warga extends Authenticatable
         'password',
         'no_hp',
         'google_id',
+        'facebook_id',
         'avatar_url',
         'tanggal_daftar',
         'gagal_login',

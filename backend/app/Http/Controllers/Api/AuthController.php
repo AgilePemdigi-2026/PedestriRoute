@@ -370,4 +370,86 @@ class AuthController extends Controller
             </html>
         ", 200, ['Content-Type' => 'text/html']);
     }
+
+    /**
+     * Redirect to Facebook OAuth provider.
+     */
+    public function facebookRedirect()
+    {
+        if (env('FACEBOOK_OAUTH_MOCK', false)) {
+            return redirect('/api/v1/auth/facebook/callback?mock=true');
+        }
+
+        return Socialite::driver('facebook')->stateless()->redirect();
+    }
+
+    /**
+     * Handle Facebook OAuth callback.
+     */
+    public function facebookCallback(Request $request)
+    {
+        if (env('FACEBOOK_OAUTH_MOCK', false) && $request->has('mock')) {
+            $email = 'mock_fb_warga@facebook.com';
+            $nama = 'Warga Facebook Mock';
+            $facebookId = 'facebook_mock_123456';
+            $avatar = 'https://ui-avatars.com/api/?name=Warga+Facebook';
+        } else {
+            try {
+                $fbUser = Socialite::driver('facebook')->stateless()->user();
+                $email = strtolower($fbUser->getEmail() ?? $fbUser->getId() . '@facebook.com');
+                $nama = $fbUser->getName() ?? 'Pengguna Facebook';
+                $facebookId = $fbUser->getId();
+                $avatar = $fbUser->getAvatar();
+            } catch (\Exception $e) {
+                return redirect('/login?error=facebook_failed');
+            }
+        }
+
+        if (Admin::where('email', $email)->exists()) {
+            return redirect('/login?error=email_reserved_for_admin');
+        }
+
+        $warga = Warga::where('email', $email)->orWhere('facebook_id', $facebookId)->first();
+        if (!$warga) {
+            $warga = Warga::create([
+                'nama' => $nama,
+                'email' => $email,
+                'facebook_id' => $facebookId,
+                'avatar_url' => $avatar,
+                'password' => Hash::make(Str::random(32)),
+                'tanggal_daftar' => now(),
+                'gagal_login' => 0,
+                'notif_jalur_aktif' => true,
+            ]);
+        } else {
+            $warga->facebook_id = $facebookId;
+            if ($avatar) {
+                $warga->avatar_url = $avatar;
+            }
+            $warga->save();
+        }
+
+        $token = $warga->createToken('auth-token', ['role:warga'])->plainTextToken;
+
+        return response()->make("
+            <!DOCTYPE html>
+            <html>
+            <head><title>Otentikasi Berhasil</title></head>
+            <body>
+            <script>
+                localStorage.setItem('token', " . json_encode($token) . ");
+                localStorage.setItem('role', 'warga');
+                localStorage.setItem('user', " . json_encode([
+                    'id' => $warga->warga_id,
+                    'nama' => $warga->nama,
+                    'email' => $warga->email,
+                    'avatar_url' => $warga->avatar_url,
+                ]) . ");
+                window.location.href = '/beranda-warga';
+            </script>
+            <p>Menghubungkan ke PedestriRoute...</p>
+            </body>
+            </html>
+        ", 200, ['Content-Type' => 'text/html']);
+    }
 }
