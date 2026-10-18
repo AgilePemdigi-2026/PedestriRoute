@@ -139,15 +139,13 @@
                 return;
             }
 
-            // Save token and user info in localStorage
-            localStorage.setItem('token', resData.data.token);
-            localStorage.setItem('role', resData.data.role);
-            localStorage.setItem('user', JSON.stringify(resData.data.user));
-
-            showToast('Login Berhasil!', 'success');
-            setTimeout(() => {
-                window.location.href = resData.data.redirect || '/beranda-warga';
-            }, 600);
+            // OTP required: do not store auth token or redirect to protected pages yet.
+            if (resData.data?.otp_required && resData.data?.challenge_id) {
+                sessionStorage.setItem('login_otp_challenge', resData.data.challenge_id);
+                window.location.href = '/verify-otp';
+                return;
+            }
+            showToast('Respons login tidak sesuai. Silakan coba lagi.', 'error');
         } catch (err) {
             showToast('Terjadi kesalahan koneksi. Silakan coba lagi.', 'error');
         }

@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Mail\LoginOtpMail;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
 use App\Models\Warga;
 use App\Support\MessageCatalog;
 use App\Support\PhoneNormalizer;
@@ -95,27 +98,35 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // Reset lockout and failed attempts on successful login
-        $user->gagal_login = 0;
-        $user->terkunci_hingga = null;
-        $user->save();
-
-        // 6. Create Sanctum token with role ability
-        $token = $user->createToken('auth-token', ['role:' . $role])->plainTextToken;
-
-        return response()->json([
-            'data' => [
-                'token' => $token,
-                'role' => $role,
-                'redirect' => $role === 'admin' ? '/admin' : '/beranda-warga',
-                'user' => [
-                    'id' => $role === 'admin' ? $user->admin_id : $user->warga_id,
-                    'nama' => $user->nama,
-                    'email' => $user->email,
-                    'avatar_url' => $user->avatar_url ?? null,
-                ],
-            ]
-        ], 200);
+        // Credentials valid. DO NOT issue Sanctum token before OTP verification.
+        if (!filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
+            return response()->json(['error' => ['code' => 'OTP_EMAIL_MISSING', 'message' => 'Akun belum memiliki email valid.']], 422);
+        }
+        $challenge = (string) Str::uuid();
+        $otp = (string) random_int(100000, 999999);
+        $payload = [
+            'role' => $role,
+            'user_id' => $role === 'admin' ? $user->admin_id : $user->warga_id,
+            'hash' => Hash::make($otp),
+            'attempts' => 0,
+            'expires_at' => now()->addMinutes(5)->timestamp,
+            'resend_at' => now()->addSeconds(60)->timestamp,
+        ];
+        Cache::put('login_otp:' . $challenge, $payload, now()->addMinutes(5));
+        try {
+            Mail::to($user->email)->send(new LoginOtpMail($otp));
+        } catch (\Throwable $e) {
+            Cache::forget('login_otp:' . $challenge);
+            report($e);
+            return response()->json(['error' => ['code' => 'OTP_SEND_FAILED', 'message' => 'Gagal mengirim OTP. Coba lagi.']], 503);
+        }
+        return response()->json(['data' => [
+            'otp_required' => true,
+            'challenge_id' => $challenge,
+            'expires_in' => 300,
+            'resend_after' => 60,
+            'email_hint' => preg_replace('/(^.).*(@.*$)/', '$1***$2', $user->email),
+        ]], 200);
     }
 
     /**
