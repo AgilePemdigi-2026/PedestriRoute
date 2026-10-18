@@ -1,0 +1,13 @@
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/vendor/
+backend/node_modules/
+backend/public/storage
+backend/storage/*.key
+Google Oauth/
+client_secret*.json
+*.pem
+.DS_Store
+Thumbs.db
+Project_Context/
