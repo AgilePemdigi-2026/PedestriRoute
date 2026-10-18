@@ -30,7 +30,7 @@ Proyek ini dirancang untuk memberdayakan partisipasi aktif warga dalam melaporka
 
 ---
 
-## 🛠️ Tumpukan Teknologi (Tech Stack)
+## 🛠️ Tech Stack
 
 | Komponen | Teknologi | Deskripsi |
 | :--- | :--- | :--- |
@@ -56,14 +56,5 @@ PedestriRoute/
 │   ├── docker/               # Dockerfile PHP-FPM dan konfigurasi vhost Nginx
 │   └── docker-compose.yml    # Definisi service: db (PostGIS), app (PHP), nginx
 ├── README.md                 # Informasi umum proyek
-├── README_KOLABORATOR.md     # Panduan instalasi dan kontribusi untuk pengembang
 └── .gitignore                # Aturan pengecualian berkas rahasia & lokal
 ```
-
----
-
-## 📖 Panduan untuk Pengembang & Kolaborator
-
-Bagi rekan tim atau kolaborator yang ingin menjalankan proyek ini secara lokal di komputernya, silakan membaca panduan instalasi langkah-demi-langkah, cara menjalankan pengujian otomatis, serta daftar akun dummy di berkas:
-
-👉 **[Baca Panduan Kolaborator (README_KOLABORATOR.md)](./README_KOLABORATOR.md)**
