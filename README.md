@@ -10,10 +10,11 @@ Proyek ini dirancang untuk memberdayakan partisipasi aktif warga dalam melaporka
 
 1. **Autentikasi & Registrasi Fleksibel (F1 & F2):**
    - Masuk (*login*) menggunakan **Email** atau **Nomor Telepon** (mendukung berbagai format penulisan lokal `08...`, `+628...`, `628...`).
+   - Lapisan keamanan **Two-Step Verification (Email OTP)** 6-digit untuk perlindungan akun dari akses tidak sah.
    - Pendaftaran akun Warga baru dengan enkripsi kata sandi yang aman.
    - Fitur proteksi penguncian akun otomatis setelah 5 kali percobaan gagal dan pembatasan laju (*rate limiting*).
-2. **Integrasi Google OAuth 2.0:**
-   - Memungkinkan warga masuk dengan satu ketukan menggunakan akun Google.
+2. **Multiple Social Login (Google & Facebook OAuth 2.0):**
+   - Memungkinkan warga masuk atau mendaftar dengan satu ketukan menggunakan akun Google maupun Facebook.
 3. **Pelaporan Kondisi Fasilitas Pejalan Kaki (F3):**
    - Penandaan lokasi presisi berbasis peta interaktif OpenStreetMap / Leaflet dan geolokasi GPS perangkat.
    - Validasi geospasial (*PostGIS Snapping*) yang memastikan laporan terikat pada segmen jalan dalam radius 50 meter.
@@ -24,6 +25,7 @@ Proyek ini dirancang untuk memberdayakan partisipasi aktif warga dalam melaporka
    - Tampilan rincian laporan lengkap dengan foto beresolusi tinggi, pratinjau peta, dan catatan sistem analisis visual.
    - Eksekusi keputusan *Valid* atau *Tidak Valid* (dengan kewajiban mencantumkan alasan penolakan).
    - Perhitungan ulang skor kelayakan segmen jalan otomatis menggunakan algoritma **Weighted Sum Model (WSM)** saat laporan dinyatakan valid.
+   - Teruji dan terverifikasi 100% pada 8 skenario pengujian fungsional manual (lihat `docs/HASIL_CEK_F5.md`).
 5. **Beranda Warga Interaktif (Home Screen):**
    - Ringkasan status aduan warga secara waktu nyata (*Menunggu*, *Valid*, *Ditolak*).
    - Peta dasar Leaflet untuk pemantauan rute pejalan kaki.

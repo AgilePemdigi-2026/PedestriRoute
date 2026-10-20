@@ -3,10 +3,13 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\Warga;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class GoogleLoginTest extends TestCase
 {
+    use DatabaseTransactions;
+
     public function test_google_redirect(): void
     {
         $response = $this->get('/api/v1/auth/google/redirect');

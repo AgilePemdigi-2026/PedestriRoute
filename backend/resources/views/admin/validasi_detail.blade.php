@@ -31,11 +31,11 @@
                 </svg>
             </div>
             <div>
-                <h2 class="text-xs font-bold text-slate-900">Antrean Validasi</h2>
-                <p class="text-[10px] text-teal-800 font-medium">Laporan Menunggu Verifikasi</p>
+                <h2 id="headerTitle" class="text-xs font-bold text-slate-900">Antrean Validasi</h2>
+                <p id="headerSubtitle" class="text-[10px] text-teal-800 font-medium">Laporan Menunggu Verifikasi</p>
             </div>
         </div>
-        <span class="px-2.5 py-1 bg-white text-teal-800 text-[10px] font-extrabold rounded-full border border-teal-200">
+        <span id="headerStatusBadge" class="px-2.5 py-1 bg-white text-teal-800 text-[10px] font-extrabold rounded-full border border-teal-200">
             • Review Aktif
         </span>
     </div>
@@ -44,7 +44,7 @@
     <div class="flex items-center justify-between mb-2">
         <div class="flex items-center gap-2">
             <span id="kodeLaporan" class="text-xs font-mono font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-lg border border-teal-200">
-                #LAP-{{ $id }}
+                #LAP-{{ str_pad($id, 4, '0', STR_PAD_LEFT) }}
             </span>
             <span class="text-[11px] text-slate-500 flex items-center gap-1">
                 <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,10 +163,13 @@
             </button>
         </div>
 
+        <!-- Status History Notice (if already validated/rejected) -->
+        <div id="statusHistoryBanner" class="hidden mb-3 rounded-xl p-3 text-xs leading-relaxed font-medium"></div>
+
         <!-- Rejection Reason Container (Mandatory if Tidak Valid) -->
         <div id="rejectionContainer" class="hidden mb-3">
             <label class="block text-xs font-bold text-rose-700 mb-1">
-                Alasan Penolakan <span class="text-rose-500">*Wajib diisi</span>
+                Alasan Penolakan <span id="rejectionRequiredBadge" class="text-rose-500">*Wajib diisi</span>
             </label>
             <textarea id="alasanPenolakan" rows="2"
                 placeholder="Tulis alasan spesifik (misal: Foto tidak menunjukkan kerusakan fasilitas pejalan kaki)..."
@@ -174,6 +177,9 @@
         </div>
 
         <!-- Action Buttons -->
+        <button type="button" disabled id="btnDisabledDecision"
+            class="hidden w-full py-3 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 mb-2 cursor-not-allowed shadow-sm"></button>
+
         <button type="button" id="btnSubmitDecision"
             class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 shadow-md shadow-teal-900/10 transition mb-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -240,6 +246,23 @@
     const lightboxImg = document.getElementById('lightboxImg');
     const btnCloseLightbox = document.getElementById('btnCloseLightbox');
 
+    function formatTimeAgo(dateString) {
+        if (!dateString) return 'Baru saja';
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffSec = Math.floor((now - date) / 1000);
+        if (diffSec < 60) return 'Baru saja';
+        const diffMin = Math.floor(diffSec / 60);
+        if (diffMin < 60) return `${diffMin} menit lalu`;
+        const diffHour = Math.floor(diffMin / 60);
+        if (diffHour < 24) return `${diffHour} jam lalu`;
+        const diffDay = Math.floor(diffHour / 24);
+        if (diffDay < 30) return `${diffDay} hari lalu`;
+        const diffMonth = Math.floor(diffDay / 30);
+        if (diffMonth < 12) return `${diffMonth} bulan lalu`;
+        return `${Math.floor(diffMonth / 12)} tahun lalu`;
+    }
+
     btnZoomPhoto.addEventListener('click', () => {
         if (currentPhotoUrl) {
             lightboxImg.src = currentPhotoUrl;
@@ -276,7 +299,8 @@
             const json = await res.json();
             const report = json.data;
 
-            document.getElementById('kodeLaporan').innerText = `#LAP-2024-${String(report.laporan_id).padStart(3, '0')}`;
+            document.getElementById('kodeLaporan').innerText = `#LAP-${String(report.laporan_id).padStart(4, '0')}`;
+            document.getElementById('timeAgo').innerText = formatTimeAgo(report.tanggal_lapor);
             document.getElementById('categoryBadge').innerText = report.kategori.nama;
             document.getElementById('reportAddress').innerText = report.lokasi.alamat || report.lokasi.nama_jalan || 'Surabaya';
             document.getElementById('reportDesc').innerText = `"${report.deskripsi}"`;
@@ -289,6 +313,11 @@
                     photoImg.classList.remove('hidden');
                     document.getElementById('photoSkeleton').classList.add('hidden');
                 };
+                photoImg.onerror = () => {
+                    document.getElementById('photoSkeleton').innerText = 'Foto berkas tidak ditemukan di server.';
+                };
+            } else {
+                document.getElementById('photoSkeleton').innerText = 'Foto tidak tersedia.';
             }
 
             if (report.confidence_score) {
@@ -298,6 +327,63 @@
             }
             if (report.cv_label) {
                 document.getElementById('cvLabelText').innerText = report.cv_label;
+            }
+
+            // Check if report has already been reviewed (read-only view)
+            const headerSubtitle = document.getElementById('headerSubtitle');
+            const headerStatusBadge = document.getElementById('headerStatusBadge');
+            const statusHistoryBanner = document.getElementById('statusHistoryBanner');
+            const btnSubmitDecision = document.getElementById('btnSubmitDecision');
+            const btnDisabledDecision = document.getElementById('btnDisabledDecision');
+            const rejectionRequiredBadge = document.getElementById('rejectionRequiredBadge');
+
+            if (report.status === 'TERVALIDASI') {
+                headerStatusBadge.className = 'px-2.5 py-1 bg-emerald-100 text-emerald-800 text-[10px] font-extrabold rounded-full border border-emerald-300';
+                headerStatusBadge.innerText = '✓ Tervalidasi';
+                headerSubtitle.innerText = 'Laporan telah diverifikasi Valid';
+
+                selectedDecision = 'VALID';
+                cardValid.className = 'decision-card p-3 rounded-2xl border-2 border-emerald-600 bg-emerald-50 text-center flex flex-col items-center gap-1 shadow-sm pointer-events-none';
+                cardTidakValid.className = 'decision-card p-3 rounded-2xl border-2 border-slate-200 bg-slate-50 opacity-40 text-center flex flex-col items-center gap-1 pointer-events-none';
+
+                const formattedTime = report.tanggal_validasi ? new Date(report.tanggal_validasi).toLocaleString('id-ID', {day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit'}) : '';
+                statusHistoryBanner.className = 'mb-3 rounded-xl p-3 text-xs leading-relaxed font-semibold bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-start gap-2';
+                statusHistoryBanner.innerHTML = `
+                    <span class="text-base mt-0.5">✅</span>
+                    <div>Laporan ini telah dinyatakan <strong>VALID</strong>${formattedTime ? ' pada ' + formattedTime : ''}. Skor kelayakan segmen jalan telah diperbarui.</div>
+                `;
+                statusHistoryBanner.classList.remove('hidden');
+
+                btnSubmitDecision.classList.add('hidden');
+                btnDisabledDecision.className = 'w-full py-3 bg-emerald-600 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 mb-2 cursor-not-allowed shadow-sm';
+                btnDisabledDecision.innerText = '✓ Status Laporan: VALID';
+                btnDisabledDecision.classList.remove('hidden');
+            } else if (report.status === 'DITOLAK') {
+                headerStatusBadge.className = 'px-2.5 py-1 bg-rose-100 text-rose-800 text-[10px] font-extrabold rounded-full border border-rose-300';
+                headerStatusBadge.innerText = '✕ Ditolak';
+                headerSubtitle.innerText = 'Laporan tidak valid / ditolak';
+
+                selectedDecision = 'TIDAK_VALID';
+                cardTidakValid.className = 'decision-card p-3 rounded-2xl border-2 border-rose-600 bg-rose-50 text-center flex flex-col items-center gap-1 shadow-sm pointer-events-none';
+                cardValid.className = 'decision-card p-3 rounded-2xl border-2 border-slate-200 bg-slate-50 opacity-40 text-center flex flex-col items-center gap-1 pointer-events-none';
+
+                rejectionContainer.classList.remove('hidden');
+                if (rejectionRequiredBadge) rejectionRequiredBadge.classList.add('hidden');
+                alasanPenolakanInput.value = report.alasan_penolakan || 'Tidak ada alasan tercatat.';
+                alasanPenolakanInput.readOnly = true;
+
+                const formattedTime = report.tanggal_validasi ? new Date(report.tanggal_validasi).toLocaleString('id-ID', {day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit'}) : '';
+                statusHistoryBanner.className = 'mb-3 rounded-xl p-3 text-xs leading-relaxed font-semibold bg-rose-50 border border-rose-200 text-rose-900 flex items-start gap-2';
+                statusHistoryBanner.innerHTML = `
+                    <span class="text-base mt-0.5">❌</span>
+                    <div>Laporan ini telah dinyatakan <strong>TIDAK VALID</strong>${formattedTime ? ' pada ' + formattedTime : ''}.</div>
+                `;
+                statusHistoryBanner.classList.remove('hidden');
+
+                btnSubmitDecision.classList.add('hidden');
+                btnDisabledDecision.className = 'w-full py-3 bg-rose-600 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 mb-2 cursor-not-allowed shadow-sm';
+                btnDisabledDecision.innerText = '✕ Status Laporan: DITOLAK';
+                btnDisabledDecision.classList.remove('hidden');
             }
         } catch (e) {
             showToast('Gagal memuat detail laporan', 'error');

@@ -30,6 +30,7 @@
         <env name="DB_USERNAME" value="pedestriroute"/>
         <env name="DB_PASSWORD" value="secretpassword"/>
         <env name="GOOGLE_OAUTH_MOCK" value="true"/>
+        <env name="FACEBOOK_OAUTH_MOCK" value="true"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>

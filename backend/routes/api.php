@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\Api\AdminValidationController;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\LoginOtpController;
+use App\Http\Controllers\Api\RegisterOtpController;
 use App\Http\Controllers\Api\ReportController;
 use Illuminate\Support\Facades\Route;
 
@@ -10,9 +10,11 @@ Route::prefix('v1')->group(function () {
     // Authentication endpoints (F1, F2, OAuth)
     Route::prefix('auth')->group(function () {
         Route::post('/login', [AuthController::class, 'login']);
-        Route::post('/otp/verify', [LoginOtpController::class, 'verify']);
-        Route::post('/otp/resend', [LoginOtpController::class, 'resend']);
+        Route::post('/otp/verify', [RegisterOtpController::class, 'verify']);
+        Route::post('/otp/resend', [RegisterOtpController::class, 'resend']);
         Route::post('/register', [AuthController::class, 'register']);
+        Route::post('/register/otp/verify', [RegisterOtpController::class, 'verify']);
+        Route::post('/register/otp/resend', [RegisterOtpController::class, 'resend']);
         Route::get('/google/redirect', [AuthController::class, 'googleRedirect']);
         Route::get('/google/callback', [AuthController::class, 'googleCallback']);
 

@@ -45,18 +45,12 @@
 </div>
 
 <!-- Bottom Navigation for Admin -->
-<div class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-200 py-2.5 px-6 flex items-center justify-around z-40">
+<div class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-200 py-2.5 px-6 flex items-center justify-center z-40">
     <a href="/admin/validasi" class="flex flex-col items-center gap-1 text-brand-600 font-bold">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <span class="text-[10px]">Validasi Laporan</span>
-    </a>
-    <a href="/beranda-warga" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        </svg>
-        <span class="text-[10px]">Tampilan Warga</span>
     </a>
 </div>
 @endsection
@@ -81,6 +75,23 @@
         localStorage.clear();
         window.location.href = '/login';
     });
+
+    function formatTimeAgo(dateString) {
+        if (!dateString) return 'Baru saja';
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffSec = Math.floor((now - date) / 1000);
+        if (diffSec < 60) return 'Baru saja';
+        const diffMin = Math.floor(diffSec / 60);
+        if (diffMin < 60) return `${diffMin} menit lalu`;
+        const diffHour = Math.floor(diffMin / 60);
+        if (diffHour < 24) return `${diffHour} jam lalu`;
+        const diffDay = Math.floor(diffHour / 24);
+        if (diffDay < 30) return `${diffDay} hari lalu`;
+        const diffMonth = Math.floor(diffDay / 30);
+        if (diffMonth < 12) return `${diffMonth} bulan lalu`;
+        return `${Math.floor(diffMonth / 12)} tahun lalu`;
+    }
 
     async function loadQueue() {
         try {
@@ -124,9 +135,17 @@
                 html += `
                     <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex flex-col gap-2">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-mono font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md">
-                                ${lap.kode_laporan}
-                            </span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-mono font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md">
+                                    ${lap.kode_laporan}
+                                </span>
+                                <span class="text-[10px] text-slate-500 flex items-center gap-1 font-medium">
+                                    <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    ${formatTimeAgo(lap.tanggal_lapor)}
+                                </span>
+                            </div>
                             <span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
                                 ${lap.kategori}
                             </span>

@@ -2,13 +2,18 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Mail\RegisterOtpMail;
 use App\Models\Warga;
 use App\Support\MessageCatalog;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class RegisterTest extends TestCase
 {
+    use DatabaseTransactions;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -16,8 +21,10 @@ class RegisterTest extends TestCase
         Warga::where('no_hp', '6281234567890')->delete();
     }
 
-    public function test_registrasi_berhasil(): void
+    public function test_registrasi_berhasil_dengan_verifikasi_otp(): void
     {
+        Mail::fake();
+
         $response = $this->postJson('/api/v1/auth/register', [
             'nama' => 'John Maps',
             'email' => 'johnmaps@gmail.com',
@@ -26,15 +33,58 @@ class RegisterTest extends TestCase
             'password_confirmation' => 'warga12345',
         ]);
 
-        $response->assertStatus(201)
+        $response->assertStatus(200)
+            ->assertJsonPath('data.otp_required', true)
+            ->assertJsonStructure(['data' => ['challenge_id', 'email_hint', 'expires_in']]);
+
+        $challengeId = $response->json('data.challenge_id');
+        $otp = null;
+
+        Mail::assertSent(RegisterOtpMail::class, function ($mail) use (&$otp) {
+            $otp = $mail->otp;
+            return true;
+        });
+
+        $this->assertNotNull($otp);
+
+        // Verify with valid OTP
+        $verifyRes = $this->postJson('/api/v1/auth/otp/verify', [
+            'challenge_id' => $challengeId,
+            'otp' => $otp,
+        ]);
+
+        $verifyRes->assertStatus(201)
             ->assertJsonPath('message', MessageCatalog::REG_SUCCESS)
-            ->assertJsonStructure(['data' => ['warga_id'], 'message']);
+            ->assertJsonStructure(['data' => ['warga_id', 'token', 'role', 'redirect']]);
 
         $user = Warga::where('email', 'johnmaps@gmail.com')->first();
         $this->assertNotNull($user);
         $this->assertEquals('6281234567890', $user->no_hp);
         $this->assertTrue(Hash::check('warga12345', $user->password));
         $this->assertNotEquals('warga12345', $user->password);
+    }
+
+    public function test_verifikasi_otp_gagal_kode_salah(): void
+    {
+        Mail::fake();
+
+        $response = $this->postJson('/api/v1/auth/register', [
+            'nama' => 'John Maps',
+            'email' => 'johnmaps@gmail.com',
+            'no_hp' => '081234567890',
+            'password' => 'warga12345',
+            'password_confirmation' => 'warga12345',
+        ]);
+
+        $challengeId = $response->json('data.challenge_id');
+
+        $verifyRes = $this->postJson('/api/v1/auth/otp/verify', [
+            'challenge_id' => $challengeId,
+            'otp' => '000000',
+        ]);
+
+        $verifyRes->assertStatus(422)
+            ->assertJsonPath('error.code', 'OTP_INVALID');
     }
 
     public function test_gagal_format_tidak_valid_atau_kolom_kosong(): void

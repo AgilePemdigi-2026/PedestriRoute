@@ -219,6 +219,15 @@
                 return;
             }
 
+            if (resData.data?.otp_required && resData.data?.challenge_id) {
+                sessionStorage.setItem('register_otp_challenge', resData.data.challenge_id);
+                showToast(resData.message || 'Kode verifikasi telah dikirim ke email Anda.', 'success');
+                setTimeout(() => {
+                    window.location.href = '/verify-otp';
+                }, 600);
+                return;
+            }
+
             showToast('Registrasi Berhasil', 'success');
             setTimeout(() => {
                 window.location.href = '/login';

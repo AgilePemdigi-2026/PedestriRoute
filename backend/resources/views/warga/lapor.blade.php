@@ -27,8 +27,22 @@
             <h1 class="text-sm font-extrabold text-slate-900 leading-tight">PedestriRoute</h1>
             <p class="text-[10px] text-teal-800 font-semibold tracking-wider">Lapor</p>
         </div>
-        <div class="w-9 h-9 rounded-full overflow-hidden border border-slate-200">
-            <img id="navAvatar" src="https://ui-avatars.com/api/?name=W&background=006257&color=fff" class="w-full h-full object-cover">
+        <div class="relative">
+            <button id="userMenuBtn" class="w-9 h-9 rounded-full overflow-hidden border-2 border-brand-500 focus:outline-none">
+                <img id="navAvatar" src="https://ui-avatars.com/api/?name=W&background=006257&color=fff" class="w-full h-full object-cover">
+            </button>
+            <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50">
+                <div class="px-4 py-2 border-b border-slate-100">
+                    <p id="menuUserName" class="text-xs font-bold text-slate-900 truncate">Warga</p>
+                    <p id="menuUserEmail" class="text-[10px] text-slate-500 truncate">user@gmail.com</p>
+                </div>
+                <button id="logoutBtn" class="w-full text-left px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Keluar
+                </button>
+            </div>
         </div>
     </div>
 
@@ -225,11 +239,11 @@
         </svg>
         <span class="text-[10px] font-medium">Notifikasi</span>
     </a>
-    <a href="/beranda-warga" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600">
+    <a href="javascript:void(0)" onclick="toggleUserDropdown()" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
-        <span class="text-[10px] font-medium">Admin</span>
+        <span class="text-[10px] font-medium">Profil</span>
     </a>
 </div>
 @endsection
@@ -240,6 +254,60 @@
     const token = localStorage.getItem('token');
     if (!token) {
         window.location.href = '/login';
+    }
+
+    // User Profile & Dropdown
+    try {
+        const storedUser = JSON.parse(localStorage.getItem('user'));
+        if (storedUser) {
+            document.getElementById('menuUserName').innerText = storedUser.nama || 'Warga';
+            document.getElementById('menuUserEmail').innerText = storedUser.email || '';
+            if (storedUser.avatar_url) {
+                document.getElementById('navAvatar').src = storedUser.avatar_url;
+            } else {
+                document.getElementById('navAvatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(storedUser.nama || 'W')}&background=006257&color=fff`;
+            }
+        }
+    } catch (e) {}
+
+    const userMenuBtn = document.getElementById('userMenuBtn');
+    const userDropdown = document.getElementById('userDropdown');
+
+    function toggleUserDropdown() {
+        if (userDropdown) {
+            userDropdown.classList.toggle('hidden');
+        }
+    }
+
+    if (userMenuBtn) {
+        userMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleUserDropdown();
+        });
+    }
+
+    document.addEventListener('click', () => {
+        if (userDropdown) userDropdown.classList.add('hidden');
+    });
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await fetch('/api/v1/auth/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Accept': 'application/json'
+                    }
+                });
+            } catch (e) {}
+            localStorage.clear();
+            showToast('Berhasil keluar', 'info');
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 500);
+        });
     }
 
     // Selected state
@@ -261,6 +329,30 @@
 
     let marker = L.marker([selectedLat, selectedLon], { draggable: true }).addTo(map);
 
+    let reverseGeocodeTimer = null;
+    function fetchStreetName(lat, lon) {
+        const alamatEl = document.getElementById('alamatText');
+        if (!alamatEl) return;
+        alamatEl.innerText = 'Mencari nama jalan...';
+        clearTimeout(reverseGeocodeTimer);
+        reverseGeocodeTimer = setTimeout(async () => {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const road = data.address?.road || data.address?.pedestrian || data.address?.footway || data.address?.suburb || data.display_name?.split(',')[0];
+                    if (road) {
+                        alamatEl.innerText = `${road}, Surabaya`;
+                        return;
+                    }
+                }
+            } catch (e) {}
+            alamatEl.innerText = `Titik Koordinat (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+        }, 400);
+    }
+
     function updateCoordinates(lat, lon, accuracy = null) {
         selectedLat = parseFloat(lat.toFixed(6));
         selectedLon = parseFloat(lon.toFixed(6));
@@ -269,7 +361,11 @@
         if (accuracy) {
             document.getElementById('accuracyBadge').innerText = `±${Math.round(accuracy)}m`;
         }
+        fetchStreetName(selectedLat, selectedLon);
     }
+
+    // Initial address fetch
+    fetchStreetName(selectedLat, selectedLon);
 
     marker.on('dragend', function (e) {
         const pos = e.target.getLatLng();

@@ -57,15 +57,6 @@
                 </div>
             </div>
 
-            <!-- Callout info accessibility -->
-            <div class="bg-teal-50 border border-teal-100 rounded-xl p-3 flex items-start gap-2.5">
-                <svg class="w-5 h-5 text-brand-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p class="text-xs text-brand-800 font-medium leading-relaxed">
-                    Jelajahi trotoar ramah difabel & lapor kendala langsung.
-                </p>
-            </div>
 
             <!-- Submit Button -->
             <button type="submit" id="submitBtn"
@@ -115,6 +106,23 @@
 
 @push('scripts')
 <script>
+    // Check URL parameters for OAuth errors
+    const urlParams = new URLSearchParams(window.location.search);
+    const oauthError = urlParams.get('error');
+    if (oauthError) {
+        if (oauthError === 'facebook_failed') {
+            showToast('Login dengan Facebook dibatalkan atau gagal.', 'error');
+        } else if (oauthError === 'google_failed') {
+            showToast('Login dengan Google dibatalkan atau gagal.', 'error');
+        } else if (oauthError === 'email_reserved_for_admin') {
+            showToast('Email ini terdaftar sebagai Admin. Silakan login manual.', 'error');
+        } else {
+            showToast('Autentikasi gagal. Silakan coba lagi.', 'error');
+        }
+        // Clean URL parameter without reloading
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     // Password visibility toggle
     const togglePassword = document.getElementById('togglePassword');
     const passwordInput = document.getElementById('password');
@@ -127,8 +135,8 @@
     const loginForm = document.getElementById('loginForm');
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const identifier = document.getElementById('identifier').value;
-        const password = document.getElementById('password').value;
+        const identifier = document.getElementById('identifier').value.trim();
+        const password = document.getElementById('password').value.trim();
 
         try {
             const response = await fetch('/api/v1/auth/login', {
@@ -148,10 +156,14 @@
                 return;
             }
 
-            // OTP required: do not store auth token or redirect to protected pages yet.
-            if (resData.data?.otp_required && resData.data?.challenge_id) {
-                sessionStorage.setItem('login_otp_challenge', resData.data.challenge_id);
-                window.location.href = '/verify-otp';
+            if (resData.data?.token) {
+                localStorage.setItem('token', resData.data.token);
+                localStorage.setItem('role', resData.data.role);
+                localStorage.setItem('user', JSON.stringify(resData.data.user));
+                showToast('Login berhasil!', 'success');
+                setTimeout(() => {
+                    window.location.href = resData.data.redirect || '/beranda-warga';
+                }, 400);
                 return;
             }
             showToast('Respons login tidak sesuai. Silakan coba lagi.', 'error');

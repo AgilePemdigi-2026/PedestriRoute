@@ -5,11 +5,14 @@ namespace Tests\Feature\Auth;
 use App\Models\Admin;
 use App\Models\Warga;
 use App\Support\MessageCatalog;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class LoginTest extends TestCase
 {
+    use DatabaseTransactions;
+
     protected function setUp(): void
     {
         parent::setUp();
