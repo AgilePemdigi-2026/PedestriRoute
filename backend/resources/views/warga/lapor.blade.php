@@ -76,7 +76,11 @@
             </div>
 
             <!-- Map container -->
-            <div id="laporMap" class="mb-3 border border-slate-100"></div>
+            <div class="mb-2 rounded-xl border border-teal-200 bg-teal-50 px-3 py-2" role="note">
+            <p class="text-[10px] font-bold text-teal-800">Wilayah Layanan Aktif: Koridor Mulyosari, Surabaya</p>
+            <p class="text-[10px] text-slate-500 mt-0.5">Batas visual perkiraan, bukan batas administratif resmi.</p>
+        </div>
+        <div id="laporMap" class="mb-3 border border-slate-100"></div>
 
             <!-- Address bar with accuracy -->
             <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex items-center justify-between mb-2.5 text-xs text-slate-700">
@@ -252,6 +256,7 @@
 
 @push('scripts')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+@include('partials.mulyosari-service-area')
 <script>
     const token = localStorage.getItem('token');
     if (!token) {
@@ -328,6 +333,8 @@
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19
     }).addTo(map);
+
+    const serviceArea = PedestriRouteServiceArea.attach(map);
 
     // Marker Pinpoint
     let marker = L.marker([selectedLat, selectedLon], { draggable: true }).addTo(map);
@@ -409,6 +416,11 @@
             (pos) => {
                 const lat = pos.coords.latitude;
                 const lon = pos.coords.longitude;
+                if (!serviceArea.navigationBounds.contains([lat, lon])) {
+                    document.getElementById('gpsBadge').innerText = 'GPS di luar tampilan';
+                    showToast('Lokasi GPS berada di luar tampilan Mulyosari. Pilih titik laporan pada peta.', 'error');
+                    return;
+                }
                 updateCoordinates(lat, lon, pos.coords.accuracy);
                 map.setView([lat, lon], 17);
                 document.getElementById('gpsBadge').innerText = 'GPS Terkunci';
