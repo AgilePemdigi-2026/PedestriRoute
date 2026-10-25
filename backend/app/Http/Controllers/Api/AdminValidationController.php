@@ -54,6 +54,58 @@ class AdminValidationController extends Controller
     }
 
     /**
+     * Get aggregated statistics for admin dashboard.
+     */
+    public function statistics(Request $request): JsonResponse
+    {
+        $totalLaporan = Laporan::count();
+        $menungguValidasi = Laporan::where('status', 'MENUNGGU_VALIDASI_ADMIN')->count();
+        $tervalidasi = Laporan::where('status', 'TERVALIDASI')->count();
+        $ditolak = Laporan::where('status', 'DITOLAK')->count();
+
+        $categories = DB::table('kategori_masalah')
+            ->leftJoin('laporan', 'kategori_masalah.kategori_id', '=', 'laporan.kategori_id')
+            ->select(
+                'kategori_masalah.kategori_id',
+                'kategori_masalah.nama_kategori',
+                'kategori_masalah.bobot',
+                DB::raw('COUNT(laporan.laporan_id) as total_laporan'),
+                DB::raw("COUNT(CASE WHEN laporan.status = 'TERVALIDASI' THEN 1 END) as total_tervalidasi")
+            )
+            ->groupBy('kategori_masalah.kategori_id', 'kategori_masalah.nama_kategori', 'kategori_masalah.bobot')
+            ->orderBy('kategori_masalah.kategori_id', 'asc')
+            ->get();
+
+        $segments = DB::table('segmen_jalur')
+            ->select('segmen_id', 'nama_jalan', 'skor_kelayakan', 'panjang_m')
+            ->orderBy('skor_kelayakan', 'asc')
+            ->get();
+
+        $avgSkor = $segments->avg('skor_kelayakan') ?? 100.0;
+        $totalWarga = DB::table('warga')->count();
+
+        return response()->json([
+            'data' => [
+                'summary' => [
+                    'total_laporan' => $totalLaporan,
+                    'menunggu_validasi' => $menungguValidasi,
+                    'tervalidasi' => $tervalidasi,
+                    'ditolak' => $ditolak,
+                    'persentase_valid' => $totalLaporan > 0 ? round(($tervalidasi / $totalLaporan) * 100, 1) : 0,
+                    'rata_rata_skor_jalan' => round((float) $avgSkor, 1),
+                    'total_warga' => $totalWarga,
+                ],
+                'kategori' => $categories,
+                'segmen' => $segments,
+            ],
+            'meta' => [
+                'area' => 'Kecamatan Mulyorejo, Surabaya',
+                'timestamp' => now()->toIso8601String(),
+            ]
+        ], 200);
+    }
+
+    /**
      * Submit review decision (Valid or Tidak Valid) (FR-F5-04, FR-F5-05, FR-F5-08).
      */
     public function validateReport(Request $request, int $id): JsonResponse

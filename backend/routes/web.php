@@ -38,4 +38,8 @@ Route::get('/admin/validasi/{id}', function ($id) {
     return view('admin.validasi_detail', ['id' => $id]);
 })->name('admin.validasi.detail');
 
+Route::get('/admin/statistik', function () {
+    return view('admin.statistik');
+})->name('admin.statistik');
+
 Route::view('/verify-otp', 'auth.verify-otp')->name('otp.verify.page');
