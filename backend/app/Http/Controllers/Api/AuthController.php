@@ -136,6 +136,7 @@ class AuthController extends Controller
                     'id' => $role === 'admin' ? $user->admin_id : $user->warga_id,
                     'nama' => $user->nama,
                     'email' => $user->email,
+                    'no_hp' => $role === 'warga' ? $user->no_hp : null,
                     'avatar_url' => $user->avatar_url ?? null,
                 ],
             ]
@@ -321,6 +322,64 @@ class AuthController extends Controller
     }
 
     /**
+     * Update No HP Warga untuk pengguna Social Login.
+     */
+    public function updatePhone(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!($user instanceof Warga)) {
+            return response()->json([
+                'error' => [
+                    'code' => 'FORBIDDEN',
+                    'message' => 'Hanya pengguna Warga yang dapat memperbarui nomor telepon.',
+                ]
+            ], 403);
+        }
+
+        $noHp = trim((string) $request->input('no_hp', ''));
+
+        if ($noHp === '' || !PhoneNormalizer::isValid($noHp)) {
+            return response()->json([
+                'error' => [
+                    'code' => 'PHONE_INVALID',
+                    'message' => 'Nomor telepon tidak valid. Gunakan format nomor Indonesia (contoh: 081234567890).',
+                ]
+            ], 422);
+        }
+
+        $normalizedPhone = PhoneNormalizer::normalize($noHp);
+
+        // Cek jika nomor HP sudah digunakan warga lain
+        $phoneExists = Warga::where('no_hp', $normalizedPhone)
+            ->where('warga_id', '!=', $user->warga_id)
+            ->exists();
+
+        if ($phoneExists) {
+            return response()->json([
+                'error' => [
+                    'code' => 'REG_PHONE_EXISTS',
+                    'message' => MessageCatalog::REG_PHONE_EXISTS,
+                ]
+            ], 422);
+        }
+
+        $user->no_hp = $normalizedPhone;
+        $user->save();
+
+        return response()->json([
+            'data' => [
+                'id' => $user->warga_id,
+                'nama' => $user->nama,
+                'email' => $user->email,
+                'no_hp' => $user->no_hp,
+                'avatar_url' => $user->avatar_url,
+            ],
+            'message' => 'Nomor telepon berhasil disimpan.'
+        ], 200);
+    }
+
+    /**
      * Redirect to Google OAuth provider.
      */
     public function googleRedirect()
@@ -354,12 +413,10 @@ class AuthController extends Controller
             }
         }
 
-        // Email cannot conflict with Admin
         if (Admin::where('email', $email)->exists()) {
             return redirect('/login?error=email_reserved_for_admin');
         }
 
-        // Upsert Warga
         $warga = Warga::where('email', $email)->orWhere('google_id', $googleId)->first();
         if (!$warga) {
             $warga = Warga::create([
@@ -382,7 +439,6 @@ class AuthController extends Controller
 
         $token = $warga->createToken('auth-token', ['role:warga'])->plainTextToken;
 
-        // Render mini callback script to write token to localStorage and redirect to /beranda-warga
         return response()->make("
             <!DOCTYPE html>
             <html>
@@ -395,6 +451,7 @@ class AuthController extends Controller
                     'id' => $warga->warga_id,
                     'nama' => $warga->nama,
                     'email' => $warga->email,
+                    'no_hp' => $warga->no_hp,
                     'avatar_url' => $warga->avatar_url,
                 ]) . ");
                 window.location.href = '/beranda-warga';
@@ -477,6 +534,7 @@ class AuthController extends Controller
                     'id' => $warga->warga_id,
                     'nama' => $warga->nama,
                     'email' => $warga->email,
+                    'no_hp' => $warga->no_hp,
                     'avatar_url' => $warga->avatar_url,
                 ]) . ");
                 window.location.href = '/beranda-warga';

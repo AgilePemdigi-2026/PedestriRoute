@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
     #laporMap {
-        height: 180px;
+        height: 200px;
         width: 100%;
         border-radius: 0.875rem;
         z-index: 10;
@@ -84,7 +84,9 @@
                     <span class="w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>
                     <span id="alamatText" class="truncate font-medium">Jl. Raya Mulyosari, Surabaya</span>
                 </div>
-                <span id="accuracyBadge" class="text-[10px] font-semibold text-slate-500 bg-slate-200 px-2 py-0.5 rounded shrink-0">±3m</span>
+                <span id="accuracyBadge" class="text-[10px] font-semibold text-brand-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded shrink-0">
+                    Radius Snapping 50m
+                </span>
             </div>
 
             <!-- Coordinates & GPS button -->
@@ -343,13 +345,24 @@
     const map = L.map('laporMap', {
         preferCanvas: true,
         attributionControl: false
-    }).setView([selectedLat, selectedLon], 16);
+    }).setView([selectedLat, selectedLon], 17);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19
     }).addTo(map);
 
+    // Marker Pinpoint
     let marker = L.marker([selectedLat, selectedLon], { draggable: true }).addTo(map);
+
+    // Layer Indikator Radius Snapping 50m
+    let snappingCircle = L.circle([selectedLat, selectedLon], {
+        radius: 50,
+        color: '#006257',
+        weight: 1.5,
+        fillColor: '#008775',
+        fillOpacity: 0.15,
+        dashArray: '4, 6'
+    }).addTo(map);
 
     // Reverse geocoding Nominatim (FR-F7-11)
     const GEOCODE_DEBOUNCE_MS = 500;      // debounce minimal 500 ms
@@ -406,11 +419,20 @@
     function updateCoordinates(lat, lon, accuracy = null) {
         selectedLat = parseFloat(lat.toFixed(6));
         selectedLon = parseFloat(lon.toFixed(6));
-        marker.setLatLng([selectedLat, selectedLon]);
+        const newLatLng = [selectedLat, selectedLon];
+
+        marker.setLatLng(newLatLng);
+        snappingCircle.setLatLng(newLatLng); // Update posisi radius snapping 50m
+
         document.getElementById('coordDisplay').value = `${selectedLat}, ${selectedLon}`;
+        
+        const accuracyBadge = document.getElementById('accuracyBadge');
         if (accuracy) {
-            document.getElementById('accuracyBadge').innerText = `±${Math.round(accuracy)}m`;
+            accuracyBadge.innerText = `GPS (±${Math.round(accuracy)}m) • Snap 50m`;
+        } else {
+            accuracyBadge.innerText = `Radius Snapping 50m`;
         }
+
         fetchStreetName(selectedLat, selectedLon);
     }
 
@@ -440,10 +462,9 @@
                 updateCoordinates(lat, lon, pos.coords.accuracy);
                 map.setView([lat, lon], 17);
                 document.getElementById('gpsBadge').innerText = 'GPS Terkunci';
-                showToast('Lokasi GPS berhasil diambil', 'success');
+                showToast('Lokasi GPS & Radius 50m terdistribusi', 'success');
             },
             (err) => {
-                // FR-F3-15: Katalog pesan GPS_PERMISSION_DENIED
                 showToast('Izin lokasi ditolak. Aktifkan izin lokasi di pengaturan browser.', 'error');
             },
             { enableHighAccuracy: true, timeout: 10000 }
@@ -469,7 +490,7 @@
         charCount.innerText = deskripsiInput.value.length;
     });
 
-    // Photo file picker and client-side canvas resize (FR-F3-12)
+    // Photo file picker and client-side canvas resize
     const btnPickPhoto = document.getElementById('btnPickPhoto');
     const fotoInput = document.getElementById('fotoInput');
     const fotoCameraInput = document.getElementById('fotoCameraInput');
@@ -491,7 +512,6 @@
     function processPhoto(file) {
         if (!file) return;
 
-        // Check mime
         if (!['image/jpeg', 'image/png'].includes(file.type)) {
             showToast('Foto Tidak Valid', 'error');
             fotoInput.value = '';

@@ -126,6 +126,33 @@
     </div>
 </div>
 
+<!-- Modal Kelengkapan Nomor HP -->
+<div id="phoneModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-slate-100 text-center">
+        <div class="w-12 h-12 bg-teal-100 text-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+            </svg>
+        </div>
+        <h3 class="text-lg font-bold text-slate-900 mb-1">Lengkapi Nomor Telepon</h3>
+        <p class="text-xs text-slate-500 mb-5 leading-relaxed">
+            Akun Anda terdaftar via Social Login. Harap masukkan nomor HP untuk kelengkapan identitas laporan.
+        </p>
+
+        <form id="updatePhoneForm" class="space-y-4">
+            <div class="text-left">
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nomor HP / WhatsApp</label>
+                <input type="text" id="inputNoHp" placeholder="contoh: 081234567890" required
+                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition" />
+            </div>
+            <button type="submit" id="btnSavePhone"
+                class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl text-sm transition shadow-lg shadow-teal-900/10">
+                Simpan & Lanjutkan
+            </button>
+        </form>
+    </div>
+</div>
+
 <!-- Bottom Navigation Bar matching mockup -->
 <div class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-200 py-2.5 px-6 flex items-center justify-between z-40">
     <a href="/beranda-warga" class="flex flex-col items-center gap-1 text-brand-600 font-bold">
@@ -207,6 +234,11 @@
                 document.getElementById('userAvatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nama)}&background=006257&color=fff`;
             }
 
+            // Cek kelengkapan nomor HP (Issue #8)
+            if (!user.no_hp) {
+                document.getElementById('phoneModal').classList.remove('hidden');
+            }
+
             // Fetch summary
             const summaryRes = await fetch('/api/v1/reports/my-summary', {
                 headers: {
@@ -229,6 +261,39 @@
     }
 
     initBeranda();
+
+    // Submit handler modal kelengkapan No HP
+    const updatePhoneForm = document.getElementById('updatePhoneForm');
+    if (updatePhoneForm) {
+        updatePhoneForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const noHp = document.getElementById('inputNoHp').value;
+
+            try {
+                const response = await fetch('/api/v1/auth/update-phone', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ no_hp: noHp })
+                });
+
+                const resData = await response.json();
+
+                if (!response.ok) {
+                    showToast(resData.error ? resData.error.message : 'Gagal menyimpan nomor HP', 'error');
+                    return;
+                }
+
+                showToast('Nomor HP berhasil disimpan!', 'success');
+                document.getElementById('phoneModal').classList.add('hidden');
+            } catch (err) {
+                showToast('Terjadi kesalahan jaringan.', 'error');
+            }
+        });
+    }
 
     // 3. User Dropdown Toggle
     const userMenuBtn = document.getElementById('userMenuBtn');
