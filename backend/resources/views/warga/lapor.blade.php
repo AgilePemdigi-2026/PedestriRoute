@@ -29,7 +29,7 @@
         </div>
         <div class="relative">
             <button id="userMenuBtn" class="w-9 h-9 rounded-full overflow-hidden border-2 border-brand-500 focus:outline-none">
-                <img id="navAvatar" src="https://ui-avatars.com/api/?name=W&background=006257&color=fff" class="w-full h-full object-cover">
+                <img id="navAvatar" src="https://ui-avatars.com/api/?name=Warga&background=006257&color=fff" alt="Avatar" class="w-full h-full object-cover">
             </button>
             <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50">
                 <div class="px-4 py-2 border-b border-slate-100">
@@ -77,16 +77,16 @@
 
             <!-- Map container -->
             <div class="mb-2 rounded-xl border border-teal-200 bg-teal-50 px-3 py-2" role="note">
-            <p class="text-[10px] font-bold text-teal-800">Wilayah Layanan Aktif: Koridor Mulyosari, Surabaya</p>
-            <p class="text-[10px] text-slate-500 mt-0.5">Batas visual perkiraan, bukan batas administratif resmi.</p>
-        </div>
-        <div id="laporMap" class="mb-3 border border-slate-100"></div>
+                <p class="text-[10px] font-bold text-teal-800">Wilayah Layanan Aktif: Kecamatan Mulyorejo, Surabaya</p>
+                <p class="text-[10px] text-slate-500 mt-0.5">Batas wilayah administratif resmi Kecamatan Mulyorejo.</p>
+            </div>
+            <div id="laporMap" class="mb-3 border border-slate-100"></div>
 
             <!-- Address bar with accuracy -->
             <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex items-center justify-between mb-2.5 text-xs text-slate-700">
                 <div class="flex items-center gap-2 truncate pr-2">
                     <span class="w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>
-                    <span id="alamatText" class="truncate font-medium">Jl. Raya Mulyosari, Surabaya</span>
+                    <span id="alamatText" class="truncate font-medium">Jl. Raya Mulyosari, Mulyorejo, Surabaya</span>
                 </div>
                 <span id="accuracyBadge" class="text-[10px] font-semibold text-brand-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded shrink-0">
                     Radius Snapping 50m
@@ -278,7 +278,7 @@
 
 @push('scripts')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-@include('partials.mulyosari-service-area')
+@include('partials.mulyorejo-service-area')
 <script>
     const token = localStorage.getItem('token');
     if (!token) {
@@ -286,18 +286,45 @@
     }
 
     // User Profile & Dropdown
+    function applyUserProfile(user) {
+        if (!user) return;
+        document.getElementById('menuUserName').innerText = user.nama || 'Warga';
+        document.getElementById('menuUserEmail').innerText = user.email || '';
+        const avatarEl = document.getElementById('navAvatar');
+        if (avatarEl) {
+            if (user.avatar_url) {
+                avatarEl.src = user.avatar_url;
+            } else {
+                avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nama || 'Warga')}&background=006257&color=fff`;
+            }
+        }
+    }
+
     try {
         const storedUser = JSON.parse(localStorage.getItem('user'));
         if (storedUser) {
-            document.getElementById('menuUserName').innerText = storedUser.nama || 'Warga';
-            document.getElementById('menuUserEmail').innerText = storedUser.email || '';
-            if (storedUser.avatar_url) {
-                document.getElementById('navAvatar').src = storedUser.avatar_url;
-            } else {
-                document.getElementById('navAvatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(storedUser.nama || 'W')}&background=006257&color=fff`;
-            }
+            applyUserProfile(storedUser);
         }
     } catch (e) {}
+
+    async function syncUserProfile() {
+        try {
+            const res = await fetch('/api/v1/auth/me', {
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Accept': 'application/json'
+                }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data?.data) {
+                    localStorage.setItem('user', JSON.stringify(data.data));
+                    applyUserProfile(data.data);
+                }
+            }
+        } catch (e) {}
+    }
+    syncUserProfile();
 
     const userMenuBtn = document.getElementById('userMenuBtn');
     const userDropdown = document.getElementById('userDropdown');
@@ -467,8 +494,8 @@
                 const lat = pos.coords.latitude;
                 const lon = pos.coords.longitude;
                 if (!serviceArea.navigationBounds.contains([lat, lon])) {
-                    document.getElementById('gpsBadge').innerText = 'GPS di luar tampilan';
-                    showToast('Lokasi GPS berada di luar tampilan Mulyosari. Pilih titik laporan pada peta.', 'error');
+                    document.getElementById('gpsBadge').innerText = 'GPS di luar Mulyorejo';
+                    showToast('Lokasi GPS berada di luar wilayah layanan Mulyorejo. Pilih titik laporan pada peta.', 'error');
                     return;
                 }
                 updateCoordinates(lat, lon, pos.coords.accuracy);

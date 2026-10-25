@@ -83,7 +83,6 @@
         <p id="reportMapStatus" role="status" class="px-3 pb-3 text-xs text-slate-500">Memuat peta...</p>
         <div class="p-3 bg-teal-50/50 border-t border-teal-100">
             <p id="reportSnapInfo" class="text-[11px] text-teal-800 mb-2" role="status">Memuat informasi segmen...</p>
-            <p id="reportMapLegend" class="hidden text-[10px] text-slate-500 mb-2">Pin: titik laporan · Garis teal: segmen jalan</p>
             <div class="flex flex-wrap gap-2">
                 <a id="externalMapsLink" target="_blank" rel="noopener noreferrer" class="hidden px-3 py-2 rounded-xl bg-brand-600 text-white text-[11px] font-bold">Buka Google Maps ↗</a>
                 <a id="streetViewLink" target="_blank" rel="noopener noreferrer" class="hidden px-3 py-2 rounded-xl border border-teal-200 text-teal-800 text-[11px] font-bold">Buka Street View ↗</a>
@@ -350,10 +349,8 @@
         const mapElement = document.getElementById('reportMap');
         const mapsLink = document.getElementById('externalMapsLink');
         const streetLink = document.getElementById('streetViewLink');
-        const legend = document.getElementById('reportMapLegend');
         if (reportMap) { reportMap.remove(); reportMap = null; }
         mapElement.classList.add('hidden');
-        legend.classList.add('hidden');
         status.classList.remove('hidden');
         for (const link of [mapsLink, streetLink]) {
             link.removeAttribute('href');
@@ -380,7 +377,7 @@
         snapInfo.textContent = segment
             ? (numeric(segment.jarak_snapping_m) && Number(segment.jarak_snapping_m) >= 0
                 ? `Tersnap ${Number(segment.jarak_snapping_m).toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1})} m ke ${segment.nama_jalan || 'segmen jalan'}`
-                : `Segmen: ${segment.nama_jalan || 'jalan tanpa nama'} · Jarak snapping tidak tersedia.`)
+                : `Segmen: ${segment.nama_jalan || 'jalan tanpa nama'}`)
             : 'Laporan belum memiliki data segmen jalan.';
         if (typeof L === 'undefined') {
             status.textContent = 'Peta gagal dimuat. Gunakan tombol Google Maps untuk melihat lokasi.';
@@ -398,28 +395,7 @@
                 status.textContent = 'Sebagian peta dasar gagal dimuat. Gunakan Google Maps bila diperlukan.';
                 status.classList.remove('hidden');
             });
-            const marker = L.marker([lat, lng]).addTo(reportMap).bindPopup('Titik laporan warga');
-            if (segment?.geojson) {
-                try {
-                    const line = L.geoJSON(segment.geojson, {
-                        style: {
-                            color: '#006257',
-                            weight: 5,
-                            opacity: 0.85
-                        }
-                    }).addTo(reportMap);
-                    if (line.getBounds().isValid()) {
-                        reportMap.fitBounds(line.getBounds().extend(marker.getLatLng()), {padding: [24, 24], maxZoom: 18});
-                        legend.classList.remove('hidden');
-                    } else {
-                        snapInfo.textContent += ' · Garis segmen tidak tersedia.';
-                    }
-                } catch (error) {
-                    snapInfo.textContent += ' · Garis segmen gagal ditampilkan.';
-                }
-            } else if (segment) {
-                snapInfo.textContent += ' · Garis segmen tidak tersedia.';
-            }
+            L.marker([lat, lng]).addTo(reportMap).bindPopup('Titik laporan warga');
             requestAnimationFrame(() => reportMap?.invalidateSize());
         } catch (error) {
             if (reportMap) { reportMap.remove(); reportMap = null; }

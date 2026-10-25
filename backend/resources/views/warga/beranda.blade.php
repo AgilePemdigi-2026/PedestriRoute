@@ -115,15 +115,15 @@
         </div>
     </div>
 
-    <!-- Map Preview (Mulyosari / Surabaya) -->
+    <!-- Map Preview (Mulyorejo / Surabaya) -->
     <div class="mb-2">
         <div class="flex items-center justify-between mb-2.5">
             <h3 class="text-xs font-bold text-slate-700 tracking-wide uppercase">Peta Wilayah Layanan (Surabaya)</h3>
-            <span class="text-[10px] font-semibold text-slate-400">Area Mulyosari</span>
+            <span class="text-[10px] font-semibold text-slate-400">Area Mulyorejo</span>
         </div>
         <div class="mb-2 rounded-xl border border-teal-200 bg-teal-50 px-3 py-2" role="note">
-            <p class="text-[10px] font-bold text-teal-800">Wilayah Layanan Aktif: Koridor Mulyosari, Surabaya</p>
-            <p class="text-[10px] text-slate-500 mt-0.5">Batas visual perkiraan, bukan batas administratif resmi.</p>
+            <p class="text-[10px] font-bold text-teal-800">Wilayah Layanan Aktif: Kecamatan Mulyorejo, Surabaya</p>
+            <p class="text-[10px] text-slate-500 mt-0.5">Batas wilayah administratif resmi Kecamatan Mulyorejo.</p>
         </div>
         <div id="map"></div>
         <p class="text-[10px] text-slate-400 mt-1.5 text-center">© OpenStreetMap contributors</p>
@@ -197,7 +197,7 @@
 @push('scripts')
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-@include('partials.mulyosari-service-area')
+@include('partials.mulyorejo-service-area')
 <script>
     // 1. Client Auth Guard (FR-F1-09)
     const token = localStorage.getItem('token');
@@ -206,6 +206,28 @@
     }
 
     // 2. Load User Profile & Summary
+    function applyUserProfile(user) {
+        if (!user) return;
+        document.getElementById('greetingName').innerText = user.nama || 'Warga';
+        document.getElementById('menuUserName').innerText = user.nama || 'Warga';
+        document.getElementById('menuUserEmail').innerText = user.email || '';
+        const avatarEl = document.getElementById('userAvatar');
+        if (avatarEl) {
+            if (user.avatar_url) {
+                avatarEl.src = user.avatar_url;
+            } else {
+                avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nama || 'Warga')}&background=006257&color=fff`;
+            }
+        }
+    }
+
+    try {
+        const storedUser = JSON.parse(localStorage.getItem('user'));
+        if (storedUser) {
+            applyUserProfile(storedUser);
+        }
+    } catch (e) {}
+
     async function initBeranda() {
         try {
             const meRes = await fetch('/api/v1/auth/me', {
@@ -229,15 +251,9 @@
                 return;
             }
 
-            // Populate UI
-            document.getElementById('greetingName').innerText = user.nama || 'Warga';
-            document.getElementById('menuUserName').innerText = user.nama || 'Warga';
-            document.getElementById('menuUserEmail').innerText = user.email || '';
-            if (user.avatar_url) {
-                document.getElementById('userAvatar').src = user.avatar_url;
-            } else {
-                document.getElementById('userAvatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nama)}&background=006257&color=fff`;
-            }
+            // Save and apply user profile
+            localStorage.setItem('user', JSON.stringify(user));
+            applyUserProfile(user);
 
             // Cek kelengkapan nomor HP (Issue #8)
             if (!user.no_hp) {
@@ -348,12 +364,12 @@
 
     const serviceArea = PedestriRouteServiceArea.attach(map);
 
-    // Initial marker on Mulyosari
+    // Initial marker on Mulyorejo
     L.circleMarker([-7.2663, 112.7965], {
         radius: 8,
         color: '#006257',
         fillColor: '#008775',
         fillOpacity: 0.9
-    }).addTo(map).bindPopup('<b>Area Mulyosari, Surabaya</b><br>Siap melayani pemantauan rute pejalan kaki.');
+    }).addTo(map).bindPopup('<b>Kecamatan Mulyorejo, Surabaya</b><br>Siap melayani pemantauan rute pejalan kaki.');
 </script>
 @endpush
