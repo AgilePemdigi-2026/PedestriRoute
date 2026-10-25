@@ -118,6 +118,7 @@
             </div>
 
             <input type="file" id="fotoInput" accept="image/jpeg,image/png" class="hidden">
+            <input type="file" id="fotoCameraInput" accept="image/*" capture="environment" class="hidden">
 
             <div class="grid grid-cols-2 gap-3">
                 <!-- Upload Tile -->
@@ -136,7 +137,7 @@
                 <!-- Preview Tile -->
                 <div id="previewContainer" class="h-28 bg-slate-100 rounded-2xl border border-slate-200 relative overflow-hidden flex items-center justify-center">
                     <span id="previewPlaceholder" class="text-xs text-slate-400 font-medium">Belum ada foto</span>
-                    <img id="previewImg" class="w-full h-full object-cover hidden" />
+                    <img id="previewImg" class="w-full h-full object-cover hidden" alt="Pratinjau foto bukti" />
                     <button type="button" id="btnRemovePhoto"
                         class="hidden absolute top-2 right-2 w-6 h-6 rounded-full bg-slate-900/70 text-white flex items-center justify-center hover:bg-slate-900 transition">
                         ✕
@@ -144,6 +145,20 @@
                     <span id="previewFilename" class="hidden absolute bottom-1 left-2 right-2 text-[10px] text-white bg-black/60 px-1.5 py-0.5 rounded truncate"></span>
                 </div>
             </div>
+
+            <!-- Tombol kamera langsung -->
+            <button type="button" id="btnOpenCamera"
+                class="w-full mt-3 py-2.5 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition">
+                <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Buka Kamera Langsung</span>
+            </button>
+
+            <!-- Indikator optimasi berkas -->
+            <p id="compressInfo" class="hidden mt-2 text-[11px] text-teal-700 font-medium"></p>
+            <p class="text-[10px] text-slate-400 mt-1">Ketuk foto pratinjau untuk melihat ukuran penuh.</p>
         </div>
 
         <!-- 3. Kategori Masalah Card -->
@@ -211,6 +226,13 @@
             <span>Laporan diverifikasi dalam 1x24 jam oleh Dishub</span>
         </p>
     </form>
+</div>
+
+<!-- Modal Pratinjau Foto -->
+<div id="photoModal" class="hidden fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+    <button type="button" id="btnClosePhotoModal"
+        class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/20 text-white text-lg flex items-center justify-center hover:bg-white/30">✕</button>
+    <img id="photoModalImg" class="max-w-full max-h-full object-contain rounded-lg" alt="Pratinjau foto bukti">
 </div>
 
 <!-- Bottom Navigation Bar -->
@@ -443,20 +465,29 @@
     // Photo file picker and client-side canvas resize
     const btnPickPhoto = document.getElementById('btnPickPhoto');
     const fotoInput = document.getElementById('fotoInput');
+    const fotoCameraInput = document.getElementById('fotoCameraInput');
+    const btnOpenCamera = document.getElementById('btnOpenCamera');
+    const compressInfo = document.getElementById('compressInfo');
     const previewImg = document.getElementById('previewImg');
     const previewPlaceholder = document.getElementById('previewPlaceholder');
     const btnRemovePhoto = document.getElementById('btnRemovePhoto');
     const previewFilename = document.getElementById('previewFilename');
+    const photoModal = document.getElementById('photoModal');
+    const photoModalImg = document.getElementById('photoModalImg');
+    const btnClosePhotoModal = document.getElementById('btnClosePhotoModal');
 
-    btnPickPhoto.addEventListener('click', () => fotoInput.click());
+    function formatSize(bytes) {
+        if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        return Math.round(bytes / 1024) + ' KB';
+    }
 
-    fotoInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
+    function processPhoto(file) {
         if (!file) return;
 
         if (!['image/jpeg', 'image/png'].includes(file.type)) {
             showToast('Foto Tidak Valid', 'error');
             fotoInput.value = '';
+            fotoCameraInput.value = '';
             return;
         }
 
@@ -490,26 +521,56 @@
 
                     previewImg.src = canvas.toDataURL('image/jpeg', 0.85);
                     previewImg.classList.remove('hidden');
+                    previewImg.classList.add('cursor-zoom-in');
                     previewPlaceholder.classList.add('hidden');
                     btnRemovePhoto.classList.remove('hidden');
                     previewFilename.innerText = preparedPhotoName;
                     previewFilename.classList.remove('hidden');
                     document.getElementById('photoBadge').innerText = '1 Terpilih';
+
+                    // Indikator optimasi berkas
+                    compressInfo.innerText = `Foto teroptimasi: ${formatSize(file.size)} -> ${formatSize(blob.size)}`;
+                    compressInfo.classList.remove('hidden');
                 }, 'image/jpeg', 0.85);
             };
             img.src = event.target.result;
         };
         reader.readAsDataURL(file);
+    }
+
+    btnPickPhoto.addEventListener('click', () => fotoInput.click());
+    btnOpenCamera.addEventListener('click', () => fotoCameraInput.click());
+    fotoInput.addEventListener('change', (e) => processPhoto(e.target.files[0]));
+    fotoCameraInput.addEventListener('change', (e) => processPhoto(e.target.files[0]));
+
+    // Pratinjau layar penuh
+    function openPhotoModal() {
+        if (!previewImg.src || previewImg.classList.contains('hidden')) return;
+        photoModalImg.src = previewImg.src;
+        photoModal.classList.remove('hidden');
+    }
+    function closePhotoModal() {
+        photoModal.classList.add('hidden');
+    }
+    previewImg.addEventListener('click', openPhotoModal);
+    btnClosePhotoModal.addEventListener('click', closePhotoModal);
+    photoModal.addEventListener('click', (e) => {
+        if (e.target === photoModal) closePhotoModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closePhotoModal();
     });
 
     btnRemovePhoto.addEventListener('click', () => {
         preparedPhotoBlob = null;
         fotoInput.value = '';
+        fotoCameraInput.value = '';
         previewImg.classList.add('hidden');
         previewImg.src = '';
         previewPlaceholder.classList.remove('hidden');
         btnRemovePhoto.classList.add('hidden');
         previewFilename.classList.add('hidden');
+        compressInfo.classList.add('hidden');
         document.getElementById('photoBadge').innerText = 'Maks. 5MB';
     });
 
