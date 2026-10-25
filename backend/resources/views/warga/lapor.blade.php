@@ -364,16 +364,42 @@
         dashArray: '4, 6'
     }).addTo(map);
 
+    // Reverse geocoding Nominatim (FR-F7-11)
+    const GEOCODE_DEBOUNCE_MS = 500;      // debounce minimal 500 ms
+    const GEOCODE_MIN_INTERVAL_MS = 1000; // maksimal 1 request per detik
     let reverseGeocodeTimer = null;
+    let reverseGeocodeController = null;
+    let lastGeocodeAt = 0;
+
+    // Perkiraan batas wilayah Kota Surabaya
+    function isInsideSurabaya(lat, lon) {
+        return lat >= -7.40 && lat <= -7.10 && lon >= 112.55 && lon <= 112.90;
+    }
+
     function fetchStreetName(lat, lon) {
         const alamatEl = document.getElementById('alamatText');
         if (!alamatEl) return;
-        alamatEl.innerText = 'Mencari nama jalan...';
+
         clearTimeout(reverseGeocodeTimer);
+        if (reverseGeocodeController) reverseGeocodeController.abort();
+
+        if (!isInsideSurabaya(lat, lon)) {
+            alamatEl.innerText = `Di luar wilayah layanan Surabaya (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+            return;
+        }
+
+        alamatEl.innerText = 'Mendeteksi alamat...';
+
+        const sinceLast = Date.now() - lastGeocodeAt;
+        const wait = Math.max(GEOCODE_DEBOUNCE_MS, GEOCODE_MIN_INTERVAL_MS - sinceLast);
+
         reverseGeocodeTimer = setTimeout(async () => {
+            reverseGeocodeController = new AbortController();
+            lastGeocodeAt = Date.now();
             try {
                 const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`, {
-                    headers: { 'Accept': 'application/json' }
+                    headers: { 'Accept': 'application/json' },
+                    signal: reverseGeocodeController.signal
                 });
                 if (res.ok) {
                     const data = await res.json();
@@ -383,9 +409,11 @@
                         return;
                     }
                 }
-            } catch (e) {}
+            } catch (e) {
+                if (e.name === 'AbortError') return; // digantikan request yang lebih baru
+            }
             alamatEl.innerText = `Titik Koordinat (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
-        }, 400);
+        }, wait);
     }
 
     function updateCoordinates(lat, lon, accuracy = null) {
