@@ -126,6 +126,24 @@ class CreateReportTest extends TestCase
             ->assertJsonPath('error.message', MessageCatalog::REPORT_PHOTO_INVALID);
     }
 
+    public function test_lapor_gagal_ukuran_foto_melebihi_15mb(): void
+    {
+        $file = UploadedFile::fake()->create('trotoar_besar.jpg', 16 * 1024, 'image/jpeg');
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->postJson('/api/v1/reports', [
+                'latitude' => -7.2663,
+                'longitude' => 112.7965,
+                'kategori_id' => 1,
+                'deskripsi' => 'Deskripsi valid',
+                'foto' => $file,
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('error.code', 'REPORT_PHOTO_INVALID')
+            ->assertJsonPath('error.message', MessageCatalog::REPORT_PHOTO_INVALID);
+    }
+
     public function test_lapor_gagal_deskripsi_atau_kategori_kosong(): void
     {
         $file = UploadedFile::fake()->image('trotoar.jpg');

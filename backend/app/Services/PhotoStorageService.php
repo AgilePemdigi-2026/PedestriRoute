@@ -16,7 +16,7 @@ class PhotoStorageService
     public function processAndStore(UploadedFile $file): string
     {
         // 1. Validate file size (max CFG_PHOTO_MAX_MB)
-        $maxMb = (int) env('CFG_PHOTO_MAX_MB', 5);
+        $maxMb = (int) env('CFG_PHOTO_MAX_MB', 15);
         if ($file->getSize() > ($maxMb * 1024 * 1024)) {
             throw new \InvalidArgumentException(MessageCatalog::REPORT_PHOTO_INVALID);
         }

@@ -111,58 +111,59 @@
 
         <!-- 2. Foto Bukti Card -->
         <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
-            <div class="flex items-center justify-between mb-2.5">
+            <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-1.5">
                     <svg class="w-4 h-4 text-brand-600" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M4 4h3l2-2h6l2 2h3a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm8 3a5 5 0 100 10 5 5 0 000-10zm0 2a3 3 0 110 6 3 3 0 010-6z"/>
                     </svg>
                     <span class="text-xs font-bold text-slate-800">Foto Bukti</span>
                 </div>
-                <span id="photoBadge" class="text-[10px] font-semibold text-slate-400">Maks. 5MB</span>
+                <span id="photoBadge" class="text-[10px] font-semibold text-slate-400">Maks. 15MB</span>
             </div>
 
             <input type="file" id="fotoInput" accept="image/jpeg,image/png" class="hidden">
             <input type="file" id="fotoCameraInput" accept="image/*" capture="environment" class="hidden">
 
-            <div class="grid grid-cols-2 gap-3">
-                <!-- Upload Tile -->
-                <button type="button" id="btnPickPhoto"
-                    class="h-28 border-2 border-dashed border-teal-200 hover:border-brand-500 bg-teal-50/50 rounded-2xl flex flex-col items-center justify-center p-3 text-center transition">
-                    <div class="w-9 h-9 rounded-full bg-teal-100 text-brand-600 flex items-center justify-center mb-1.5">
+            <!-- Dua Pilihan: Ambil Foto (Kamera Langsung) atau Unggah dari Galeri/Penyimpanan -->
+            <div class="grid grid-cols-2 gap-2.5 mb-3">
+                <button type="button" id="btnOpenCamera"
+                    class="py-3 px-2 border-2 border-dashed border-teal-200 hover:border-brand-500 bg-teal-50/50 hover:bg-teal-50 rounded-2xl flex flex-col items-center justify-center text-center transition group">
+                    <div class="w-9 h-9 rounded-full bg-teal-100 group-hover:bg-teal-200 text-brand-600 flex items-center justify-center mb-1.5 transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                     </div>
                     <span class="text-xs font-bold text-slate-800">Ambil Foto</span>
-                    <span class="text-[10px] text-slate-500">Maks. 5MB</span>
+                    <span class="text-[10px] text-slate-500">Kamera langsung</span>
                 </button>
 
-                <!-- Preview Tile -->
-                <div id="previewContainer" class="h-28 bg-slate-100 rounded-2xl border border-slate-200 relative overflow-hidden flex items-center justify-center">
-                    <span id="previewPlaceholder" class="text-xs text-slate-400 font-medium">Belum ada foto</span>
-                    <img id="previewImg" class="w-full h-full object-cover hidden" alt="Pratinjau foto bukti" />
-                    <button type="button" id="btnRemovePhoto"
-                        class="hidden absolute top-2 right-2 w-6 h-6 rounded-full bg-slate-900/70 text-white flex items-center justify-center hover:bg-slate-900 transition">
-                        ✕
-                    </button>
-                    <span id="previewFilename" class="hidden absolute bottom-1 left-2 right-2 text-[10px] text-white bg-black/60 px-1.5 py-0.5 rounded truncate"></span>
-                </div>
+                <button type="button" id="btnPickPhoto"
+                    class="py-3 px-2 border-2 border-dashed border-slate-200 hover:border-brand-500 bg-slate-50 hover:bg-slate-100 rounded-2xl flex flex-col items-center justify-center text-center transition group">
+                    <div class="w-9 h-9 rounded-full bg-slate-200 group-hover:bg-slate-300 text-slate-700 flex items-center justify-center mb-1.5 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <span class="text-xs font-bold text-slate-800">Unggah Foto</span>
+                    <span class="text-[10px] text-slate-500">Pilih dari berkas</span>
+                </button>
             </div>
 
-            <!-- Tombol kamera langsung -->
-            <button type="button" id="btnOpenCamera"
-                class="w-full mt-3 py-2.5 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition">
-                <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span>Buka Kamera Langsung</span>
-            </button>
+            <!-- Preview Box (Full Width) -->
+            <div id="previewContainer" class="h-36 bg-slate-100 rounded-2xl border border-slate-200 relative overflow-hidden flex items-center justify-center">
+                <span id="previewPlaceholder" class="text-xs text-slate-400 font-medium">Belum ada foto yang dipilih</span>
+                <img id="previewImg" class="w-full h-full object-cover hidden" alt="Pratinjau foto bukti" />
+                <button type="button" id="btnRemovePhoto"
+                    class="hidden absolute top-2 right-2 w-7 h-7 rounded-full bg-slate-900/70 text-white flex items-center justify-center hover:bg-slate-900 transition">
+                    ✕
+                </button>
+                <span id="previewFilename" class="hidden absolute bottom-1 left-2 right-2 text-[10px] text-white bg-black/60 px-1.5 py-0.5 rounded truncate"></span>
+            </div>
 
             <!-- Indikator optimasi berkas -->
             <p id="compressInfo" class="hidden mt-2 text-[11px] text-teal-700 font-medium"></p>
-            <p class="text-[10px] text-slate-400 mt-1">Ketuk foto pratinjau untuk melihat ukuran penuh.</p>
+            <p class="text-[10px] text-slate-400 mt-1">Format JPG atau PNG (Maks. 15MB). Ketuk foto pratinjau untuk melihat ukuran penuh.</p>
         </div>
 
         <!-- 3. Kategori Masalah Card -->
@@ -543,6 +544,8 @@
     const photoModalImg = document.getElementById('photoModalImg');
     const btnClosePhotoModal = document.getElementById('btnClosePhotoModal');
 
+    const MAX_PHOTO_BYTES = 15 * 1024 * 1024; // 15MB
+
     function formatSize(bytes) {
         if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
         return Math.round(bytes / 1024) + ' KB';
@@ -552,7 +555,14 @@
         if (!file) return;
 
         if (!['image/jpeg', 'image/png'].includes(file.type)) {
-            showToast('Foto Tidak Valid', 'error');
+            showToast('Foto Tidak Valid. Gunakan format JPG atau PNG.', 'error');
+            fotoInput.value = '';
+            fotoCameraInput.value = '';
+            return;
+        }
+
+        if (file.size > MAX_PHOTO_BYTES) {
+            showToast('Ukuran foto melebihi batas maksimal 15MB', 'error');
             fotoInput.value = '';
             fotoCameraInput.value = '';
             return;
@@ -638,7 +648,7 @@
         btnRemovePhoto.classList.add('hidden');
         previewFilename.classList.add('hidden');
         compressInfo.classList.add('hidden');
-        document.getElementById('photoBadge').innerText = 'Maks. 5MB';
+        document.getElementById('photoBadge').innerText = 'Maks. 15MB';
     });
 
     // Form Submit
