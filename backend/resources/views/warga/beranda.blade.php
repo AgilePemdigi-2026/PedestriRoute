@@ -121,6 +121,10 @@
             <h3 class="text-xs font-bold text-slate-700 tracking-wide uppercase">Peta Wilayah Layanan (Surabaya)</h3>
             <span class="text-[10px] font-semibold text-slate-400">Area Mulyosari</span>
         </div>
+        <div class="mb-2 rounded-xl border border-teal-200 bg-teal-50 px-3 py-2" role="note">
+            <p class="text-[10px] font-bold text-teal-800">Wilayah Layanan Aktif: Koridor Mulyosari, Surabaya</p>
+            <p class="text-[10px] text-slate-500 mt-0.5">Batas visual perkiraan, bukan batas administratif resmi.</p>
+        </div>
         <div id="map"></div>
         <p class="text-[10px] text-slate-400 mt-1.5 text-center">© OpenStreetMap contributors</p>
     </div>
@@ -193,6 +197,7 @@
 @push('scripts')
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+@include('partials.mulyosari-service-area')
 <script>
     // 1. Client Auth Guard (FR-F1-09)
     const token = localStorage.getItem('token');
@@ -341,12 +346,14 @@
         maxZoom: 19
     }).addTo(map);
 
+    const serviceArea = PedestriRouteServiceArea.attach(map);
+
     // Initial marker on Mulyosari
     L.circleMarker([-7.2663, 112.7965], {
         radius: 8,
         color: '#006257',
         fillColor: '#008775',
         fillOpacity: 0.9
-    }).addTo(map).bindPopup('<b>Area Mulyosari, Surabaya</b><br>Siap melayani pemantauan rute pejalan kaki.').openPopup();
+    }).addTo(map).bindPopup('<b>Area Mulyosari, Surabaya</b><br>Siap melayani pemantauan rute pejalan kaki.');
 </script>
 @endpush
