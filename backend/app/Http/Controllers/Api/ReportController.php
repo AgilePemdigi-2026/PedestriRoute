@@ -271,6 +271,29 @@ class ReportController extends Controller
             ], 403);
         }
 
+        // Use the segment already assigned during submission, never re-snap to a new one.
+        $segmentMap = null;
+        if ($isAdmin && $laporan->lokasi?->segmen_id) {
+            $segment = DB::selectOne('
+                SELECT s.segmen_id, s.nama_jalan,
+                       ST_AsGeoJSON(s.geom::geometry) AS geojson,
+                       ST_Distance(s.geom, l.geom) AS distance_m
+                FROM segmen_jalur s
+                JOIN lokasi l ON l.segmen_id = s.segmen_id
+                WHERE l.lokasi_id = ?
+            ', [$laporan->lokasi->lokasi_id]);
+
+            if ($segment) {
+                $segmentMap = [
+                    'segmen_id' => (int) $segment->segmen_id,
+                    'nama_jalan' => $segment->nama_jalan,
+                    'geojson' => json_decode($segment->geojson, true),
+                    'jarak_snapping_m' => $segment->distance_m === null
+                        ? null : round((float) $segment->distance_m, 1),
+                ];
+            }
+        }
+
         // Generate temporary signed URL for photo (FR-F3-14)
         $photoUrl = null;
         if ($laporan->foto) {
@@ -297,6 +320,7 @@ class ReportController extends Controller
                     'alamat' => $laporan->lokasi->alamat,
                     'segmen_id' => $laporan->lokasi->segmen_id,
                     'nama_jalan' => $laporan->lokasi->segmen->nama_jalan ?? null,
+                    ...($isAdmin ? ['segmen' => $segmentMap] : []),
                 ],
                 'foto_url' => $photoUrl,
                 'confidence_score' => $laporan->confidence_score,

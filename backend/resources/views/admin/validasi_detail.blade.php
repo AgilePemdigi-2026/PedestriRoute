@@ -2,6 +2,13 @@
 
 @section('title', 'Validasi Laporan - PedestriRoute Admin')
 
+@push('styles')
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #reportMap { height: 240px; width: 100%; z-index: 0; }
+</style>
+@endpush
+
 @section('content')
 <div class="px-5 pt-5 pb-20 flex flex-col flex-1">
     <!-- Header -->
@@ -65,6 +72,25 @@
         </svg>
         <span id="reportAddress" class="truncate">Memuat alamat lokasi...</span>
     </p>
+
+    <!-- Report location: additive card using the existing admin visual style. -->
+    <section class="bg-white rounded-2xl border border-teal-100 shadow-sm mb-3 overflow-hidden" aria-labelledby="reportMapTitle">
+        <div class="p-3">
+            <h3 id="reportMapTitle" class="text-xs font-bold text-slate-800">Lokasi Laporan</h3>
+            <p id="reportCoordinates" class="text-[10px] text-slate-500 mt-1">Memuat koordinat...</p>
+        </div>
+        <div id="reportMap" class="hidden" aria-label="Peta titik laporan dan segmen jalan"></div>
+        <p id="reportMapStatus" role="status" class="px-3 pb-3 text-xs text-slate-500">Memuat peta...</p>
+        <div class="p-3 bg-teal-50/50 border-t border-teal-100">
+            <p id="reportSnapInfo" class="text-[11px] text-teal-800 mb-2" role="status">Memuat informasi segmen...</p>
+            <p id="reportMapLegend" class="hidden text-[10px] text-slate-500 mb-2">Pin: titik laporan · Garis teal: segmen jalan</p>
+            <div class="flex flex-wrap gap-2">
+                <a id="externalMapsLink" target="_blank" rel="noopener noreferrer" class="hidden px-3 py-2 rounded-xl bg-brand-600 text-white text-[11px] font-bold">Buka Google Maps ↗</a>
+                <a id="streetViewLink" target="_blank" rel="noopener noreferrer" class="hidden px-3 py-2 rounded-xl border border-teal-200 text-teal-800 text-[11px] font-bold">Buka Street View ↗</a>
+            </div>
+            <p class="text-[10px] text-slate-500 mt-2">Street View tersedia sesuai cakupan Google dan dapat menampilkan citra lama.</p>
+        </div>
+    </section>
 
     <!-- Photo Container -->
     <div class="w-full h-56 bg-slate-100 rounded-2xl relative overflow-hidden mb-3 border border-slate-200 shadow-sm">
@@ -242,6 +268,7 @@
 @endsection
 
 @push('scripts')
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     const reportId = {{ $id }};
     const token = localStorage.getItem('token');
@@ -314,6 +341,94 @@
         }
     });
 
+    let reportMap = null;
+
+    function renderReportMap(location) {
+        const status = document.getElementById('reportMapStatus');
+        const coordinates = document.getElementById('reportCoordinates');
+        const snapInfo = document.getElementById('reportSnapInfo');
+        const mapElement = document.getElementById('reportMap');
+        const mapsLink = document.getElementById('externalMapsLink');
+        const streetLink = document.getElementById('streetViewLink');
+        const legend = document.getElementById('reportMapLegend');
+        if (reportMap) { reportMap.remove(); reportMap = null; }
+        mapElement.classList.add('hidden');
+        legend.classList.add('hidden');
+        status.classList.remove('hidden');
+        for (const link of [mapsLink, streetLink]) {
+            link.removeAttribute('href');
+            link.classList.add('hidden');
+        }
+        const numeric = value => (typeof value === 'number' ||
+            (typeof value === 'string' && value.trim() !== '')) && Number.isFinite(Number(value));
+        if (!numeric(location?.latitude) || !numeric(location?.longitude) ||
+            Math.abs(Number(location.latitude)) > 90 || Math.abs(Number(location.longitude)) > 180) {
+            coordinates.textContent = 'Koordinat tidak tersedia';
+            status.textContent = 'Peta tidak dapat ditampilkan karena koordinat laporan tidak valid.';
+            snapInfo.textContent = 'Informasi segmen tidak tersedia.';
+            return;
+        }
+        const lat = Number(location.latitude);
+        const lng = Number(location.longitude);
+        const coordinatePair = `${lat},${lng}`;
+        coordinates.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        mapsLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(coordinatePair)}`;
+        streetLink.href = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${encodeURIComponent(coordinatePair)}`;
+        mapsLink.classList.remove('hidden');
+        streetLink.classList.remove('hidden');
+        const segment = location.segmen;
+        snapInfo.textContent = segment
+            ? (numeric(segment.jarak_snapping_m) && Number(segment.jarak_snapping_m) >= 0
+                ? `Tersnap ${Number(segment.jarak_snapping_m).toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1})} m ke ${segment.nama_jalan || 'segmen jalan'}`
+                : `Segmen: ${segment.nama_jalan || 'jalan tanpa nama'} · Jarak snapping tidak tersedia.`)
+            : 'Laporan belum memiliki data segmen jalan.';
+        if (typeof L === 'undefined') {
+            status.textContent = 'Peta gagal dimuat. Gunakan tombol Google Maps untuk melihat lokasi.';
+            return;
+        }
+        try {
+            mapElement.classList.remove('hidden');
+            reportMap = L.map(mapElement, {scrollWheelZoom: false}).setView([lat, lng], 18);
+            const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(reportMap);
+            status.classList.add('hidden');
+            tiles.on('tileerror', () => {
+                status.textContent = 'Sebagian peta dasar gagal dimuat. Gunakan Google Maps bila diperlukan.';
+                status.classList.remove('hidden');
+            });
+            const marker = L.marker([lat, lng]).addTo(reportMap).bindPopup('Titik laporan warga');
+            if (segment?.geojson) {
+                try {
+                    const line = L.geoJSON(segment.geojson, {
+                        style: {
+                            color: '#006257',
+                            weight: 5,
+                            opacity: 0.85
+                        }
+                    }).addTo(reportMap);
+                    if (line.getBounds().isValid()) {
+                        reportMap.fitBounds(line.getBounds().extend(marker.getLatLng()), {padding: [24, 24], maxZoom: 18});
+                        legend.classList.remove('hidden');
+                    } else {
+                        snapInfo.textContent += ' · Garis segmen tidak tersedia.';
+                    }
+                } catch (error) {
+                    snapInfo.textContent += ' · Garis segmen gagal ditampilkan.';
+                }
+            } else if (segment) {
+                snapInfo.textContent += ' · Garis segmen tidak tersedia.';
+            }
+            requestAnimationFrame(() => reportMap?.invalidateSize());
+        } catch (error) {
+            if (reportMap) { reportMap.remove(); reportMap = null; }
+            mapElement.classList.add('hidden');
+            status.textContent = 'Peta gagal ditampilkan. Gunakan tombol Google Maps untuk melihat lokasi.';
+            status.classList.remove('hidden');
+        }
+    }
+
     // Load Report Detail
     async function loadReportDetail() {
         try {
@@ -336,8 +451,10 @@
             document.getElementById('kodeLaporan').innerText = `#LAP-${String(report.laporan_id).padStart(4, '0')}`;
             document.getElementById('timeAgo').innerText = formatTimeAgo(report.tanggal_lapor);
             document.getElementById('categoryBadge').innerText = report.kategori.nama;
-            document.getElementById('reportAddress').innerText = report.lokasi.alamat || report.lokasi.nama_jalan || 'Surabaya';
+            document.getElementById('reportAddress').innerText = report.lokasi?.alamat || report.lokasi?.nama_jalan || 'Alamat tidak tersedia';
             document.getElementById('reportDesc').innerText = `"${report.deskripsi}"`;
+
+            renderReportMap(report.lokasi);
 
             if (report.foto_url) {
                 currentPhotoUrl = report.foto_url;
