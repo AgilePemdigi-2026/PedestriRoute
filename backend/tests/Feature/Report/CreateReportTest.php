@@ -15,6 +15,7 @@ class CreateReportTest extends TestCase
     use DatabaseTransactions;
 
     protected Warga $warga;
+
     protected string $token;
 
     protected function setUp(): void
@@ -24,8 +25,8 @@ class CreateReportTest extends TestCase
 
         $this->warga = Warga::create([
             'nama' => 'Test Reporter',
-            'email' => 'reporter_' . uniqid() . '@test.com',
-            'no_hp' => '62811' . rand(1000000, 9999999),
+            'email' => 'reporter_'.uniqid().'@test.com',
+            'no_hp' => '62811'.rand(1000000, 9999999),
             'password' => Hash::make('password123'),
             'tanggal_daftar' => now(),
             'gagal_login' => 0,
@@ -42,7 +43,7 @@ class CreateReportTest extends TestCase
 
         $file = UploadedFile::fake()->image('trotoar_rusak.jpg', 600, 600);
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->postJson('/api/v1/reports', [
                 'latitude' => $lat,
                 'longitude' => $lon,
@@ -76,7 +77,7 @@ class CreateReportTest extends TestCase
     {
         $file = UploadedFile::fake()->image('trotoar.jpg');
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->postJson('/api/v1/reports', [
                 'latitude' => -6.2088,
                 'longitude' => 106.8456,
@@ -94,7 +95,7 @@ class CreateReportTest extends TestCase
     {
         $file = UploadedFile::fake()->image('trotoar.jpg');
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->postJson('/api/v1/reports', [
                 'latitude' => -7.1800,
                 'longitude' => 112.8800,
@@ -112,7 +113,7 @@ class CreateReportTest extends TestCase
     {
         $file = UploadedFile::fake()->create('dokumen.pdf', 100, 'application/pdf');
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->postJson('/api/v1/reports', [
                 'latitude' => -7.2663,
                 'longitude' => 112.7965,
@@ -130,7 +131,7 @@ class CreateReportTest extends TestCase
     {
         $file = UploadedFile::fake()->create('trotoar_besar.jpg', 16 * 1024, 'image/jpeg');
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->postJson('/api/v1/reports', [
                 'latitude' => -7.2663,
                 'longitude' => 112.7965,
@@ -148,7 +149,7 @@ class CreateReportTest extends TestCase
     {
         $file = UploadedFile::fake()->image('trotoar.jpg');
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->postJson('/api/v1/reports', [
                 'latitude' => -7.2663,
                 'longitude' => 112.7965,
@@ -165,7 +166,7 @@ class CreateReportTest extends TestCase
     public function test_warga_lain_tidak_bisa_melihat_laporan(): void
     {
         $file = UploadedFile::fake()->image('trotoar.jpg');
-        $createRes = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $createRes = $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->postJson('/api/v1/reports', [
                 'latitude' => -7.2663,
                 'longitude' => 112.7965,
@@ -178,8 +179,8 @@ class CreateReportTest extends TestCase
         // Other warga
         $otherWarga = Warga::create([
             'nama' => 'Other Warga',
-            'email' => 'other_' . uniqid() . '@test.com',
-            'no_hp' => '628999' . rand(100000, 999999),
+            'email' => 'other_'.uniqid().'@test.com',
+            'no_hp' => '628999'.rand(100000, 999999),
             'password' => Hash::make('password123'),
             'tanggal_daftar' => now(),
             'gagal_login' => 0,
@@ -189,9 +190,69 @@ class CreateReportTest extends TestCase
         // Reset memoized auth guard in test container
         $this->app['auth']->forgetGuards();
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $otherToken)
+        $response = $this->withHeader('Authorization', 'Bearer '.$otherToken)
             ->getJson("/api/v1/reports/{$laporanId}");
 
         $response->assertStatus(403);
+    }
+
+    public function test_endpoint_kategori_mengembalikan_5_kategori_fasilitas(): void
+    {
+        $response = $this->getJson('/api/v1/categories');
+
+        $response->assertStatus(200)
+            ->assertJsonCount(5, 'data')
+            ->assertJsonPath('data.0.nama_kategori', 'Trotoar Rusak')
+            ->assertJsonPath('data.0.kode_label', 0)
+            ->assertJsonPath('data.1.nama_kategori', 'Masalah Drainase')
+            ->assertJsonPath('data.2.nama_kategori', 'Guiding Block Rusak')
+            ->assertJsonPath('data.3.nama_kategori', 'Penyebrangan Rusak')
+            ->assertJsonPath('data.4.nama_kategori', 'Parkir Liar');
+    }
+
+    public function test_pelaporan_dengan_slug_kategori_atau_kode_label(): void
+    {
+        $file = UploadedFile::fake()->image('drainase.jpg');
+
+        // Test with slug 'masalah_drainase' and alias 'drainase_terbuka'
+        $response = $this->withHeader('Authorization', 'Bearer '.$this->token)
+            ->postJson('/api/v1/reports', [
+                'latitude' => -7.2663,
+                'longitude' => 112.7965,
+                'kategori_id' => 'masalah_drainase',
+                'deskripsi' => 'Tutup gorong-gorong terbuka',
+                'foto' => $file,
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('message', MessageCatalog::REPORT_SENT);
+
+        // Test with 0-based code 0 (Trotoar Rusak)
+        $file2 = UploadedFile::fake()->image('trotoar0.jpg');
+        $response2 = $this->withHeader('Authorization', 'Bearer '.$this->token)
+            ->postJson('/api/v1/reports', [
+                'latitude' => -7.2663,
+                'longitude' => 112.7965,
+                'kategori_id' => 0,
+                'deskripsi' => 'Paving amblas kode 0',
+                'foto' => $file2,
+            ]);
+
+        $response2->assertStatus(201)
+            ->assertJsonPath('message', MessageCatalog::REPORT_SENT);
+
+        // Test with parkir liar alias
+        $file3 = UploadedFile::fake()->image('parkir.jpg');
+        $response3 = $this->withHeader('Authorization', 'Bearer '.$this->token)
+            ->postJson('/api/v1/reports', [
+                'latitude' => -7.2663,
+                'longitude' => 112.7965,
+                'kategori_id' => 'parkir_liar',
+                'deskripsi' => 'Sepeda motor parkir di atas trotoar',
+                'foto' => $file3,
+            ]);
+
+        $response3->assertStatus(201)
+            ->assertJsonPath('message', MessageCatalog::REPORT_SENT);
     }
 }
