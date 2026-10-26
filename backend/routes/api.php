@@ -52,6 +52,7 @@ Route::prefix('v1')->group(function () {
         Route::middleware('role:admin')->prefix('admin')->group(function () {
             Route::get('/reports', [AdminValidationController::class, 'index']);
             Route::post('/reports/{id}/validation', [AdminValidationController::class, 'validateReport']);
+            Route::get('/statistics', [AdminValidationController::class, 'statistics']);
         });
     });
 });

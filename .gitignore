@@ -14,3 +14,8 @@ Project_Context/
 Project_Context.zip
 *.zip
 .vscode/
+bdd/.venv/
+.venv/
+__pycache__/
+*.pyc
+

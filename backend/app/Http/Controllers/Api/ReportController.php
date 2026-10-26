@@ -8,7 +8,6 @@ use App\Models\FotoLaporan;
 use App\Models\KategoriMasalah;
 use App\Models\Laporan;
 use App\Models\Lokasi;
-use App\Models\RiwayatStatusLaporan;
 use App\Models\Warga;
 use App\Services\NotificationService;
 use App\Services\PhotoStorageService;
@@ -32,9 +31,16 @@ class ReportController extends Controller
      */
     public function categories(): JsonResponse
     {
-        $categories = KategoriMasalah::orderBy('kategori_id')->get(['kategori_id', 'nama_kategori', 'bobot']);
+        $categories = KategoriMasalah::orderBy('kategori_id')->get([
+            'kategori_id',
+            'kode_label',
+            'nama_kategori',
+            'deskripsi',
+            'bobot',
+        ]);
+
         return response()->json([
-            'data' => $categories
+            'data' => $categories,
         ], 200);
     }
 
@@ -62,7 +68,7 @@ class ReportController extends Controller
                 'menunggu_validasi' => $menunggu,
                 'tervalidasi' => $tervalidasi,
                 'ditolak' => $ditolak,
-            ]
+            ],
         ], 200);
     }
 
@@ -76,40 +82,72 @@ class ReportController extends Controller
         // 1. Validate existence of input fields
         $lat = $request->input('latitude');
         $lon = $request->input('longitude');
-        $kategoriId = $request->input('kategori_id');
+        $kategoriInput = $request->input('kategori_id');
         $deskripsi = trim((string) $request->input('deskripsi', ''));
 
-        // Check incomplete fields (FR-F3-05)
-        if ($lat === null || $lon === null || !$kategoriId || $deskripsi === '' || !$request->hasFile('foto')) {
+        // Check incomplete fields (FR-F3-05) - note: '0' or 0 is valid for 0-indexed categories
+        if ($lat === null || $lon === null || $kategoriInput === null || $kategoriInput === '' || $deskripsi === '' || ! $request->hasFile('foto')) {
             return response()->json([
                 'error' => [
                     'code' => 'REPORT_INCOMPLETE',
                     'message' => MessageCatalog::REPORT_INCOMPLETE,
-                ]
+                ],
             ], 422);
         }
 
         $lat = (float) $lat;
         $lon = (float) $lon;
-        $kategoriId = (int) $kategoriId;
 
         if (strlen($deskripsi) > (int) env('CFG_DESCRIPTION_MAX', 200)) {
             return response()->json([
                 'error' => [
                     'code' => 'REPORT_INCOMPLETE',
                     'message' => MessageCatalog::REPORT_INCOMPLETE,
-                ]
+                ],
             ], 422);
         }
 
-        if (!KategoriMasalah::where('kategori_id', $kategoriId)->exists()) {
+        // Resolve category by ID (1..5), 0-based code (0..4), or slug/name
+        $kategori = null;
+        if (is_numeric($kategoriInput)) {
+            $num = (int) $kategoriInput;
+            $kategori = KategoriMasalah::where('kategori_id', $num)
+                ->orWhere('kode_label', $num)
+                ->first();
+        }
+        if (! $kategori && is_string($kategoriInput)) {
+            $slug = strtolower(trim($kategoriInput));
+            $kategori = KategoriMasalah::where('nama_kategori', $slug)
+                ->orWhere('nama_kategori', str_replace('_', ' ', $slug))
+                ->orWhere('nama_kategori', ucwords(str_replace('_', ' ', $slug)))
+                ->first();
+
+            if (! $kategori) {
+                // Synonyms & model label aliases
+                if (in_array($slug, ['drainase_terbuka', 'drainase', 'masalah_drainase'])) {
+                    $kategori = KategoriMasalah::where('nama_kategori', 'like', '%Drainase%')->first();
+                } elseif (in_array($slug, ['zebra_cross_utuh', 'zebra_cross_pudar', 'penyebrangan_rusak', 'penyeberangan_rusak', 'penyeberangan', 'penyebrangan'])) {
+                    $kategori = KategoriMasalah::where('nama_kategori', 'like', '%Penyebrangan%')
+                        ->orWhere('nama_kategori', 'like', '%Penyeberangan%')
+                        ->first();
+                } elseif (in_array($slug, ['kendaraan_halangan', 'parkir_liar', 'halangan_fisik'])) {
+                    $kategori = KategoriMasalah::where('nama_kategori', 'like', '%Parkir%')
+                        ->orWhere('nama_kategori', 'like', '%Halangan%')
+                        ->first();
+                }
+            }
+        }
+
+        if (! $kategori) {
             return response()->json([
                 'error' => [
                     'code' => 'REPORT_INCOMPLETE',
                     'message' => MessageCatalog::REPORT_INCOMPLETE,
-                ]
+                ],
             ], 422);
         }
+
+        $kategoriId = $kategori->kategori_id;
 
         // 2. Validate coordinates within service area (FR-F3-03)
         $minLat = (float) env('CFG_SERVICE_AREA_MIN_LAT', -7.40);
@@ -122,27 +160,27 @@ class ReportController extends Controller
                 'error' => [
                     'code' => 'REPORT_OUT_OF_AREA',
                     'message' => MessageCatalog::REPORT_OUT_OF_AREA,
-                ]
+                ],
             ], 422);
         }
 
         // 3. PostGIS Snapping: Find nearest segment within CFG_SNAP_RADIUS_M (FR-F3-11)
         $snapRadius = (float) env('CFG_SNAP_RADIUS_M', 50);
-        $nearestSegment = DB::selectOne("
+        $nearestSegment = DB::selectOne('
             SELECT segmen_id, nama_jalan,
                    ST_Distance(geom, ST_SetSRID(ST_Point(?, ?), 4326)::geography) as distance
             FROM segmen_jalur
             WHERE ST_DWithin(geom, ST_SetSRID(ST_Point(?, ?), 4326)::geography, ?)
             ORDER BY distance ASC
             LIMIT 1;
-        ", [$lon, $lat, $lon, $lat, $snapRadius]);
+        ', [$lon, $lat, $lon, $lat, $snapRadius]);
 
-        if (!$nearestSegment) {
+        if (! $nearestSegment) {
             return response()->json([
                 'error' => [
                     'code' => 'REPORT_NO_SEGMENT',
                     'message' => MessageCatalog::REPORT_NO_SEGMENT,
-                ]
+                ],
             ], 422);
         }
 
@@ -155,14 +193,14 @@ class ReportController extends Controller
                 'error' => [
                     'code' => 'REPORT_PHOTO_INVALID',
                     'message' => MessageCatalog::REPORT_PHOTO_INVALID,
-                ]
+                ],
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'error' => [
                     'code' => 'REPORT_PHOTO_INVALID',
                     'message' => MessageCatalog::REPORT_PHOTO_INVALID,
-                ]
+                ],
             ], 422);
         }
 
@@ -221,11 +259,12 @@ class ReportController extends Controller
         } catch (\Exception $e) {
             // Rollback uploaded file if DB transaction fails
             $this->photoService->delete($photoPath);
+
             return response()->json([
                 'error' => [
                     'code' => 'INTERNAL_SERVER_ERROR',
                     'message' => 'Gagal menyimpan laporan. Silakan coba lagi.',
-                ]
+                ],
             ], 500);
         }
 
@@ -249,12 +288,12 @@ class ReportController extends Controller
         $user = $request->user();
         $laporan = Laporan::with(['lokasi.segmen', 'kategori', 'foto', 'riwayat.admin'])->find($id);
 
-        if (!$laporan) {
+        if (! $laporan) {
             return response()->json([
                 'error' => [
                     'code' => 'NOT_FOUND',
                     'message' => 'Laporan tidak ditemukan.',
-                ]
+                ],
             ], 404);
         }
 
@@ -262,12 +301,12 @@ class ReportController extends Controller
         $isWargaOwner = ($user instanceof Warga && (int) $laporan->warga_id === (int) $user->warga_id);
         $isAdmin = ($user instanceof Admin);
 
-        if (!$isWargaOwner && !$isAdmin) {
+        if (! $isWargaOwner && ! $isAdmin) {
             return response()->json([
                 'error' => [
                     'code' => 'FORBIDDEN',
                     'message' => 'Anda tidak berhak melihat laporan ini.',
-                ]
+                ],
             ], 403);
         }
 
@@ -337,7 +376,7 @@ class ReportController extends Controller
                         'waktu' => $r->waktu?->toIso8601String(),
                     ];
                 }),
-            ]
+            ],
         ], 200);
     }
 
@@ -347,16 +386,17 @@ class ReportController extends Controller
     public function photo(Request $request, int $id): BinaryFileResponse|JsonResponse
     {
         $foto = FotoLaporan::where('laporan_id', $id)->first();
-        if (!$foto || !Storage::disk('public')->exists($foto->url_foto)) {
+        if (! $foto || ! Storage::disk('public')->exists($foto->url_foto)) {
             return response()->json([
                 'error' => [
                     'code' => 'NOT_FOUND',
                     'message' => 'Berkas foto tidak ditemukan.',
-                ]
+                ],
             ], 404);
         }
 
         $path = Storage::disk('public')->path($foto->url_foto);
+
         return response()->file($path, [
             'Content-Type' => 'image/jpeg',
             'Cache-Control' => 'private, max-age=600',

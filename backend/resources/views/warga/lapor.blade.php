@@ -178,23 +178,56 @@
                 <span class="text-[10px] font-bold text-rose-500">*Wajib</span>
             </div>
 
-            <!-- Categories Grid 2x2 -->
+            <!-- Categories Grid (5 Kategori) -->
             <div id="categoriesGrid" class="grid grid-cols-2 gap-2.5">
-                <button type="button" data-id="1" class="cat-chip py-3 px-3 rounded-xl border border-teal-200 bg-teal-50 text-brand-800 font-bold text-xs flex items-center gap-2 transition text-left">
-                    <span class="text-base">🛠️</span>
-                    <span class="truncate">Trotoar Rusak</span>
+                <!-- 1: Trotoar Rusak -->
+                <button type="button" data-id="1" data-slug="trotoar_rusak"
+                    class="cat-chip p-3 rounded-xl border-2 border-brand-500 bg-teal-50/70 text-brand-900 text-left transition flex flex-col justify-between shadow-sm ring-1 ring-brand-500/30">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-xl shrink-0">🛠️</span>
+                        <p class="font-bold text-xs text-slate-900 leading-tight">Trotoar Rusak</p>
+                    </div>
+                    <p class="text-[10px] text-slate-500 leading-tight line-clamp-2">Paving amblas, paving pecah, retak beton, lubang trotoar</p>
                 </button>
-                <button type="button" data-id="2" class="cat-chip py-3 px-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-semibold text-xs flex items-center gap-2 transition text-left hover:bg-slate-100">
-                    <span class="text-base">🚦</span>
-                    <span class="truncate">Penyeberangan</span>
+
+                <!-- 2: Masalah Drainase -->
+                <button type="button" data-id="2" data-slug="masalah_drainase"
+                    class="cat-chip p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100/80 text-left transition flex flex-col justify-between">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-xl shrink-0">🕳️</span>
+                        <p class="font-bold text-xs text-slate-900 leading-tight">Masalah Drainase</p>
+                    </div>
+                    <p class="text-[10px] text-slate-500 leading-tight line-clamp-2">Tutup gorong-gorong/manhole rusak, patah, atau terbuka</p>
                 </button>
-                <button type="button" data-id="3" class="cat-chip py-3 px-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-semibold text-xs flex items-center gap-2 transition text-left hover:bg-slate-100">
-                    <span class="text-base">💡</span>
-                    <span class="truncate">Penerangan Minim</span>
+
+                <!-- 3: Guiding Block Rusak -->
+                <button type="button" data-id="3" data-slug="guiding_block_rusak"
+                    class="cat-chip p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100/80 text-left transition flex flex-col justify-between">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-xl shrink-0">🦯</span>
+                        <p class="font-bold text-xs text-slate-900 leading-tight">Guiding Block Rusak</p>
+                    </div>
+                    <p class="text-[10px] text-slate-500 leading-tight line-clamp-2">Ubin pemandu tunanetra terkelupas, hilang, atau pecah</p>
                 </button>
-                <button type="button" data-id="4" class="cat-chip py-3 px-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-semibold text-xs flex items-center gap-2 transition text-left hover:bg-slate-100">
-                    <span class="text-base">🚫</span>
-                    <span class="truncate">Halangan Fisik</span>
+
+                <!-- 4: Penyebrangan Rusak -->
+                <button type="button" data-id="4" data-slug="penyebrangan_rusak"
+                    class="cat-chip p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100/80 text-left transition flex flex-col justify-between">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-xl shrink-0">🚦</span>
+                        <p class="font-bold text-xs text-slate-900 leading-tight">Penyebrangan Rusak</p>
+                    </div>
+                    <p class="text-[10px] text-slate-500 leading-tight line-clamp-2">Marka garis putih aus/pudar, atau penyeberangan rusak</p>
+                </button>
+
+                <!-- 5: Parkir Liar -->
+                <button type="button" data-id="5" data-slug="parkir_liar"
+                    class="cat-chip col-span-2 p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100/80 text-left transition flex items-center gap-3">
+                    <span class="text-xl shrink-0">🛵</span>
+                    <div class="min-w-0">
+                        <p class="font-bold text-xs text-slate-900 leading-tight">Parkir Liar</p>
+                        <p class="text-[10px] text-slate-500 leading-tight mt-0.5">Sepeda motor atau mobil di atas fasilitas pejalan kaki</p>
+                    </div>
                 </button>
             </div>
         </div>
@@ -516,9 +549,11 @@
     catChips.forEach(chip => {
         chip.addEventListener('click', () => {
             catChips.forEach(c => {
-                c.className = 'cat-chip py-3 px-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-semibold text-xs flex items-center gap-2 transition text-left hover:bg-slate-100';
+                c.classList.remove('border-brand-500', 'border-2', 'bg-teal-50/70', 'text-brand-900', 'shadow-sm', 'ring-1', 'ring-brand-500/30');
+                c.classList.add('border-slate-200', 'bg-slate-50', 'text-slate-700');
             });
-            chip.className = 'cat-chip py-3 px-3 rounded-xl border border-teal-200 bg-teal-50 text-brand-800 font-bold text-xs flex items-center gap-2 transition text-left';
+            chip.classList.remove('border-slate-200', 'bg-slate-50', 'text-slate-700');
+            chip.classList.add('border-brand-500', 'border-2', 'bg-teal-50/70', 'text-brand-900', 'shadow-sm', 'ring-1', 'ring-brand-500/30');
             selectedCategoryId = parseInt(chip.getAttribute('data-id'), 10);
         });
     });
