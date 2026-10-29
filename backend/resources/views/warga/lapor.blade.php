@@ -439,11 +439,6 @@
     let reverseGeocodeController = null;
     let lastGeocodeAt = 0;
 
-    // Perkiraan batas wilayah Kota Surabaya
-    function isInsideSurabaya(lat, lon) {
-        return lat >= -7.40 && lat <= -7.10 && lon >= 112.55 && lon <= 112.90;
-    }
-
     function fetchStreetName(lat, lon) {
         const alamatEl = document.getElementById('alamatText');
         if (!alamatEl) return;
@@ -451,8 +446,9 @@
         clearTimeout(reverseGeocodeTimer);
         if (reverseGeocodeController) reverseGeocodeController.abort();
 
-        if (!isInsideSurabaya(lat, lon)) {
-            alamatEl.innerText = `Di luar wilayah layanan Surabaya (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+        // Titik di luar polygon resmi Mulyorejo tidak dikirim ke Nominatim
+        if (!serviceArea.contains(lat, lon)) {
+            alamatEl.innerText = `Di luar wilayah layanan Kecamatan Mulyorejo (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
             return;
         }
 
@@ -509,10 +505,19 @@
 
     marker.on('dragend', function (e) {
         const pos = e.target.getLatLng();
+        if (!serviceArea.contains(pos.lat, pos.lng)) {
+            marker.setLatLng([selectedLat, selectedLon]); // kembalikan ke titik sebelumnya
+            showToast('Titik berada di luar wilayah layanan Kecamatan Mulyorejo.', 'error');
+            return;
+        }
         updateCoordinates(pos.lat, pos.lng);
     });
 
     map.on('click', function (e) {
+        if (!serviceArea.contains(e.latlng.lat, e.latlng.lng)) {
+            showToast('Titik berada di luar wilayah layanan Kecamatan Mulyorejo.', 'error');
+            return;
+        }
         updateCoordinates(e.latlng.lat, e.latlng.lng);
     });
 
@@ -527,7 +532,7 @@
             (pos) => {
                 const lat = pos.coords.latitude;
                 const lon = pos.coords.longitude;
-                if (!serviceArea.navigationBounds.contains([lat, lon])) {
+                if (!serviceArea.contains(lat, lon)) {
                     document.getElementById('gpsBadge').innerText = 'GPS di luar Mulyorejo';
                     showToast('Lokasi GPS berada di luar wilayah layanan Mulyorejo. Pilih titik laporan pada peta.', 'error');
                     return;
