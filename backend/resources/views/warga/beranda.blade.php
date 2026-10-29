@@ -113,6 +113,7 @@
                 <p id="countDitolak" class="text-xl font-extrabold text-rose-900">0</p>
             </div>
         </div>
+         <a href="/riwayat-laporan" class="mt-2.5 block text-center text-xs font-bold text-brand-600 hover:underline">Lihat riwayat laporan →</a>
     </div>
 
     <!-- Map Preview (Mulyorejo / Surabaya) -->

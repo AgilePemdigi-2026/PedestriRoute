@@ -73,6 +73,37 @@ class ReportController extends Controller
     }
 
     /**
+     * Riwayat laporan milik warga yang login. Filter: ?status=A,B
+     */
+    public function myReports(Request $request): JsonResponse
+    {
+        $allowed = ['DIPROSES', 'MENUNGGU_VALIDASI_ADMIN', 'TERVALIDASI', 'DITOLAK'];
+        $statuses = array_values(array_intersect(
+            array_filter(array_map('trim', explode(',', strtoupper((string) $request->query('status', ''))))),
+            $allowed
+        ));
+
+        $query = Laporan::with(['kategori', 'lokasi.segmen'])
+            ->where('warga_id', $request->user()->warga_id);
+
+        if ($statuses) {
+            $query->whereIn('status', $statuses);
+        }
+
+        $data = $query->orderByDesc('tanggal_lapor')->get()->map(fn ($lap) => [
+            'laporan_id' => $lap->laporan_id,
+            'kode_laporan' => '#LAP-' . str_pad($lap->laporan_id, 4, '0', STR_PAD_LEFT),
+            'status' => $lap->status,
+            'kategori' => $lap->kategori->nama_kategori,
+            'alamat' => $lap->lokasi->alamat ?? $lap->lokasi->segmen->nama_jalan ?? 'Surabaya',
+            'tanggal_lapor' => $lap->tanggal_lapor?->toIso8601String(),
+            'tanggal_validasi' => $lap->tanggal_validasi?->toIso8601String(),
+        ]);
+
+        return response()->json(['data' => $data, 'meta' => ['total' => $data->count()]], 200);
+    }
+
+    /**
      * Create a new report (F3).
      */
     public function store(Request $request): JsonResponse

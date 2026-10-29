@@ -43,6 +43,7 @@ Route::prefix('v1')->group(function () {
         Route::middleware('role:warga')->group(function () {
             Route::post('/reports', [ReportController::class, 'store']);
             Route::get('/reports/my-summary', [ReportController::class, 'mySummary']);
+            Route::get('/reports/my-reports', [ReportController::class, 'myReports']);
         });
 
         // Common report detail (accessible by report owner or admin)

@@ -25,6 +25,10 @@ Route::get('/lapor-kondisi', function () {
     return view('warga.lapor');
 })->name('warga.lapor');
 
+Route::get('/riwayat-laporan', function () {
+    return view('warga.riwayat');
+})->name('warga.riwayat');
+
 // Admin views
 Route::get('/admin', function () {
     return redirect('/admin/validasi');
@@ -37,6 +41,10 @@ Route::get('/admin/validasi', function () {
 Route::get('/admin/validasi/{id}', function ($id) {
     return view('admin.validasi_detail', ['id' => $id]);
 })->name('admin.validasi.detail');
+
+Route::get('/admin/riwayat', function () {
+    return view('admin.riwayat');
+})->name('admin.riwayat');
 
 Route::get('/admin/statistik', function () {
     return view('admin.statistik');
