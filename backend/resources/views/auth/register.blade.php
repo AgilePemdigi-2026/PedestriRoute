@@ -178,6 +178,35 @@
 
 @push('scripts')
 <script>
+    // --- TAMBAHKAN SCRIPT AUTO-FILL DI SINI ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const paramNama = urlParams.get('nama');
+        const paramEmail = urlParams.get('email');
+        const paramInfo = urlParams.get('info');
+
+        // Isi form otomatis jika data tersedia di URL
+        if (paramNama) {
+            document.getElementById('nama').value = paramNama;
+        }
+        
+        if (paramEmail) {
+            const emailInput = document.getElementById('email');
+            emailInput.value = paramEmail;
+            emailInput.readOnly = true; // Opsional: Kunci email agar tidak bisa diubah karena dari Sosmed
+            emailInput.classList.add('bg-slate-100', 'text-slate-500'); // Efek visual terkunci
+        }
+
+        // Tampilkan notifikasi jika ini dari proses Social Login
+        if (paramInfo === 'social_register') {
+            // Gunakan fungsi showToast kamu jika sudah ada, atau alert sementara
+            if (typeof showToast === 'function') {
+                showToast('Akun belum terdaftar. Silakan lengkapi nomor telepon dan kata sandi.', 'info');
+            }
+        }
+    });
+    // --- AKHIR SCRIPT AUTO-FILL ---
+
     const togglePassword = document.getElementById('togglePassword');
     const passwordInput = document.getElementById('password');
     togglePassword.addEventListener('click', () => {
@@ -195,6 +224,8 @@
     const registerForm = document.getElementById('registerForm');
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        // ... (Kode submit fetch/api kamu tetap sama tidak perlu diubah) ...
         const nama = document.getElementById('nama').value;
         const email = document.getElementById('email').value;
         const no_hp = document.getElementById('no_hp').value;
