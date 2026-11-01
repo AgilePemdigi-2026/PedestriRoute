@@ -71,4 +71,20 @@ class FacebookLoginTest extends TestCase
         $response->assertStatus(302);
         $response->assertRedirect('/login?error=email_reserved_for_admin');
     }
+
+    public function test_facebook_callback_supports_long_avatar_url(): void
+    {
+        $longAvatar = 'https://scontent.fsub7-1.fna.fbcdn.net/v/t1.30497-1/' . str_repeat('a', 300) . '.jpg?token=' . str_repeat('b', 100);
+        $warga = Warga::create([
+            'nama' => 'Long Avatar Warga',
+            'email' => 'long_avatar@facebook.com',
+            'avatar_url' => $longAvatar,
+            'facebook_id' => '122131551441393517',
+            'password' => Hash::make('password123'),
+            'tanggal_daftar' => now(),
+            'gagal_login' => 0,
+        ]);
+
+        $this->assertEquals($longAvatar, $warga->fresh()->avatar_url);
+    }
 }

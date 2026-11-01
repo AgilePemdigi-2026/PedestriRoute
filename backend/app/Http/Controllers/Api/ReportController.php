@@ -45,6 +45,37 @@ class ReportController extends Controller
     }
 
     /**
+     * Get all pedestrian segments as GeoJSON FeatureCollection.
+     */
+    public function segments(): JsonResponse
+    {
+        $segments = DB::select("
+            SELECT segmen_id, osm_way_id, nama_jalan, panjang_m, skor_kelayakan,
+                   ST_AsGeoJSON(geom::geometry) as geojson
+            FROM segmen_jalur
+            ORDER BY segmen_id ASC;
+        ");
+
+        $features = array_map(function ($seg) {
+            return [
+                'type' => 'Feature',
+                'geometry' => json_decode($seg->geojson),
+                'properties' => [
+                    'segmen_id' => $seg->segmen_id,
+                    'nama_jalan' => $seg->nama_jalan,
+                    'panjang_m' => (float) $seg->panjang_m,
+                    'skor_kelayakan' => (float) $seg->skor_kelayakan,
+                ],
+            ];
+        }, $segments);
+
+        return response()->json([
+            'type' => 'FeatureCollection',
+            'features' => $features,
+        ], 200);
+    }
+
+    /**
      * Get summary of current warga's reports (for home screen).
      */
     public function mySummary(Request $request): JsonResponse
@@ -195,18 +226,18 @@ class ReportController extends Controller
             ], 422);
         }
 
-        // 3. PostGIS Snapping: Find nearest segment within CFG_SNAP_RADIUS_M (FR-F3-11)
-        $snapRadius = (float) env('CFG_SNAP_RADIUS_M', 50);
+        // 3. PostGIS Snapping: Hubungkan dengan segmen jalan terdekat (toleransi hingga 5000m)
         $nearestSegment = DB::selectOne('
             SELECT segmen_id, nama_jalan,
                    ST_Distance(geom, ST_SetSRID(ST_Point(?, ?), 4326)::geography) as distance
             FROM segmen_jalur
-            WHERE ST_DWithin(geom, ST_SetSRID(ST_Point(?, ?), 4326)::geography, ?)
             ORDER BY distance ASC
             LIMIT 1;
-        ', [$lon, $lat, $lon, $lat, $snapRadius]);
+        ', [$lon, $lat]);
 
-        if (! $nearestSegment) {
+        // Jika jarak ke seluruh jalan terdata lebih dari 5 km (misal titik uji di tengah lautan Selat Madura)
+        $maxAllowedDistance = (float) env('CFG_MAX_ROAD_DISTANCE_M', 5000);
+        if (! $nearestSegment || $nearestSegment->distance > $maxAllowedDistance) {
             return response()->json([
                 'error' => [
                     'code' => 'REPORT_NO_SEGMENT',
