@@ -10,7 +10,17 @@
         <span class="text-[10px] tracking-tight">Validasi</span>
     </a>
 
-    <!-- Tab 2: Riwayat -->
+    <!-- Tab 2: Status Perbaikan (F9) -->
+    <a href="/admin/status-laporan" class="flex flex-col items-center gap-1 transition {{ request()->is('admin/status-laporan*') ? 'text-brand-600 font-bold' : 'text-slate-400 hover:text-slate-600' }}">
+        <div class="w-6 h-6 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+        </div>
+        <span class="text-[10px] tracking-tight">Perbaikan</span>
+    </a>
+
+    <!-- Tab 3: Riwayat -->
     <a href="/admin/riwayat" class="flex flex-col items-center gap-1 transition {{ request()->is('admin/riwayat*') ? 'text-brand-600 font-bold' : 'text-slate-400 hover:text-slate-600' }}">
         <div class="w-6 h-6 flex items-center justify-center">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

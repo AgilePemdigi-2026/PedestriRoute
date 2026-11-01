@@ -183,8 +183,12 @@
                 <!-- 1: Trotoar Rusak -->
                 <button type="button" data-id="1" data-slug="trotoar_rusak"
                     class="cat-chip p-3 rounded-xl border-2 border-brand-500 bg-teal-50/70 text-brand-900 text-left transition flex flex-col justify-between shadow-sm ring-1 ring-brand-500/30">
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="text-xl shrink-0">🛠️</span>
+                    <div class="flex items-center gap-2 mb-1.5">
+                        <div class="w-8 h-8 rounded-lg bg-teal-100 text-brand-700 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                            </svg>
+                        </div>
                         <p class="font-bold text-xs text-slate-900 leading-tight">Trotoar Rusak</p>
                     </div>
                     <p class="text-[10px] text-slate-500 leading-tight line-clamp-2">Paving amblas, paving pecah, retak beton, lubang trotoar</p>
@@ -193,8 +197,12 @@
                 <!-- 2: Masalah Drainase -->
                 <button type="button" data-id="2" data-slug="masalah_drainase"
                     class="cat-chip p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100/80 text-left transition flex flex-col justify-between">
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="text-xl shrink-0">🕳️</span>
+                    <div class="flex items-center gap-2 mb-1.5">
+                        <div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                            </svg>
+                        </div>
                         <p class="font-bold text-xs text-slate-900 leading-tight">Masalah Drainase</p>
                     </div>
                     <p class="text-[10px] text-slate-500 leading-tight line-clamp-2">Tutup gorong-gorong/manhole rusak, patah, atau terbuka</p>
@@ -203,8 +211,13 @@
                 <!-- 3: Guiding Block Rusak -->
                 <button type="button" data-id="3" data-slug="guiding_block_rusak"
                     class="cat-chip p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100/80 text-left transition flex flex-col justify-between">
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="text-xl shrink-0">🦯</span>
+                    <div class="flex items-center gap-2 mb-1.5">
+                        <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <circle cx="16" cy="4" r="1"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m18 19 1-7-6 1M5 8l3-3 5.5 3-2.36 3.5M4.24 14.5a5 5 0 0 0 6.88 6M13.76 17.5a5 5 0 0 0-6.88-6"/>
+                            </svg>
+                        </div>
                         <p class="font-bold text-xs text-slate-900 leading-tight">Guiding Block Rusak</p>
                     </div>
                     <p class="text-[10px] text-slate-500 leading-tight line-clamp-2">Ubin pemandu tunanetra terkelupas, hilang, atau pecah</p>
@@ -213,8 +226,15 @@
                 <!-- 4: Penyebrangan Rusak -->
                 <button type="button" data-id="4" data-slug="penyebrangan_rusak"
                     class="cat-chip p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100/80 text-left transition flex flex-col justify-between">
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="text-xl shrink-0">🚦</span>
+                    <div class="flex items-center gap-2 mb-1.5">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <rect width="10" height="18" x="7" y="3" rx="4"/>
+                                <circle cx="12" cy="7.5" r="1.5" fill="currentColor"/>
+                                <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+                                <circle cx="12" cy="16.5" r="1.5" fill="currentColor"/>
+                            </svg>
+                        </div>
                         <p class="font-bold text-xs text-slate-900 leading-tight">Penyebrangan Rusak</p>
                     </div>
                     <p class="text-[10px] text-slate-500 leading-tight line-clamp-2">Marka garis putih aus/pudar, atau penyeberangan rusak</p>
@@ -223,7 +243,13 @@
                 <!-- 5: Parkir Liar -->
                 <button type="button" data-id="5" data-slug="parkir_liar"
                     class="cat-chip col-span-2 p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100/80 text-left transition flex items-center gap-3">
-                    <span class="text-xl shrink-0">🛵</span>
+                    <div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m4.93 4.93 14.14 14.14"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7h4a3 3 0 0 1 0 6H9"/>
+                        </svg>
+                    </div>
                     <div class="min-w-0">
                         <p class="font-bold text-xs text-slate-900 leading-tight">Parkir Liar</p>
                         <p class="text-[10px] text-slate-500 leading-tight mt-0.5">Sepeda motor atau mobil di atas fasilitas pejalan kaki</p>

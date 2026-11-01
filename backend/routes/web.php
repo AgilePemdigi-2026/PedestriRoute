@@ -42,6 +42,14 @@ Route::get('/admin/validasi/{id}', function ($id) {
     return view('admin.validasi_detail', ['id' => $id]);
 })->name('admin.validasi.detail');
 
+Route::get('/admin/status-laporan', function () {
+    return view('admin.status_laporan_queue');
+})->name('admin.status_laporan.queue');
+
+Route::get('/admin/status-laporan/{id}', function ($id) {
+    return view('admin.status_laporan_detail', ['id' => $id]);
+})->name('admin.status_laporan.detail');
+
 Route::get('/admin/riwayat', function () {
     return view('admin.riwayat');
 })->name('admin.riwayat');

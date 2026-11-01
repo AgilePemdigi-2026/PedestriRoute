@@ -61,7 +61,11 @@
             if (reports.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-12 bg-white rounded-2xl border border-slate-100 p-6">
-                        <span class="text-3xl mb-2 block">📭</span>
+                        <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7m16 0v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-5m16 0h-2.586a1 1 0 0 0-.707.293l-2.414 2.414a1 1 0 0 1-.707.293h-3.172a1 1 0 0 1-.707-.293l-2.414-2.414A1 1 0 0 0 6.586 13H4"/>
+                            </svg>
+                        </div>
                         <h3 class="text-sm font-bold text-slate-800">Belum ada laporan</h3>
                         <p class="text-xs text-slate-500 mt-1">Laporan yang kamu kirim akan muncul di sini.</p>
                     </div>`;

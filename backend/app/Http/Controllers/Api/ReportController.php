@@ -405,11 +405,21 @@ class ReportController extends Controller
             );
         }
 
+        $photoRepairUrl = null;
+        if ($laporan->foto_perbaikan) {
+            $photoRepairUrl = URL::temporarySignedRoute(
+                'report.photo',
+                now()->addMinutes(10),
+                ['id' => $laporan->laporan_id, 'type' => 'repair']
+            );
+        }
+
         return response()->json([
             'data' => [
                 'laporan_id' => $laporan->laporan_id,
                 'status' => $laporan->status,
                 'status_perbaikan' => $laporan->status_perbaikan,
+                'catatan_perbaikan' => $laporan->catatan_perbaikan,
                 'deskripsi' => $laporan->deskripsi,
                 'kategori' => [
                     'id' => $laporan->kategori->kategori_id,
@@ -424,11 +434,13 @@ class ReportController extends Controller
                     ...($isAdmin ? ['segmen' => $segmentMap] : []),
                 ],
                 'foto_url' => $photoUrl,
+                'foto_perbaikan_url' => $photoRepairUrl,
                 'confidence_score' => $laporan->confidence_score,
                 'cv_label' => $laporan->cv_label,
                 'alasan_penolakan' => $laporan->alasan_penolakan,
                 'tanggal_lapor' => $laporan->tanggal_lapor?->toIso8601String(),
                 'tanggal_validasi' => $laporan->tanggal_validasi?->toIso8601String(),
+                'tanggal_perbaikan' => $laporan->tanggal_perbaikan?->toIso8601String(),
                 'riwayat' => $laporan->riwayat->map(function ($r) {
                     return [
                         'jenis' => $r->jenis,
@@ -447,6 +459,25 @@ class ReportController extends Controller
      */
     public function photo(Request $request, int $id): BinaryFileResponse|JsonResponse
     {
+        if ($request->query('type') === 'repair') {
+            $lap = Laporan::find($id);
+            if (! $lap || ! $lap->foto_perbaikan || ! Storage::disk('public')->exists($lap->foto_perbaikan)) {
+                return response()->json([
+                    'error' => [
+                        'code' => 'NOT_FOUND',
+                        'message' => 'Berkas foto bukti perbaikan tidak ditemukan.',
+                    ],
+                ], 404);
+            }
+
+            $path = Storage::disk('public')->path($lap->foto_perbaikan);
+
+            return response()->file($path, [
+                'Content-Type' => 'image/jpeg',
+                'Cache-Control' => 'private, max-age=600',
+            ]);
+        }
+
         $foto = FotoLaporan::where('laporan_id', $id)->first();
         if (! $foto || ! Storage::disk('public')->exists($foto->url_foto)) {
             return response()->json([

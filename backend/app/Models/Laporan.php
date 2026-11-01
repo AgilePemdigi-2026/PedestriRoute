@@ -24,6 +24,8 @@ class Laporan extends Model
         'tanggal_validasi',
         'status_perbaikan',
         'tanggal_perbaikan',
+        'foto_perbaikan',
+        'catatan_perbaikan',
     ];
 
     protected $casts = [
