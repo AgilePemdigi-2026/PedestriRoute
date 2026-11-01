@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
     #laporMap {
-        height: 200px;
+        height: 400px;
         width: 100%;
         border-radius: 0.875rem;
         z-index: 10;
