@@ -126,6 +126,17 @@ class ReportController extends Controller
             ], 422);
         }
 
+        if (! is_numeric($lat) || ! is_numeric($lon) ||
+            ! is_finite((float) $lat) || ! is_finite((float) $lon) ||
+            abs((float) $lat) > 90 || abs((float) $lon) > 180) {
+            return response()->json([
+                'error' => [
+                    'code' => 'REPORT_OUT_OF_AREA',
+                    'message' => 'Koordinat laporan tidak valid.',
+                ],
+            ], 422);
+        }
+
         $lat = (float) $lat;
         $lon = (float) $lon;
 
@@ -180,17 +191,23 @@ class ReportController extends Controller
 
         $kategoriId = $kategori->kategori_id;
 
-        // 2. Validate coordinates within service area (FR-F3-03)
-        $minLat = (float) env('CFG_SERVICE_AREA_MIN_LAT', -7.40);
-        $maxLat = (float) env('CFG_SERVICE_AREA_MAX_LAT', -7.12);
-        $minLon = (float) env('CFG_SERVICE_AREA_MIN_LON', 112.55);
-        $maxLon = (float) env('CFG_SERVICE_AREA_MAX_LON', 112.90);
+        // Use the same project polygon as the citizen map, including its boundary.
+        $serviceArea = json_decode(
+            file_get_contents(resource_path('data/mulyorejo-service-area.geojson')),
+            true, 512, JSON_THROW_ON_ERROR
+        );
+        $coverage = DB::selectOne('
+            SELECT CASE WHEN ST_Covers(
+                ST_SetSRID(ST_GeomFromGeoJSON(?), 4326),
+                ST_SetSRID(ST_Point(?, ?), 4326)
+            ) THEN 1 ELSE 0 END AS inside
+        ', [json_encode($serviceArea['geometry'], JSON_THROW_ON_ERROR), $lon, $lat]);
 
-        if ($lat < $minLat || $lat > $maxLat || $lon < $minLon || $lon > $maxLon) {
+        if ((int) $coverage->inside !== 1) {
             return response()->json([
                 'error' => [
                     'code' => 'REPORT_OUT_OF_AREA',
-                    'message' => MessageCatalog::REPORT_OUT_OF_AREA,
+                    'message' => 'Lokasi berada di luar wilayah layanan Kecamatan Mulyorejo.',
                 ],
             ], 422);
         }
@@ -206,14 +223,8 @@ class ReportController extends Controller
             LIMIT 1;
         ', [$lon, $lat, $lon, $lat, $snapRadius]);
 
-        if (! $nearestSegment) {
-            return response()->json([
-                'error' => [
-                    'code' => 'REPORT_NO_SEGMENT',
-                    'message' => MessageCatalog::REPORT_NO_SEGMENT,
-                ],
-            ], 422);
-        }
+        // Missing road coverage must not prevent a report inside Mulyorejo.
+        // Leave the relation null instead of attaching a distant, unrelated segment.
 
         // 4. Validate and store photo (FR-F3-04, FR-F3-12)
         $photoFile = $request->file('foto');
@@ -244,8 +255,8 @@ class ReportController extends Controller
                     'latitude' => $lat,
                     'longitude' => $lon,
                     'geom' => DB::raw("ST_SetSRID(ST_Point({$lon}, {$lat}), 4326)"),
-                    'alamat' => $nearestSegment->nama_jalan,
-                    'segmen_id' => $nearestSegment->segmen_id,
+                    'alamat' => $nearestSegment?->nama_jalan ?? 'Titik laporan di Kecamatan Mulyorejo',
+                    'segmen_id' => $nearestSegment?->segmen_id,
                 ], 'lokasi_id');
 
                 // In Sprint 1 stub: CFG_CV_ENABLED = false -> status langsung MENUNGGU_VALIDASI_ADMIN
@@ -306,6 +317,8 @@ class ReportController extends Controller
             'data' => [
                 'laporan_id' => $laporan->laporan_id,
                 'status' => $laporan->status,
+                'segmen_id' => $nearestSegment?->segmen_id,
+                'status_snapping' => $nearestSegment ? 'TERHUBUNG' : 'BELUM_TERHUBUNG',
             ],
             'message' => MessageCatalog::REPORT_SENT,
         ], 201);
