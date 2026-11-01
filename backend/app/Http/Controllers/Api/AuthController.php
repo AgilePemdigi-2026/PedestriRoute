@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use App\Mail\RegisterOtpMail;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Warga;
 use App\Support\MessageCatalog;
@@ -409,6 +410,9 @@ class AuthController extends Controller
                 $googleId = $googleUser->getId();
                 $avatar = $googleUser->getAvatar();
             } catch (\Exception $e) {
+                Log::error('Google OAuth callback error: ' . $e->getMessage(), [
+                    'trace' => $e->getTraceAsString(),
+                ]);
                 return redirect('/login?error=google_failed');
             }
         }
@@ -417,20 +421,28 @@ class AuthController extends Controller
             return redirect('/login?error=email_reserved_for_admin');
         }
 
-        // PERBAIKAN: Cari akun berdasarkan email atau google_id
+        // Cari akun berdasarkan email atau google_id
         $warga = Warga::where('email', $email)->orWhere('google_id', $googleId)->first();
         
-        // JIKA AKUN TIDAK DITEMUKAN (Arahkan ke form daftar dan bawa data sosmednya)
+        // Auto-provisioning jika akun belum terdaftar
         if (!$warga) {
-            return redirect('/register?nama=' . urlencode($nama) . '&email=' . urlencode($email) . '&info=social_register');
+            $warga = Warga::create([
+                'nama' => $nama ?: 'Pengguna Google',
+                'email' => $email,
+                'google_id' => $googleId,
+                'avatar_url' => $avatar,
+                'password' => Hash::make(Str::random(32)),
+                'tanggal_daftar' => now(),
+                'gagal_login' => 0,
+                'notif_jalur_aktif' => true,
+            ]);
+        } else {
+            $warga->google_id = $googleId;
+            if ($avatar) {
+                $warga->avatar_url = $avatar;
+            }
+            $warga->save();
         }
-        
-        // JIKA AKUN DITEMUKAN (Update data jika perlu)
-        $warga->google_id = $googleId;
-        if ($avatar) {
-            $warga->avatar_url = $avatar;
-        }
-        $warga->save();
 
         $token = $warga->createToken('auth-token', ['role:warga'])->plainTextToken;
 
@@ -466,7 +478,12 @@ class AuthController extends Controller
             return redirect('/api/v1/auth/facebook/callback?mock=true');
         }
 
-        return Socialite::driver('facebook')->stateless()->redirect();
+        $scopes = array_filter(array_map('trim', explode(',', env('FACEBOOK_SCOPES', 'public_profile'))));
+        if (empty($scopes)) {
+            $scopes = ['public_profile'];
+        }
+
+        return Socialite::driver('facebook')->setScopes($scopes)->stateless()->redirect();
     }
 
     /**
@@ -487,6 +504,9 @@ class AuthController extends Controller
                 $facebookId = $fbUser->getId();
                 $avatar = $fbUser->getAvatar();
             } catch (\Exception $e) {
+                Log::error('Facebook OAuth callback error: ' . $e->getMessage(), [
+                    'trace' => $e->getTraceAsString(),
+                ]);
                 return redirect('/login?error=facebook_failed');
             }
         }
@@ -495,20 +515,28 @@ class AuthController extends Controller
             return redirect('/login?error=email_reserved_for_admin');
         }
 
-        // PERBAIKAN: Cari akun berdasarkan email atau facebook_id
+        // Cari akun berdasarkan email atau facebook_id
         $warga = Warga::where('email', $email)->orWhere('facebook_id', $facebookId)->first();
         
-        // JIKA AKUN TIDAK DITEMUKAN (Arahkan ke form daftar dan bawa data sosmednya)
+        // Auto-provisioning jika akun belum terdaftar
         if (!$warga) {
-            return redirect('/register?nama=' . urlencode($nama) . '&email=' . urlencode($email) . '&info=social_register');
-        } 
-        
-        // JIKA AKUN DITEMUKAN (Update data jika perlu)
-        $warga->facebook_id = $facebookId;
-        if ($avatar) {
-            $warga->avatar_url = $avatar;
+            $warga = Warga::create([
+                'nama' => $nama ?: 'Pengguna Facebook',
+                'email' => $email,
+                'facebook_id' => $facebookId,
+                'avatar_url' => $avatar,
+                'password' => Hash::make(Str::random(32)),
+                'tanggal_daftar' => now(),
+                'gagal_login' => 0,
+                'notif_jalur_aktif' => true,
+            ]);
+        } else {
+            $warga->facebook_id = $facebookId;
+            if ($avatar) {
+                $warga->avatar_url = $avatar;
+            }
+            $warga->save();
         }
-        $warga->save();
 
         $token = $warga->createToken('auth-token', ['role:warga'])->plainTextToken;
 

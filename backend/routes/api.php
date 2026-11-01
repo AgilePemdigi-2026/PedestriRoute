@@ -29,8 +29,9 @@ Route::prefix('v1')->group(function () {
         });
     });
 
-    // Public / Protected categories (F3)
+    // Public / Protected categories and segments (F3)
     Route::get('/categories', [ReportController::class, 'categories']);
+    Route::get('/segments', [ReportController::class, 'segments']);
 
     // Signed photo route (FR-F3-14)
     Route::get('/reports/{id}/photo', [ReportController::class, 'photo'])

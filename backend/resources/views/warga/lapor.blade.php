@@ -89,7 +89,7 @@
                     <span id="alamatText" class="truncate font-medium">Jl. Raya Mulyosari, Mulyorejo, Surabaya</span>
                 </div>
                 <span id="accuracyBadge" class="text-[10px] font-semibold text-brand-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded shrink-0">
-                    Radius Snapping 50m
+                    Titik Terpilih
                 </span>
             </div>
 
@@ -419,18 +419,8 @@
 
     const serviceArea = PedestriRouteServiceArea.attach(map);
 
-    // Marker Pinpoint
+    // Marker Pinpoint - Bebas ditaruh di mana saja oleh pengguna
     let marker = L.marker([selectedLat, selectedLon], { draggable: true }).addTo(map);
-
-    // Layer Indikator Radius Snapping 50m
-    let snappingCircle = L.circle([selectedLat, selectedLon], {
-        radius: 50,
-        color: '#006257',
-        weight: 1.5,
-        fillColor: '#008775',
-        fillOpacity: 0.15,
-        dashArray: '4, 6'
-    }).addTo(map);
 
     // Reverse geocoding Nominatim (FR-F7-11)
     const GEOCODE_DEBOUNCE_MS = 500;      // debounce minimal 500 ms
@@ -445,12 +435,6 @@
 
         clearTimeout(reverseGeocodeTimer);
         if (reverseGeocodeController) reverseGeocodeController.abort();
-
-        // Titik di luar polygon resmi Mulyorejo tidak dikirim ke Nominatim
-        if (!serviceArea.contains(lat, lon)) {
-            alamatEl.innerText = `Di luar wilayah layanan Kecamatan Mulyorejo (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
-            return;
-        }
 
         alamatEl.innerText = 'Mendeteksi alamat...';
 
@@ -486,15 +470,14 @@
         const newLatLng = [selectedLat, selectedLon];
 
         marker.setLatLng(newLatLng);
-        snappingCircle.setLatLng(newLatLng); // Update posisi radius snapping 50m
 
         document.getElementById('coordDisplay').value = `${selectedLat}, ${selectedLon}`;
         
         const accuracyBadge = document.getElementById('accuracyBadge');
         if (accuracy) {
-            accuracyBadge.innerText = `GPS (±${Math.round(accuracy)}m) • Snap 50m`;
+            accuracyBadge.innerText = `GPS (±${Math.round(accuracy)}m)`;
         } else {
-            accuracyBadge.innerText = `Radius Snapping 50m`;
+            accuracyBadge.innerText = `Titik Terpilih`;
         }
 
         fetchStreetName(selectedLat, selectedLon);
@@ -505,19 +488,10 @@
 
     marker.on('dragend', function (e) {
         const pos = e.target.getLatLng();
-        if (!serviceArea.contains(pos.lat, pos.lng)) {
-            marker.setLatLng([selectedLat, selectedLon]); // kembalikan ke titik sebelumnya
-            showToast('Titik berada di luar wilayah layanan Kecamatan Mulyorejo.', 'error');
-            return;
-        }
         updateCoordinates(pos.lat, pos.lng);
     });
 
     map.on('click', function (e) {
-        if (!serviceArea.contains(e.latlng.lat, e.latlng.lng)) {
-            showToast('Titik berada di luar wilayah layanan Kecamatan Mulyorejo.', 'error');
-            return;
-        }
         updateCoordinates(e.latlng.lat, e.latlng.lng);
     });
 
@@ -532,15 +506,10 @@
             (pos) => {
                 const lat = pos.coords.latitude;
                 const lon = pos.coords.longitude;
-                if (!serviceArea.contains(lat, lon)) {
-                    document.getElementById('gpsBadge').innerText = 'GPS di luar Mulyorejo';
-                    showToast('Lokasi GPS berada di luar wilayah layanan Mulyorejo. Pilih titik laporan pada peta.', 'error');
-                    return;
-                }
                 updateCoordinates(lat, lon, pos.coords.accuracy);
                 map.setView([lat, lon], 17);
                 document.getElementById('gpsBadge').innerText = 'GPS Terkunci';
-                showToast('Lokasi GPS & Radius 50m terdistribusi', 'success');
+                showToast('Lokasi GPS berhasil dikunci', 'success');
             },
             (err) => {
                 showToast('Izin lokasi ditolak. Aktifkan izin lokasi di pengaturan browser.', 'error');
