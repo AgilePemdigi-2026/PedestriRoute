@@ -19,15 +19,28 @@ class AdminValidationController extends Controller
     ) {}
 
     /**
-     * Get validation queue for admin (FR-F5-01).
+     * Get validation queue / history for admin (FR-F5-01).
+     * Query ?status=A,B (default: MENUNGGU_VALIDASI_ADMIN).
      */
     public function index(Request $request): JsonResponse
     {
-        $status = $request->query('status', 'MENUNGGU_VALIDASI_ADMIN');
+        $allowed = ['DIPROSES', 'MENUNGGU_VALIDASI_ADMIN', 'TERVALIDASI', 'DITOLAK'];
+        $statuses = array_values(array_intersect(
+            array_filter(array_map('trim', explode(',', strtoupper((string) $request->query('status', 'MENUNGGU_VALIDASI_ADMIN'))))),
+            $allowed
+        ));
+        if (! $statuses) {
+            $statuses = ['MENUNGGU_VALIDASI_ADMIN'];
+        }
+        $isQueue = $statuses === ['MENUNGGU_VALIDASI_ADMIN'];
 
         $reports = Laporan::with(['kategori', 'lokasi.segmen', 'foto', 'warga'])
-            ->where('status', $status)
-            ->orderBy('tanggal_lapor', 'asc')
+            ->whereIn('status', $statuses)
+            ->when(
+                $isQueue,
+                fn ($q) => $q->orderBy('tanggal_lapor', 'asc'),
+                fn ($q) => $q->orderByDesc('tanggal_validasi')
+            )
             ->get();
 
         $data = $reports->map(function ($lap) {
@@ -40,6 +53,8 @@ class AdminValidationController extends Controller
                 'alamat' => $lap->lokasi->alamat ?? $lap->lokasi->segmen->nama_jalan ?? 'Surabaya',
                 'pelapor_nama' => $lap->warga->nama ?? 'Warga',
                 'tanggal_lapor' => $lap->tanggal_lapor?->toIso8601String(),
+                'tanggal_validasi' => $lap->tanggal_validasi?->toIso8601String(),
+                'alasan_penolakan' => $lap->alasan_penolakan,
                 'cv_label' => $lap->cv_label,
                 'confidence_score' => $lap->confidence_score,
             ];
