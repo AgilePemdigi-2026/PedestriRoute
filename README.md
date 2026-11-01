@@ -6,8 +6,9 @@ Proyek ini dirancang untuk memberdayakan partisipasi aktif warga dalam melaporka
 
 ---
 
-## 🌟 Fitur Utama (Sprint 1)
+## 🌟 Fitur Utama
 
+### Sprint 1
 1. **Autentikasi & Registrasi Fleksibel (F1 & F2):**
    - Masuk (*login*) menggunakan **Email** atau **Nomor Telepon** (mendukung berbagai format penulisan lokal `08...`, `+628...`, `628...`).
    - Lapisan keamanan **Two-Step Verification (Email OTP)** 6-digit untuk perlindungan akun dari akses tidak sah.
@@ -19,7 +20,7 @@ Proyek ini dirancang untuk memberdayakan partisipasi aktif warga dalam melaporka
    - Penandaan lokasi presisi berbasis peta interaktif OpenStreetMap / Leaflet dan geolokasi GPS perangkat.
    - Validasi geospasial (*PostGIS Snapping*) yang memastikan laporan terikat pada segmen jalan dalam radius 50 meter.
    - Unggah foto bukti dengan kompresi otomatis di sisi peramban dan pembersihan metadata EXIF/GPS demi privasi warga.
-   - Pilihan 4 kategori masalah: *Trotoar Rusak*, *Penyeberangan*, *Penerangan Minim*, dan *Halangan Fisik*.
+   - Pilihan kategori masalah: *Trotoar Rusak*, *Masalah Drainase*, *Guiding Block*, *Penerangan Minim*, dan *Halangan Fisik*.
 4. **Validasi Laporan Manual oleh Admin (F5):**
    - Dasbor antrean verifikasi untuk admin/petugas berwenang (Dishub).
    - Tampilan rincian laporan lengkap dengan foto beresolusi tinggi, pratinjau peta, dan catatan sistem analisis visual.
@@ -28,7 +29,18 @@ Proyek ini dirancang untuk memberdayakan partisipasi aktif warga dalam melaporka
    - Teruji dan terverifikasi 100% pada 8 skenario pengujian fungsional manual (lihat `docs/HASIL_CEK_F5.md`).
 5. **Beranda Warga Interaktif (Home Screen):**
    - Ringkasan status aduan warga secara waktu nyata (*Menunggu*, *Valid*, *Ditolak*).
-   - Peta dasar Leaflet untuk pemantauan rute pejalan kaki.
+   - Peta dasar Leaflet untuk pemantauan rute pejalan kaki dengan batas wilayah administratif resmi Kecamatan Mulyorejo yang bersih dan non-intrusif (tanpa tooltip hover yang mengganggu navigasi peta).
+
+### Sprint 2
+6. **Peta Heatmap Kelayakan Fasilitas Pejalan Kaki (F6):**
+   - Visualisasi tingkat kelayakan segmen jalan berbasis PostGIS geospasial dan *dynamic density heat dots* (Leaflet.heat & canvas).
+   - Filter interaktif berbasis kategori kerusakan dan status aduan (*Aduan Aktif*, *Sudah Diperbaiki*, *Semua Status*).
+   - Transisi mode tampilan peta fleksibel antara mode Heatmap dan Peta Standar.
+   - Penyesuaian presisi poligon batas administratif Kecamatan Mulyorejo sesuai referensi resmi.
+7. **Pembaruan Status Perbaikan Laporan (F9):**
+   - Dasbor administrasi untuk pembaruan progres tindak lanjut fasilitas (*Sedang Diperbaiki* & *Sudah Diperbaiki*).
+   - Unggah bukti foto dokumentasi perbaikan transparan (*sebelum* vs *sesudah*).
+   - Pemulihan otomatis skor kelayakan segmen jalan (WSM) saat fasilitas selesai diperbaiki.
 
 ---
 

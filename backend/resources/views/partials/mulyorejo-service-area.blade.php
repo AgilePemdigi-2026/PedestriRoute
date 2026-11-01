@@ -54,21 +54,15 @@
             }
             const layer = L.geoJSON(geojson, {
                 pane: 'serviceAreaPane',
+                interactive: false,
                 bubblingMouseEvents: true,
                 style: {
                     color: '#006257',
                     weight: 2.5,
                     opacity: 1,
                     fillColor: '#008775',
-                    fillOpacity: 0.12
-                },
-                onEachFeature(feature, polygon) {
-                    const text = document.createElement('div');
-                    const title = document.createElement('strong');
-                    title.textContent = feature.properties.name;
-                    text.append(title, document.createElement('br'), feature.properties.description);
-                    polygon.bindTooltip(text.cloneNode(true), {sticky: true});
-                    polygon.bindPopup(text, {autoPan: false});
+                    fillOpacity: 0.12,
+                    interactive: false
                 }
             }).addTo(map);
             const bounds = layer.getBounds();
