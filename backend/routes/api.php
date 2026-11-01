@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\AdminRepairController;
 use App\Http\Controllers\Api\AdminValidationController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\HeatmapController;
 use App\Http\Controllers\Api\RegisterOtpController;
 use App\Http\Controllers\Api\ReportController;
 use Illuminate\Support\Facades\Route;
@@ -50,10 +52,14 @@ Route::prefix('v1')->group(function () {
         // Common report detail (accessible by report owner or admin)
         Route::get('/reports/{id}', [ReportController::class, 'show']);
 
-        // Admin specific validation routes (F5)
+        // Heatmap endpoint (F6 - accessible by warga and admin)
+        Route::get('/heatmap', [HeatmapController::class, 'index']);
+
+        // Admin specific validation & repair routes (F5, F9)
         Route::middleware('role:admin')->prefix('admin')->group(function () {
             Route::get('/reports', [AdminValidationController::class, 'index']);
             Route::post('/reports/{id}/validation', [AdminValidationController::class, 'validateReport']);
+            Route::match(['patch', 'post'], '/reports/{id}/repair-status', [AdminRepairController::class, 'updateRepairStatus']);
             Route::get('/statistics', [AdminValidationController::class, 'statistics']);
         });
     });

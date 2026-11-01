@@ -34,8 +34,18 @@ class AdminValidationController extends Controller
         }
         $isQueue = $statuses === ['MENUNGGU_VALIDASI_ADMIN'];
 
-        $reports = Laporan::with(['kategori', 'lokasi.segmen', 'foto', 'warga'])
-            ->whereIn('status', $statuses)
+        $repairFilter = strtoupper(trim((string) $request->query('status_perbaikan', $request->query('repair_status', ''))));
+
+        $reportsQuery = Laporan::with(['kategori', 'lokasi.segmen', 'foto', 'warga'])
+            ->whereIn('status', $statuses);
+
+        if ($repairFilter === 'BELUM' || $repairFilter === 'NULL') {
+            $reportsQuery->whereNull('status_perbaikan');
+        } elseif (in_array($repairFilter, ['SEDANG_DIPERBAIKI', 'SUDAH_DIPERBAIKI'], true)) {
+            $reportsQuery->where('status_perbaikan', $repairFilter);
+        }
+
+        $reports = $reportsQuery
             ->when(
                 $isQueue,
                 fn ($q) => $q->orderBy('tanggal_lapor', 'asc'),
@@ -48,12 +58,14 @@ class AdminValidationController extends Controller
                 'laporan_id' => $lap->laporan_id,
                 'kode_laporan' => '#LAP-' . str_pad($lap->laporan_id, 4, '0', STR_PAD_LEFT),
                 'status' => $lap->status,
+                'status_perbaikan' => $lap->status_perbaikan,
                 'kategori' => $lap->kategori->nama_kategori,
                 'deskripsi' => $lap->deskripsi,
                 'alamat' => $lap->lokasi->alamat ?? $lap->lokasi->segmen->nama_jalan ?? 'Surabaya',
                 'pelapor_nama' => $lap->warga->nama ?? 'Warga',
                 'tanggal_lapor' => $lap->tanggal_lapor?->toIso8601String(),
                 'tanggal_validasi' => $lap->tanggal_validasi?->toIso8601String(),
+                'tanggal_perbaikan' => $lap->tanggal_perbaikan?->toIso8601String(),
                 'alasan_penolakan' => $lap->alasan_penolakan,
                 'cv_label' => $lap->cv_label,
                 'confidence_score' => $lap->confidence_score,

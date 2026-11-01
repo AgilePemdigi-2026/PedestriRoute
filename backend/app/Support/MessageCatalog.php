@@ -23,11 +23,16 @@ class MessageCatalog
     public const REPORT_NO_SEGMENT = 'Lokasi terlalu jauh dari jalan yang terdata. Pilih titik yang lebih dekat dengan jalan.';
     public const GPS_PERMISSION_DENIED = 'Izin lokasi ditolak. Aktifkan izin lokasi di pengaturan browser.';
 
-    // Validation Messages
+    // Validation & Repair Messages
     public const VALIDATION_REASON_REQUIRED = 'Alasan penolakan harus diisi sebelum status laporan diperbarui';
     public const REPAIR_STATUS_REQUIRED = 'Mohon pilih status perbaikan terlebih dahulu';
     public const REPAIR_STATUS_SAVED = 'Notifikasi Status Berhasil Diperbarui';
     public const REPAIR_SAVE_FAILED = 'Pembaruan status gagal disimpan. Silakan coba lagi.';
+
+    // Heatmap Messages (SRS Section 4.5)
+    public const HEATMAP_NO_DATA = 'Data kelayakan jalur belum tersedia untuk area ini.';
+    public const HEATMAP_FILTER_EMPTY = 'Tidak ada data laporan yang sesuai dengan filter.';
+    public const HEATMAP_ZOOM_IN = 'Perbesar peta untuk melihat semua segmen jalur.';
 
     // Notification Templates
     public const NOTIF_AUTO_VALIDATED = 'Laporan Anda di {jalan} telah tervalidasi.';

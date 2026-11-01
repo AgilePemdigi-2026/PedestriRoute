@@ -82,4 +82,26 @@ class NotificationService
 
         $this->create('WARGA', $laporan->warga_id, 'STATUS_LAPORAN', $pesan, $laporan->laporan_id);
     }
+
+    /**
+     * Notify Warga that repair is in progress (F9).
+     */
+    public function notifyRepairing(Laporan $laporan): void
+    {
+        $jalan = $laporan->lokasi->alamat ?? $laporan->lokasi->segmen->nama_jalan ?? 'Surabaya';
+        $pesan = MessageCatalog::format(MessageCatalog::NOTIF_REPAIRING, ['jalan' => $jalan]);
+
+        $this->create('WARGA', $laporan->warga_id, 'STATUS_LAPORAN', $pesan, $laporan->laporan_id);
+    }
+
+    /**
+     * Notify Warga that repair is completed (F9).
+     */
+    public function notifyRepaired(Laporan $laporan): void
+    {
+        $jalan = $laporan->lokasi->alamat ?? $laporan->lokasi->segmen->nama_jalan ?? 'Surabaya';
+        $pesan = MessageCatalog::format(MessageCatalog::NOTIF_REPAIRED, ['jalan' => $jalan]);
+
+        $this->create('WARGA', $laporan->warga_id, 'STATUS_LAPORAN', $pesan, $laporan->laporan_id);
+    }
 }
