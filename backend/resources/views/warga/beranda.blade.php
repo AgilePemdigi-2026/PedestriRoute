@@ -286,10 +286,10 @@
         <div class="flex items-center gap-1.5 overflow-x-auto pb-1.5 mb-1.5 scrollbar-none transition-all" id="statusFilterGroup">
             <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap mr-1">Status:</span>
             <button type="button" onclick="selectRepairFilter('aktif')" id="btnStatus-aktif" class="status-filter-chip px-2.5 py-1 rounded-lg text-[10px] font-bold transition bg-brand-600 text-white shadow-sm flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5 text-amber-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-                    <line x1="12" y1="9" x2="12" y2="13"/>
-                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                <svg class="w-3.5 h-3.5 text-amber-300 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                    <line x1="12" y1="9" x2="12" y2="13.5"/>
+                    <circle cx="12" cy="17.2" r="1.1" fill="currentColor" stroke="none"/>
                 </svg>
                 <span>Aduan Aktif</span>
             </button>
@@ -917,7 +917,7 @@
                     'Penyeberangan': `<span class="w-4 h-4 rounded bg-emerald-100 text-emerald-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect width="10" height="18" x="7" y="3" rx="4"/><circle cx="12" cy="7.5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="16.5" r="1.5" fill="currentColor"/></svg></span>`,
                     'Parkir Liar': `<span class="w-4 h-4 rounded bg-rose-100 text-rose-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="m4.93 4.93 14.14 14.14"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg></span>`,
                 };
-                const defaultCatIcon = `<span class="w-4 h-4 rounded bg-slate-100 text-slate-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>`;
+                const defaultCatIcon = `<span class="w-4 h-4 rounded bg-slate-100 text-slate-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13.5"/><circle cx="12" cy="17.2" r="1.1" fill="currentColor" stroke="none"/></svg></span>`;
 
                 function getReparationBadge(status) {
                     if (status === 'SUDAH_DIPERBAIKI') {
