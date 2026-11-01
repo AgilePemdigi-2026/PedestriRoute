@@ -13,10 +13,16 @@ class DemoLaporanSeeder extends Seeder
 {
     public function run(): void
     {
-        $warga = Warga::first();
-        if (!$warga) {
-            return;
-        }
+        $warga = Warga::firstOrCreate(
+            ['email' => 'demo.warga@pedestriroute.test'],
+            [
+                'nama' => 'Warga Pelapor PedestriRoute',
+                'no_hp' => '6289999999999',
+                'password' => \Illuminate\Support\Facades\Hash::make('password123'),
+                'tanggal_daftar' => now(),
+                'gagal_login' => 0,
+            ]
+        );
 
         // Get an existing photo file from storage/app/public/reports or create a sample placeholder
         $existingPhotos = Storage::disk('public')->files('reports');
