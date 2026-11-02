@@ -293,8 +293,14 @@
                 </svg>
                 <span>Aduan Aktif</span>
             </button>
+            <button type="button" onclick="selectRepairFilter('sedang')" id="btnStatus-sedang" class="status-filter-chip px-2.5 py-1 rounded-lg text-[10px] font-bold transition bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-sky-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                </svg>
+                <span>Sedang Diperbaiki</span>
+            </button>
             <button type="button" onclick="selectRepairFilter('selesai')" id="btnStatus-selesai" class="status-filter-chip px-2.5 py-1 rounded-lg text-[10px] font-bold transition bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                     <polyline points="20 6 9 17 4 12"/>
                 </svg>
                 <span>Sudah Diperbaiki</span>
@@ -838,14 +844,40 @@
                 return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
             }
 
-            // Cluster reports into spatial hotspots within 35 meters
+            // Pixel-based adaptive clustering helper
+            function getPixelDistance(lat1, lon1, lat2, lon2) {
+                if (map && typeof map.latLngToLayerPoint === 'function') {
+                    try {
+                        const p1 = map.latLngToLayerPoint([lat1, lon1]);
+                        const p2 = map.latLngToLayerPoint([lat2, lon2]);
+                        return Math.hypot(p1.x - p2.x, p1.y - p2.y);
+                    } catch (err) {
+                        // fallback below
+                    }
+                }
+                const distMeters = getDistanceMeters(lat1, lon1, lat2, lon2);
+                const currentZoom = (map && typeof map.getZoom === 'function') ? map.getZoom() : 15;
+                const metersPerPixel = (40075016 * Math.cos(lat1 * Math.PI / 180)) / Math.pow(2, currentZoom + 8);
+                return distMeters / (metersPerPixel || 1);
+            }
+
+            // Cluster reports dynamically by screen pixel proximity (threshold 28px)
+            // so individual report locations show distinct clickable markers when zoomed in,
+            // while grouping into clusters cleanly when zoomed out or touching.
             const clusters = [];
+            const clusterPixelThreshold = 28;
+
             reports.forEach(r => {
                 let added = false;
                 for (let c of clusters) {
-                    const dist = getDistanceMeters(c.center.latitude, c.center.longitude, r.latitude, r.longitude);
-                    if (dist <= 35) {
+                    const pxDist = getPixelDistance(c.center.latitude, c.center.longitude, r.latitude, r.longitude);
+                    if (pxDist <= clusterPixelThreshold) {
                         c.reports.push(r);
+                        // Recompute geometric centroid so marker sits accurately among clustered reports
+                        const sumLat = c.reports.reduce((acc, curr) => acc + curr.latitude, 0);
+                        const sumLon = c.reports.reduce((acc, curr) => acc + curr.longitude, 0);
+                        c.center.latitude = sumLat / c.reports.length;
+                        c.center.longitude = sumLon / c.reports.length;
                         added = true;
                         break;
                     }
@@ -881,17 +913,26 @@
             document.getElementById('legendTotalSegments').innerText = `${reports.length} aduan (${clusters.length} titik)`;
 
             // 1. Render continuous thermal gradient field via leaflet-heat (if loaded)
-            if (typeof L.heatLayer === 'function' && reports.length > 0) {
+            // Synchronized directly with visible clusters to eliminate orphan / phantom heat points
+            if (typeof L.heatLayer === 'function' && clusters.length > 0) {
                 try {
-                    const heatPoints = reports.map(r => {
-                        const density = r.density_count || 1;
-                        const weight = density >= 4 ? 1.0 : (density >= 2 ? 0.65 : 0.4);
-                        return [r.latitude, r.longitude, weight];
+                    const heatPoints = clusters.map(c => {
+                        const count = c.reports.length;
+                        const allFixed = c.reports.every(r => r.status_perbaikan === 'SUDAH_DIPERBAIKI');
+                        let weight = 0.35;
+                        if (allFixed) {
+                            weight = 0.2;
+                        } else if (count >= 4) {
+                            weight = 0.95;
+                        } else if (count >= 2) {
+                            weight = 0.60;
+                        }
+                        return [c.center.latitude, c.center.longitude, weight];
                     });
 
                     const heatCanvas = L.heatLayer(heatPoints, {
-                        radius: 38,
-                        blur: 24,
+                        radius: 24,
+                        blur: 16,
                         maxZoom: 18,
                         gradient: {
                             0.2: '#10B981',
@@ -1198,6 +1239,7 @@
 
     const debouncedLoadHeatmap = debounce(loadHeatmap, 500);
     map.on('moveend', debouncedLoadHeatmap);
+    map.on('zoomend', debouncedLoadHeatmap);
 
     // Initial heatmap fetch
     loadHeatmap();

@@ -45,21 +45,17 @@ class HeatmapTest extends TestCase
         ]);
         $this->adminToken = $this->admin->createToken('admin-token', ['role:admin'])->plainTextToken;
 
-        $segment = SegmenJalur::first();
-        if ($segment) {
-            $this->segmenId = $segment->segmen_id;
-        } else {
-            $this->segmenId = DB::table('segmen_jalur')->insertGetId([
-                'osm_way_id' => 9998,
-                'u_node' => 8887,
-                'v_node' => 7776,
-                'nama_jalan' => 'Jl. Mulyosari Heatmap',
-                'geom' => DB::raw("ST_GeogFromText('SRID=4326;LINESTRING(112.7950 -7.2660, 112.7980 -7.2665)')"),
-                'panjang_m' => 350.0,
-                'skor_kelayakan' => 100.00,
-                'tanggal_update' => now(),
-            ], 'segmen_id');
-        }
+        $unique = rand(10000, 99999);
+        $this->segmenId = DB::table('segmen_jalur')->insertGetId([
+            'osm_way_id' => 90000 + $unique,
+            'u_node' => 80000 + $unique,
+            'v_node' => 70000 + $unique,
+            'nama_jalan' => 'Jl. Mulyosari Heatmap ' . $unique,
+            'geom' => DB::raw("ST_GeogFromText('SRID=4326;LINESTRING(112.7950 -7.2660, 112.7980 -7.2665)')"),
+            'panjang_m' => 350.0,
+            'skor_kelayakan' => 100.00,
+            'tanggal_update' => now(),
+        ], 'segmen_id');
     }
 
     public function test_unauthenticated_cannot_access_heatmap(): void

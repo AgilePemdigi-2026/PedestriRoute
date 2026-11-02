@@ -35,9 +35,63 @@ class WargaSeeder extends Seeder
                 'no_hp' => '6281234567893',
                 'password' => Hash::make('warga12345'),
             ],
+            [
+                'nama' => 'Rina Kartika',
+                'email' => 'rina.kartika@gmail.com',
+                'no_hp' => '6281234567894',
+                'password' => Hash::make('warga12345'),
+            ],
+            [
+                'nama' => 'Dwi Santoso',
+                'email' => 'dwi.santoso@gmail.com',
+                'no_hp' => '6281234567895',
+                'password' => Hash::make('warga12345'),
+            ],
+            [
+                'nama' => 'Mega Kusuma',
+                'email' => 'mega.kusuma@gmail.com',
+                'no_hp' => '6281234567896',
+                'password' => Hash::make('warga12345'),
+            ],
+            [
+                'nama' => 'Eko Prasetyo',
+                'email' => 'eko.prasetyo@gmail.com',
+                'no_hp' => '6281234567897',
+                'password' => Hash::make('warga12345'),
+            ],
+            [
+                'nama' => 'Maya Indah',
+                'email' => 'maya.indah@gmail.com',
+                'no_hp' => '6281234567898',
+                'password' => Hash::make('warga12345'),
+            ],
+            [
+                'nama' => 'Rizky Ramadhan',
+                'email' => 'rizky.ramadhan@gmail.com',
+                'no_hp' => '6281234567899',
+                'password' => Hash::make('warga12345'),
+            ],
+            [
+                'nama' => 'Hendra Wijaya',
+                'email' => 'hendra.wijaya@gmail.com',
+                'no_hp' => '6281234567888',
+                'password' => Hash::make('warga12345'),
+            ],
+            [
+                'nama' => 'Dewi Lestari',
+                'email' => 'dewi.lestari@gmail.com',
+                'no_hp' => '6281234567877',
+                'password' => Hash::make('warga12345'),
+            ],
         ];
 
         foreach ($wargaList as $w) {
+            // Reconcile if another user has this phone number with a different email
+            DB::table('warga')
+                ->where('no_hp', $w['no_hp'])
+                ->where('email', '!=', $w['email'])
+                ->update(['no_hp' => '62899' . rand(1000000, 9999999)]);
+
             DB::table('warga')->updateOrInsert(
                 ['email' => $w['email']],
                 [

@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             AdminSeeder::class,
             WargaSeeder::class,
             SegmenJalurSeeder::class,
+            DemoLaporanSeeder::class,
         ]);
     }
 }

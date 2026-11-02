@@ -320,8 +320,10 @@ class HeatmapController extends Controller
     protected function getReportPoints(float $minLon, float $minLat, float $maxLon, float $maxLat, ?int $kategoriId = null, string $repairFilter = 'aktif'): array
     {
         $statusCondition = " AND (lap.status_perbaikan IS NULL OR lap.status_perbaikan = 'SEDANG_DIPERBAIKI') ";
-        if ($repairFilter === 'selesai') {
+        if ($repairFilter === 'selesai' || $repairFilter === 'sudah_diperbaiki') {
             $statusCondition = " AND lap.status_perbaikan = 'SUDAH_DIPERBAIKI' ";
+        } elseif ($repairFilter === 'sedang' || $repairFilter === 'sedang_diperbaiki') {
+            $statusCondition = " AND lap.status_perbaikan = 'SEDANG_DIPERBAIKI' ";
         } elseif ($repairFilter === 'semua') {
             $statusCondition = "";
         }
