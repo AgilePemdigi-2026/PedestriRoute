@@ -19,4 +19,5 @@ bdd/.venv/
 __pycache__/
 *.pyc
 graphify-out/
+computer vision planning/
 
