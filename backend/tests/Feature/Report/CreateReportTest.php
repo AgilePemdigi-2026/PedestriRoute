@@ -255,4 +255,35 @@ class CreateReportTest extends TestCase
         $response3->assertStatus(201)
             ->assertJsonPath('message', MessageCatalog::REPORT_SENT);
     }
+
+    public function test_pelaporan_dengan_alamat_manual_tersimpan_di_lokasi(): void
+    {
+        $file = UploadedFile::fake()->image('trotoar_manual_alamat.jpg');
+        $customAddress = 'Jl. Sutorejo Prima Utara No. 12, Mulyorejo, Surabaya';
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$this->token)
+            ->postJson('/api/v1/reports', [
+                'latitude' => -7.2663,
+                'longitude' => 112.7965,
+                'kategori_id' => 1,
+                'deskripsi' => 'Trotoar amblas di depan ruko',
+                'alamat' => $customAddress,
+                'foto' => $file,
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('message', MessageCatalog::REPORT_SENT);
+
+        $laporanId = $response->json('data.laporan_id');
+
+        $this->assertDatabaseHas('lokasi', [
+            'alamat' => $customAddress,
+        ]);
+
+        $detailResponse = $this->withHeader('Authorization', 'Bearer '.$this->token)
+            ->getJson('/api/v1/reports/'.$laporanId);
+
+        $detailResponse->assertStatus(200)
+            ->assertJsonPath('data.lokasi.alamat', $customAddress);
+    }
 }

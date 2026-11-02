@@ -6,10 +6,146 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
     #laporMap {
-        height: 400px;
+        height: 380px;
         width: 100%;
         border-radius: 0.875rem;
         z-index: 10;
+    }
+
+    /* Heatmap Gradient Dots */
+    .heat-dot-fixed {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(16, 185, 129, 0.95) 30%, rgba(5, 150, 105, 0.45) 60%, rgba(16, 185, 129, 0) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+    .heat-dot-fixed:hover {
+        transform: scale(1.2);
+    }
+    .heat-dot-fixed-core {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: #059669;
+        border: 2px solid #ffffff;
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 900;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 8px rgba(16, 185, 129, 0.9);
+    }
+
+    .heat-dot-low {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(16, 185, 129, 0.95) 20%, rgba(16, 185, 129, 0.45) 55%, rgba(16, 185, 129, 0) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+    .heat-dot-low:hover {
+        transform: scale(1.2);
+    }
+    .heat-dot-low-core {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #059669;
+        border: 2px solid #ffffff;
+        box-shadow: 0 0 6px rgba(16, 185, 129, 0.9);
+    }
+
+    .heat-dot-medium {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(245, 158, 11, 0.95) 22%, rgba(245, 158, 11, 0.45) 55%, rgba(245, 158, 11, 0) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        animation: heatPulseMedium 2.5s infinite ease-in-out;
+    }
+    .heat-dot-medium:hover {
+        animation-play-state: paused;
+        transform: scale(1.15);
+    }
+    .heat-dot-medium-core {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: #D97706;
+        border: 2px solid #ffffff;
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 8px rgba(245, 158, 11, 0.9);
+    }
+
+    .heat-dot-high {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(220, 38, 38, 0.95) 20%, rgba(239, 68, 68, 0.55) 50%, rgba(248, 113, 113, 0.25) 75%, rgba(239, 68, 68, 0) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        animation: heatPulseHigh 1.8s infinite ease-in-out;
+    }
+    .heat-dot-high:hover {
+        animation-play-state: paused;
+        transform: scale(1.15);
+    }
+    .heat-dot-high-core {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: #B91C1C;
+        border: 2px solid #ffffff;
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 900;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 10px rgba(220, 38, 38, 1);
+    }
+
+    @keyframes heatPulseMedium {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.08); }
+    }
+
+    @keyframes heatPulseHigh {
+        0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+        50% { transform: scale(1.12); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+    }
+
+    /* Custom Leaflet Popup Card */
+    .leaflet-popup-content-wrapper {
+        padding: 0 !important;
+        border-radius: 1rem !important;
+        box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.15) !important;
+        border: 1px solid #e2e8f0 !important;
+        overflow: hidden !important;
+    }
+    .leaflet-popup-content {
+        margin: 0 !important;
+        line-height: 1.4 !important;
     }
 </style>
 @endpush
@@ -70,17 +206,88 @@
                     </svg>
                     <span class="text-xs font-bold text-slate-800">Lokasi Kejadian</span>
                 </div>
-                <span id="gpsBadge" class="text-[10px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-100">
-                    GPS Siap
-                </span>
+                <div class="flex items-center gap-2">
+                    <!-- Toggle Heatmap Button -->
+                    <button type="button" id="btnToggleHeatmap" onclick="toggleLaporHeatmap()"
+                        class="px-2.5 py-1 rounded-full text-[10px] font-bold border transition flex items-center gap-1 bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
+                        title="Tampilkan titik aduan dan kelayakan jalur di peta">
+                        <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/>
+                        </svg>
+                        <span id="heatmapToggleText">Heatmap: Off</span>
+                    </button>
+                    <span id="gpsBadge" class="text-[10px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-100">
+                        GPS Siap
+                    </span>
+                </div>
             </div>
 
-            <!-- Map container -->
+            <!-- Service area notice -->
             <div class="mb-2 rounded-xl border border-teal-200 bg-teal-50 px-3 py-2" role="note">
                 <p class="text-[10px] font-bold text-teal-800">Wilayah Layanan Aktif: Kecamatan Mulyorejo, Surabaya</p>
                 <p class="text-[10px] text-slate-500 mt-0.5">Batas wilayah administratif resmi Kecamatan Mulyorejo.</p>
             </div>
-            <div id="laporMap" class="mb-3 border border-slate-100"></div>
+
+            <!-- Input / Pencarian Alamat Manual -->
+            <div class="relative mb-2.5">
+                <div class="relative flex items-center">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input type="text" id="manualAddressInput" autocomplete="off"
+                        placeholder="Ketik alamat atau cari jalan (contoh: Jl. Raya Mulyosari)..."
+                        class="w-full pl-9 pr-20 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition" />
+                    <div class="absolute inset-y-0 right-0 pr-1.5 flex items-center gap-1">
+                        <button type="button" id="btnClearAddress" class="hidden p-1 text-slate-400 hover:text-slate-600 rounded-md" title="Hapus teks pencarian">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                        <button type="button" id="btnSearchAddress" class="px-2.5 py-1 bg-brand-600 hover:bg-brand-700 text-white text-[10px] font-bold rounded-lg transition shadow-sm">
+                            Cari
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Suggestions Dropdown -->
+                <div id="addressSuggestions" class="hidden absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-56 overflow-y-auto divide-y divide-slate-100 text-xs">
+                </div>
+            </div>
+
+            <!-- Map container with relative overlay -->
+            <div class="relative mb-2.5">
+                <div id="laporMap" class="border border-slate-100"></div>
+
+                <!-- Heatmap loading spinner indicator -->
+                <div id="heatmapLoading" class="hidden absolute top-2.5 right-2.5 z-20 bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg shadow-sm border border-slate-100 flex items-center gap-1.5">
+                    <svg class="w-3 h-3 animate-spin text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span class="text-[9px] font-bold text-slate-700">Memuat titik aduan...</span>
+                </div>
+            </div>
+
+            <!-- Heatmap Mini Legend (Visible when Heatmap is ON) -->
+            <div id="laporHeatmapLegend" class="hidden mb-2.5 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[10px]">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="font-bold text-slate-600 uppercase tracking-wider text-[9px]">Aduan Aktif (Belum Selesai)</span>
+                    <span id="laporHeatmapCount" class="font-extrabold text-brand-700 text-[10px]">0 aduan aktif</span>
+                </div>
+                <div class="grid grid-cols-3 gap-1.5 text-center font-bold">
+                    <div class="bg-emerald-50 text-emerald-800 border border-emerald-100 rounded-lg py-1 px-1 flex items-center justify-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                        <span class="truncate">1 Aduan</span>
+                    </div>
+                    <div class="bg-amber-50 text-amber-800 border border-amber-100 rounded-lg py-1 px-1 flex items-center justify-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
+                        <span class="truncate">2–3 Aduan</span>
+                    </div>
+                    <div class="bg-rose-50 text-rose-800 border border-rose-100 rounded-lg py-1 px-1 flex items-center justify-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-rose-600 shrink-0"></span>
+                        <span class="truncate">≥4 Hotspot</span>
+                    </div>
+                </div>
+            </div>
 
             <!-- Address bar with accuracy -->
             <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex items-center justify-between mb-2.5 text-xs text-slate-700">
@@ -338,6 +545,7 @@
 
 @push('scripts')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 @include('partials.mulyorejo-service-area')
 <script>
     const token = localStorage.getItem('token');
@@ -446,7 +654,489 @@
     const serviceArea = PedestriRouteServiceArea.attach(map);
 
     // Marker Pinpoint - Bebas ditaruh di mana saja oleh pengguna
-    let marker = L.marker([selectedLat, selectedLon], { draggable: true }).addTo(map);
+    let marker = L.marker([selectedLat, selectedLon], { draggable: true, zIndexOffset: 1000 }).addTo(map);
+
+    // ==========================================
+    // 1. Toggleable Heatmap Feature
+    // ==========================================
+    let isHeatmapVisible = false;
+    const heatmapLayerGroup = L.layerGroup();
+
+    function debounce(func, wait) {
+        let timeout;
+        return function (...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
+    function getDistanceMeters(lat1, lon1, lat2, lon2) {
+        const R = 6371e3;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+    }
+
+    function getPixelDistance(lat1, lon1, lat2, lon2) {
+        if (map && typeof map.latLngToLayerPoint === 'function') {
+            try {
+                const p1 = map.latLngToLayerPoint([lat1, lon1]);
+                const p2 = map.latLngToLayerPoint([lat2, lon2]);
+                return Math.hypot(p1.x - p2.x, p1.y - p2.y);
+            } catch (err) {}
+        }
+        const distMeters = getDistanceMeters(lat1, lon1, lat2, lon2);
+        const currentZoom = (map && typeof map.getZoom === 'function') ? map.getZoom() : 17;
+        const metersPerPixel = (40075016 * Math.cos(lat1 * Math.PI / 180)) / Math.pow(2, currentZoom + 8);
+        return distMeters / (metersPerPixel || 1);
+    }
+
+    async function fetchHeatmapData() {
+        if (!isHeatmapVisible) return;
+
+        const loadingEl = document.getElementById('heatmapLoading');
+        if (loadingEl) loadingEl.classList.remove('hidden');
+
+        try {
+            const bounds = map.getBounds();
+            const params = new URLSearchParams({
+                min_lon: bounds.getWest().toFixed(6),
+                min_lat: bounds.getSouth().toFixed(6),
+                max_lon: bounds.getEast().toFixed(6),
+                max_lat: bounds.getNorth().toFixed(6),
+                zoom: Math.round(map.getZoom()),
+                filter_perbaikan: 'aktif'
+            });
+
+            const res = await fetch(`/api/v1/heatmap?${params.toString()}`, {
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!res.ok) return;
+
+            const data = await res.json();
+            // Hanya tampilkan aduan aktif yang belum selesai diperbaiki
+            const reports = (data.reports || []).filter(r => r.status_perbaikan !== 'SUDAH_DIPERBAIKI');
+
+            heatmapLayerGroup.clearLayers();
+
+            // Cluster reports dynamically by screen pixel proximity (threshold 28px)
+            const clusters = [];
+            const clusterPixelThreshold = 28;
+
+            reports.forEach(r => {
+                let added = false;
+                for (let c of clusters) {
+                    const pxDist = getPixelDistance(c.center.latitude, c.center.longitude, r.latitude, r.longitude);
+                    if (pxDist <= clusterPixelThreshold) {
+                        c.reports.push(r);
+                        const sumLat = c.reports.reduce((acc, curr) => acc + curr.latitude, 0);
+                        const sumLon = c.reports.reduce((acc, curr) => acc + curr.longitude, 0);
+                        c.center.latitude = sumLat / c.reports.length;
+                        c.center.longitude = sumLon / c.reports.length;
+                        added = true;
+                        break;
+                    }
+                }
+                if (!added) {
+                    clusters.push({
+                        center: { latitude: r.latitude, longitude: r.longitude },
+                        reports: [r],
+                    });
+                }
+            });
+
+            const countEl = document.getElementById('laporHeatmapCount');
+            if (countEl) {
+                countEl.innerText = `${reports.length} aduan aktif (${clusters.length} titik)`;
+            }
+
+            // 1. Render continuous thermal field via Leaflet heatLayer (if loaded)
+            if (typeof L.heatLayer === 'function' && clusters.length > 0) {
+                try {
+                    const heatPoints = clusters.map(c => {
+                        const count = c.reports.length;
+                        let weight = 0.35;
+                        if (count >= 4) {
+                            weight = 0.95;
+                        } else if (count >= 2) {
+                            weight = 0.60;
+                        }
+                        return [c.center.latitude, c.center.longitude, weight];
+                    });
+
+                    const heatCanvas = L.heatLayer(heatPoints, {
+                        radius: 22,
+                        blur: 15,
+                        maxZoom: 18,
+                        gradient: {
+                            0.2: '#10B981',
+                            0.45: '#F59E0B',
+                            0.75: '#EF4444',
+                            1.0: '#991B1B'
+                        }
+                    });
+                    heatmapLayerGroup.addLayer(heatCanvas);
+                } catch (e) {}
+            }
+
+            // 2. Render each cluster as an interactive dot
+            clusters.forEach(cluster => {
+                const count = cluster.reports.length;
+                const lat = cluster.center.latitude;
+                const lon = cluster.center.longitude;
+
+                let iconClass = 'heat-dot-low';
+                let iconHtml = '<div class="heat-dot-low-core"></div>';
+                let iconSize = [30, 30];
+                let iconAnchor = [15, 15];
+
+                if (count >= 4) {
+                    iconClass = 'heat-dot-high';
+                    iconHtml = `<div class="heat-dot-high-core flex items-center justify-center gap-0.5"><svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg><span>${count}</span></div>`;
+                    iconSize = [50, 50];
+                    iconAnchor = [25, 25];
+                } else if (count >= 2) {
+                    iconClass = 'heat-dot-medium';
+                    iconHtml = `<div class="heat-dot-medium-core">${count}</div>`;
+                    iconSize = [40, 40];
+                    iconAnchor = [20, 20];
+                }
+
+                const markerIcon = L.divIcon({
+                    className: 'custom-heat-marker',
+                    html: `<div class="${iconClass}">${iconHtml}</div>`,
+                    iconSize: iconSize,
+                    iconAnchor: iconAnchor,
+                });
+
+                const heatMarker = L.marker([lat, lon], { icon: markerIcon });
+
+                const firstRep = cluster.reports[0];
+                const headerTitle = count > 1 
+                    ? `<span class="text-rose-700 font-extrabold">🔥 Titik Rawan (${count} Aduan)</span>` 
+                    : `<span class="text-brand-700 font-extrabold">${firstRep.kode_laporan || '#Aduan'}</span>`;
+                const safeAddr = (firstRep.alamat || '').replace(/'/g, "\\'");
+                const statusBadge = firstRep.status_perbaikan === 'SEDANG_DIPERBAIKI'
+                    ? `<span class="px-1.5 py-0.5 bg-sky-100 text-sky-800 text-[9px] font-bold rounded">Sedang Dikerjakan</span>`
+                    : `<span class="px-1.5 py-0.5 bg-amber-100 text-amber-800 text-[9px] font-bold rounded">Belum Ditangani</span>`;
+
+                const popupHtml = `
+                    <div class="p-3 max-w-[240px]">
+                        <div class="flex items-center justify-between text-xs pb-1.5 border-b border-slate-100 mb-1.5">
+                            ${headerTitle}
+                            ${statusBadge}
+                        </div>
+                        <p class="text-[11px] font-bold text-slate-800 mb-0.5">${firstRep.kategori_nama || 'Fasilitas Pejalan Kaki'}</p>
+                        <p class="text-[10px] text-slate-500 line-clamp-2 leading-relaxed mb-2 font-medium">"${firstRep.deskripsi || 'Tidak ada catatan tambahan.'}"</p>
+                        <button type="button" onclick="syncLocationFromHeatmap(${lat}, ${lon}, '${safeAddr}')"
+                            class="w-full py-1.5 px-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-[10px] flex items-center justify-center gap-1 shadow-sm transition">
+                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
+                            <span>Pilih Titik Ini Untuk Laporan</span>
+                        </button>
+                    </div>
+                `;
+
+                heatMarker.bindPopup(popupHtml, { maxWidth: 260 });
+                heatmapLayerGroup.addLayer(heatMarker);
+            });
+
+        } catch (e) {
+            console.error('Heatmap load error on lapor page:', e);
+        } finally {
+            if (loadingEl) loadingEl.classList.add('hidden');
+        }
+    }
+
+    const debouncedHeatmap = debounce(() => {
+        if (isHeatmapVisible) fetchHeatmapData();
+    }, 500);
+
+    map.on('moveend', debouncedHeatmap);
+    map.on('zoomend', debouncedHeatmap);
+
+    function toggleLaporHeatmap() {
+        isHeatmapVisible = !isHeatmapVisible;
+        const btn = document.getElementById('btnToggleHeatmap');
+        const text = document.getElementById('heatmapToggleText');
+        const legend = document.getElementById('laporHeatmapLegend');
+
+        if (isHeatmapVisible) {
+            btn.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold border transition flex items-center gap-1 bg-brand-600 text-white border-brand-600 shadow-sm';
+            text.innerText = 'Heatmap: On';
+            if (legend) legend.classList.remove('hidden');
+            if (!map.hasLayer(heatmapLayerGroup)) {
+                map.addLayer(heatmapLayerGroup);
+            }
+            fetchHeatmapData();
+            showToast('Heatmap sebaran aduan aktif', 'info');
+        } else {
+            btn.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold border transition flex items-center gap-1 bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200';
+            text.innerText = 'Heatmap: Off';
+            if (legend) legend.classList.add('hidden');
+            heatmapLayerGroup.clearLayers();
+            if (map.hasLayer(heatmapLayerGroup)) {
+                map.removeLayer(heatmapLayerGroup);
+            }
+            showToast('Heatmap sebaran aduan dimatikan', 'info');
+        }
+    }
+
+    function syncLocationFromHeatmap(lat, lon, address = '') {
+        map.closePopup();
+        updateCoordinates(lat, lon);
+        map.setView([lat, lon], 17);
+        if (address) {
+            const manualInput = document.getElementById('manualAddressInput');
+            if (manualInput) {
+                manualInput.value = address;
+                document.getElementById('btnClearAddress')?.classList.remove('hidden');
+            }
+            const alamatEl = document.getElementById('alamatText');
+            if (alamatEl) alamatEl.innerText = address;
+        }
+        showToast('Titik laporan disinkronkan ke lokasi aduan', 'success');
+    }
+
+    // ==========================================
+    // 2. Manual Address Search & Autocomplete
+    // ==========================================
+    let cachedLocalStreets = [];
+    async function loadLocalStreets() {
+        try {
+            const res = await fetch('/api/v1/segments', {
+                headers: { 'Accept': 'application/json' }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const features = data?.features || [];
+                const seen = new Set();
+                features.forEach(f => {
+                    const name = f.properties?.nama_jalan;
+                    if (name && !seen.has(name)) {
+                        seen.add(name);
+                        let lat = selectedLat;
+                        let lon = selectedLon;
+                        if (f.geometry?.coordinates?.length > 0) {
+                            const first = f.geometry.coordinates[0];
+                            lon = first[0];
+                            lat = first[1];
+                        }
+                        cachedLocalStreets.push({
+                            name: name,
+                            lat: lat,
+                            lon: lon,
+                            type: 'Jalan Lokal (Mulyorejo)'
+                        });
+                    }
+                });
+            }
+        } catch (e) {
+            console.warn('Failed to load local segments:', e);
+        }
+
+        // Add prominent public landmarks in Mulyorejo area
+        const landmarks = [
+            { name: 'Universitas Airlangga Kampus C (UNAIR)', lat: -7.2713, lon: 112.7990, type: 'Kampus / Fasilitas Publik' },
+            { name: 'Institut Teknologi Sepuluh Nopember (ITS)', lat: -7.2824, lon: 112.7949, type: 'Kampus / Fasilitas Publik' },
+            { name: 'Galaxy Mall Surabaya', lat: -7.2755, lon: 112.7806, type: 'Pusat Perbelanjaan' },
+            { name: 'Pakuwon City San Antonio', lat: -7.2662, lon: 112.8095, type: 'Kawasan Perumahan' },
+            { name: 'Pasar Modern Mulyosari', lat: -7.2618, lon: 112.7954, type: 'Pasar & Kuliner' },
+            { name: 'Kantor Kecamatan Mulyorejo', lat: -7.2680, lon: 112.7915, type: 'Kantor Pemerintahan' },
+            { name: 'RS Unair (Rumah Sakit Airlangga)', lat: -7.2685, lon: 112.7876, type: 'Rumah Sakit' },
+        ];
+        landmarks.forEach(l => cachedLocalStreets.push(l));
+    }
+    loadLocalStreets();
+
+    const manualAddressInput = document.getElementById('manualAddressInput');
+    const addressSuggestions = document.getElementById('addressSuggestions');
+    const btnClearAddress = document.getElementById('btnClearAddress');
+    const btnSearchAddress = document.getElementById('btnSearchAddress');
+    let addressSearchTimer = null;
+    let addressSearchController = null;
+
+    function renderAddressSuggestions(items) {
+        if (!items || items.length === 0) {
+            addressSuggestions.innerHTML = `
+                <div class="px-3.5 py-3 text-center text-slate-400 text-xs">
+                    <p class="font-medium">Alamat tidak ditemukan</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Coba gunakan nama jalan utama atau geser pin di peta</p>
+                </div>
+            `;
+            addressSuggestions.classList.remove('hidden');
+            return;
+        }
+
+        addressSuggestions.innerHTML = items.map((item, idx) => `
+            <div class="px-3.5 py-2.5 hover:bg-teal-50 cursor-pointer flex items-center justify-between transition group suggestion-item" data-idx="${idx}">
+                <div class="flex items-center gap-2.5 min-w-0 pr-2">
+                    <span class="w-6 h-6 rounded-lg bg-teal-100 text-brand-700 flex items-center justify-center shrink-0 group-hover:bg-brand-600 group-hover:text-white transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    </span>
+                    <div class="truncate">
+                        <p class="font-bold text-xs text-slate-800 group-hover:text-brand-900 truncate leading-tight">${item.name}</p>
+                        <p class="text-[10px] text-slate-400 truncate mt-0.5 leading-tight">${item.detail || item.type || 'Surabaya'}</p>
+                    </div>
+                </div>
+                <span class="px-1.5 py-0.5 text-[9px] font-bold rounded shrink-0 ${item.isMulyorejo ? 'bg-teal-50 text-brand-700 border border-teal-200' : 'bg-slate-100 text-slate-600'}">
+                    ${item.isMulyorejo ? 'Mulyorejo' : 'Surabaya'}
+                </span>
+            </div>
+        `).join('');
+
+        addressSuggestions.querySelectorAll('.suggestion-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const idx = parseInt(el.getAttribute('data-idx'), 10);
+                const selected = items[idx];
+                if (selected) {
+                    applySelectedAddress(selected);
+                }
+            });
+        });
+
+        addressSuggestions.classList.remove('hidden');
+    }
+
+    function applySelectedAddress(item) {
+        addressSuggestions.classList.add('hidden');
+        if (manualAddressInput) manualAddressInput.value = item.name;
+        if (btnClearAddress) btnClearAddress.classList.remove('hidden');
+
+        updateCoordinates(item.lat, item.lon, null);
+        map.setView([item.lat, item.lon], 17);
+
+        const accuracyBadge = document.getElementById('accuracyBadge');
+        if (accuracyBadge) accuracyBadge.innerText = 'Pencarian Alamat';
+
+        const alamatEl = document.getElementById('alamatText');
+        if (alamatEl) alamatEl.innerText = item.name;
+
+        // Check against Mulyorejo service area boundary
+        if (typeof PedestriRouteServiceArea !== 'undefined' && PedestriRouteServiceArea.contains) {
+            const isInside = PedestriRouteServiceArea.contains(item.lat, item.lon);
+            if (!isInside) {
+                showToast('Catatan: Titik berada di luar batas administratif Kecamatan Mulyorejo', 'info');
+            } else {
+                showToast('Lokasi peta diperbarui ke ' + item.name, 'success');
+            }
+        }
+    }
+
+    async function executeAddressSearch(query) {
+        const q = query.trim().toLowerCase();
+        if (q.length < 2) {
+            addressSuggestions.classList.add('hidden');
+            return;
+        }
+
+        const results = [];
+
+        // 1. Check local cache (Mulyorejo segments & landmarks)
+        cachedLocalStreets.forEach(s => {
+            if (s.name.toLowerCase().includes(q)) {
+                results.push({
+                    name: s.name,
+                    detail: s.type,
+                    lat: s.lat,
+                    lon: s.lon,
+                    isMulyorejo: true
+                });
+            }
+        });
+
+        // 2. Fetch from OpenStreetMap Nominatim for live Surabaya search
+        if (addressSearchController) addressSearchController.abort();
+        addressSearchController = new AbortController();
+
+        try {
+            const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ' Surabaya')}&viewbox=112.75,-7.30,112.84,-7.24&bounded=0&countrycodes=id&limit=4&addressdetails=1`;
+            const res = await fetch(nominatimUrl, {
+                headers: { 'Accept': 'application/json' },
+                signal: addressSearchController.signal
+            });
+            if (res.ok) {
+                const osmData = await res.json();
+                osmData.forEach(item => {
+                    const lat = parseFloat(item.lat);
+                    const lon = parseFloat(item.lon);
+                    const duplicate = results.some(r => Math.abs(r.lat - lat) < 0.0001 && Math.abs(r.lon - lon) < 0.0001);
+                    if (!duplicate) {
+                        const displayName = item.display_name.split(',')[0];
+                        const suburb = item.address?.suburb || item.address?.city_district || 'Surabaya';
+                        const isMulyorejo = suburb.toLowerCase().includes('mulyorejo') || 
+                                           (typeof PedestriRouteServiceArea !== 'undefined' && PedestriRouteServiceArea.contains && PedestriRouteServiceArea.contains(lat, lon));
+                        results.push({
+                            name: displayName,
+                            detail: item.display_name.split(',').slice(1, 3).join(',').trim(),
+                            lat: lat,
+                            lon: lon,
+                            isMulyorejo: isMulyorejo
+                        });
+                    }
+                });
+            }
+        } catch (e) {
+            if (e.name !== 'AbortError') console.warn('Nominatim search error:', e);
+        }
+
+        renderAddressSuggestions(results);
+    }
+
+    if (manualAddressInput) {
+        manualAddressInput.addEventListener('input', (e) => {
+            const val = e.target.value;
+            if (val.trim()) {
+                btnClearAddress.classList.remove('hidden');
+            } else {
+                btnClearAddress.classList.add('hidden');
+                addressSuggestions.classList.add('hidden');
+                return;
+            }
+
+            clearTimeout(addressSearchTimer);
+            addressSearchTimer = setTimeout(() => {
+                executeAddressSearch(val);
+            }, 350);
+        });
+
+        manualAddressInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(addressSearchTimer);
+                executeAddressSearch(manualAddressInput.value);
+            }
+        });
+    }
+
+    if (btnSearchAddress) {
+        btnSearchAddress.addEventListener('click', () => {
+            if (manualAddressInput && manualAddressInput.value.trim()) {
+                executeAddressSearch(manualAddressInput.value);
+            }
+        });
+    }
+
+    if (btnClearAddress) {
+        btnClearAddress.addEventListener('click', () => {
+            manualAddressInput.value = '';
+            btnClearAddress.classList.add('hidden');
+            addressSuggestions.classList.add('hidden');
+            manualAddressInput.focus();
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#manualAddressInput') && !e.target.closest('#addressSuggestions')) {
+            if (addressSuggestions) addressSuggestions.classList.add('hidden');
+        }
+    });
 
     // Reverse geocoding Nominatim (FR-F7-11)
     const GEOCODE_DEBOUNCE_MS = 500;      // debounce minimal 500 ms
@@ -479,14 +1169,23 @@
                     const data = await res.json();
                     const road = data.address?.road || data.address?.pedestrian || data.address?.footway || data.address?.suburb || data.display_name?.split(',')[0];
                     if (road) {
-                        alamatEl.innerText = `${road}, Surabaya`;
+                        const fullAddr = `${road}, Surabaya`;
+                        alamatEl.innerText = fullAddr;
+                        if (manualAddressInput && document.activeElement !== manualAddressInput) {
+                            manualAddressInput.value = fullAddr;
+                            btnClearAddress?.classList.remove('hidden');
+                        }
                         return;
                     }
                 }
             } catch (e) {
                 if (e.name === 'AbortError') return; // digantikan request yang lebih baru
             }
-            alamatEl.innerText = `Titik Koordinat (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+            const coordFallback = `Titik Koordinat (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+            alamatEl.innerText = coordFallback;
+            if (manualAddressInput && document.activeElement !== manualAddressInput && !manualAddressInput.value) {
+                manualAddressInput.value = coordFallback;
+            }
         }, wait);
     }
 
@@ -496,6 +1195,7 @@
         const newLatLng = [selectedLat, selectedLon];
 
         marker.setLatLng(newLatLng);
+        marker.setZIndexOffset(1000);
 
         document.getElementById('coordDisplay').value = `${selectedLat}, ${selectedLon}`;
         
@@ -708,6 +1408,11 @@
         formData.append('kategori_id', selectedCategoryId);
         formData.append('deskripsi', deskripsi);
         formData.append('foto', preparedPhotoBlob, preparedPhotoName);
+
+        const manualAddress = manualAddressInput ? manualAddressInput.value.trim() : '';
+        if (manualAddress) {
+            formData.append('alamat', manualAddress);
+        }
 
         const btnSubmit = document.getElementById('btnSubmitReport');
         btnSubmit.disabled = true;

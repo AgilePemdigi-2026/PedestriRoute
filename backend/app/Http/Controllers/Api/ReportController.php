@@ -267,15 +267,18 @@ class ReportController extends Controller
         }
 
         // 5. Database transaction (atomic, FR-F3-13)
+        $alamatInput = trim((string) $request->input('alamat', ''));
+        $resolvedAlamat = $alamatInput !== '' ? mb_substr($alamatInput, 0, 255) : $nearestSegment->nama_jalan;
+
         $laporan = null;
         try {
-            DB::transaction(function () use ($warga, $lat, $lon, $nearestSegment, $kategoriId, $deskripsi, $photoPath, &$laporan) {
+            DB::transaction(function () use ($warga, $lat, $lon, $nearestSegment, $resolvedAlamat, $kategoriId, $deskripsi, $photoPath, &$laporan) {
                 // Insert lokasi
                 $lokasiId = DB::table('lokasi')->insertGetId([
                     'latitude' => $lat,
                     'longitude' => $lon,
                     'geom' => DB::raw("ST_SetSRID(ST_Point({$lon}, {$lat}), 4326)"),
-                    'alamat' => $nearestSegment->nama_jalan,
+                    'alamat' => $resolvedAlamat,
                     'segmen_id' => $nearestSegment->segmen_id,
                 ], 'lokasi_id');
 
