@@ -7,8 +7,8 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
     #map {
-        height: 520px;
-        max-height: 75vh;
+        height: 620px;
+        max-height: 82vh;
         width: 100%;
         border-radius: 1.25rem;
         z-index: 10;
@@ -152,6 +152,38 @@
     .leaflet-popup-tip {
         background: #ffffff !important;
     }
+
+    /* In-Map Bottom Sheet Animations & Scrollbar */
+    #reportBottomSheet {
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease-out;
+    }
+    #sheetBody::-webkit-scrollbar {
+        width: 4px;
+    }
+    #sheetBody::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+    #sheetBody::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    #sheetBody::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    /* Selected Marker Glowing Beacon */
+    .heat-marker-selected {
+        z-index: 9999 !important;
+    }
+    .heat-marker-selected .heat-dot-low-core,
+    .heat-marker-selected .heat-dot-medium-core,
+    .heat-marker-selected .heat-dot-high-core,
+    .heat-marker-selected .heat-dot-fixed-core {
+        box-shadow: 0 0 0 4px rgba(0, 98, 87, 0.35), 0 0 18px rgba(0, 98, 87, 0.9) !important;
+        transform: scale(1.25);
+        outline: 2px solid #ffffff;
+    }
 </style>
 @endpush
 
@@ -253,7 +285,26 @@
                 <p id="countDitolak" class="text-xl font-extrabold text-rose-900">0</p>
             </div>
         </div>
-         <a href="/riwayat-laporan" class="mt-2.5 block text-center text-xs font-bold text-brand-600 hover:underline">Lihat riwayat laporan →</a>
+
+        <!-- Tombol Akses Riwayat Laporan Lengkap -->
+        <a href="/riwayat-laporan" class="mt-3 w-full py-2.5 px-3.5 bg-gradient-to-r from-teal-50/90 via-emerald-50/60 to-teal-50/90 hover:from-teal-100/90 hover:to-emerald-100/80 border border-teal-200/90 rounded-2xl flex items-center justify-between text-xs font-bold text-brand-800 transition-all duration-200 group shadow-sm hover:shadow-md hover:border-brand-300">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-white text-brand-600 flex items-center justify-center shadow-xs border border-teal-100 group-hover:scale-105 group-hover:bg-brand-600 group-hover:text-white transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div class="text-left">
+                    <span class="block text-slate-800 font-extrabold text-xs group-hover:text-brand-900 transition-colors">Lihat Riwayat Laporan Lengkap</span>
+                    <span class="block text-[10px] text-teal-700/80 font-medium">Pantau progres & linimasa tindak lanjut aduan</span>
+                </div>
+            </div>
+            <div class="w-6 h-6 rounded-full bg-brand-600 text-white flex items-center justify-center group-hover:bg-brand-700 group-hover:translate-x-0.5 transition-all shadow-xs shrink-0">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
+            </div>
+        </a>
     </div>
 
     <!-- Map Section (Toggleable: Heatmap / Normal Map) -->
@@ -376,6 +427,20 @@
                         Tutup
                     </button>
                 </div>
+            </div>
+
+            <!-- In-Map Report Bottom Sheet (Opsi B) -->
+            <div id="reportBottomSheet" class="absolute bottom-0 inset-x-0 z-30 transform translate-y-full opacity-0 pointer-events-none bg-white rounded-t-3xl shadow-2xl border-t border-slate-200/80 max-h-[60%] flex flex-col transition-all">
+                <!-- Grab Handle Bar -->
+                <div id="sheetDragHandle" class="w-full pt-2.5 pb-1 flex justify-center cursor-pointer select-none" onclick="closeReportBottomSheet()" title="Tutup lembar aduan">
+                    <div class="w-10 h-1 bg-slate-300 rounded-full hover:bg-slate-400 transition"></div>
+                </div>
+
+                <!-- Sheet Dynamic Header -->
+                <div id="sheetHeader" class="px-4 py-2 border-b border-slate-100 flex items-center justify-between"></div>
+
+                <!-- Sheet Dynamic Scrollable Body -->
+                <div id="sheetBody" class="p-4 overflow-y-auto max-h-[calc(620px*0.52)] scrollbar-thin"></div>
             </div>
         </div>
 
@@ -670,6 +735,7 @@
     function setMapMode(mode) {
         if (currentMapMode === mode) return;
         currentMapMode = mode;
+        closeReportBottomSheet();
 
         const btnHeatmap = document.getElementById('btnModeHeatmap');
         const btnNormal = document.getElementById('btnModeNormal');
@@ -729,6 +795,7 @@
 
     function selectRepairFilter(filter) {
         currentRepairFilter = filter;
+        closeReportBottomSheet();
 
         document.querySelectorAll('.status-filter-chip').forEach(btn => {
             btn.className = 'status-filter-chip px-2.5 py-1 rounded-lg text-[10px] font-bold transition bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center gap-1.5';
@@ -747,6 +814,7 @@
     // Category Chip selection
     function selectCategory(catId) {
         selectedCategoryId = catId;
+        closeReportBottomSheet();
 
         document.querySelectorAll('.heatmap-chip').forEach(btn => {
             btn.className = 'heatmap-chip px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200 transition';
@@ -767,10 +835,342 @@
         document.getElementById('mapEmptyNotice').classList.add('hidden');
     }
 
-    // Active popup tracking to prevent map reloads from dismissing user's open popup
-    let isUserViewingPopup = false;
-    map.on('popupopen', () => { isUserViewingPopup = true; });
-    map.on('popupclose', () => { isUserViewingPopup = false; });
+    // Active bottom sheet tracking to prevent map reloads from dismissing user's inspection
+    let isUserViewingSheet = false;
+    let activeSelectedMarker = null;
+
+    function focusOnMarkerUpperZone(marker) {
+        if (!marker || !map) return;
+
+        const latLng = marker.getLatLng();
+        const mapSize = map.getSize();
+
+        // Target position: horizontally centered, upper quadrant (~26% of container height)
+        // so it sits clearly above the bottom sheet (which occupies bottom ~55%)
+        const targetY = Math.round(Math.min(mapSize.y * 0.28, Math.max(mapSize.y * 0.22, 110)));
+        const targetPoint = L.point(mapSize.x / 2, targetY);
+
+        const currentPoint = map.latLngToContainerPoint(latLng);
+        const deltaX = currentPoint.x - targetPoint.x;
+        const deltaY = currentPoint.y - targetPoint.y;
+
+        if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
+            map.panBy([deltaX, deltaY], {
+                animate: true,
+                duration: 0.45,
+                easeLinearity: 0.25
+            });
+        }
+    }
+
+    function closeReportBottomSheet() {
+        const sheet = document.getElementById('reportBottomSheet');
+        if (sheet) {
+            sheet.classList.add('translate-y-full', 'opacity-0', 'pointer-events-none');
+            sheet.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
+        }
+
+        if (activeSelectedMarker) {
+            const el = activeSelectedMarker.getElement ? activeSelectedMarker.getElement() : activeSelectedMarker._icon;
+            if (el) el.classList.remove('heat-marker-selected');
+        }
+        activeSelectedMarker = null;
+
+        if (isUserViewingSheet) {
+            isUserViewingSheet = false;
+            debouncedLoadHeatmap();
+        }
+    }
+
+    // Helper to build and render bottom sheet content for the clicked report/cluster
+    function renderReportSheetContent(cluster) {
+        const reportsAtSpot = cluster.reports;
+        const headerEl = document.getElementById('sheetHeader');
+        const bodyEl = document.getElementById('sheetBody');
+        if (!headerEl || !bodyEl) return;
+
+        const catIcons = {
+            'Trotoar Rusak': `<span class="w-4 h-4 rounded bg-teal-100 text-brand-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>`,
+            'Masalah Drainase': `<span class="w-4 h-4 rounded bg-sky-100 text-sky-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg></span>`,
+            'Guiding Block Rusak': `<span class="w-4 h-4 rounded bg-amber-100 text-amber-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="16" cy="4" r="1"/><path stroke-linecap="round" stroke-linejoin="round" d="m18 19 1-7-6 1M5 8l3-3 5.5 3-2.36 3.5M4.24 14.5a5 5 0 0 0 6.88 6M13.76 17.5a5 5 0 0 0-6.88-6"/></svg></span>`,
+            'Guiding Block': `<span class="w-4 h-4 rounded bg-amber-100 text-amber-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="16" cy="4" r="1"/><path stroke-linecap="round" stroke-linejoin="round" d="m18 19 1-7-6 1M5 8l3-3 5.5 3-2.36 3.5M4.24 14.5a5 5 0 0 0 6.88 6M13.76 17.5a5 5 0 0 0-6.88-6"/></svg></span>`,
+            'Penyebrangan Rusak': `<span class="w-4 h-4 rounded bg-emerald-100 text-emerald-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect width="10" height="18" x="7" y="3" rx="4"/><circle cx="12" cy="7.5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="16.5" r="1.5" fill="currentColor"/></svg></span>`,
+            'Penyeberangan': `<span class="w-4 h-4 rounded bg-emerald-100 text-emerald-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect width="10" height="18" x="7" y="3" rx="4"/><circle cx="12" cy="7.5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="16.5" r="1.5" fill="currentColor"/></svg></span>`,
+            'Parkir Liar': `<span class="w-4 h-4 rounded bg-rose-100 text-rose-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="m4.93 4.93 14.14 14.14"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg></span>`,
+        };
+        const defaultCatIcon = `<span class="w-4 h-4 rounded bg-slate-100 text-slate-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13.5"/><circle cx="12" cy="17.2" r="1.1" fill="currentColor" stroke="none"/></svg></span>`;
+
+        function getReparationBadge(status) {
+            if (status === 'SUDAH_DIPERBAIKI') {
+                return `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-extrabold rounded-full flex items-center gap-1 shadow-sm"><svg class="w-3 h-3 text-emerald-700" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Selesai</span>`;
+            }
+            if (status === 'SEDANG_DIPERBAIKI') {
+                return `<span class="px-2 py-0.5 bg-sky-100 text-sky-800 text-[10px] font-extrabold rounded-full flex items-center gap-1 shadow-sm"><svg class="w-3 h-3 text-sky-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Dikerjakan</span>`;
+            }
+            return `<span class="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-extrabold rounded-full flex items-center gap-1 shadow-sm"><svg class="w-3 h-3 text-amber-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Belum Ditangani</span>`;
+        }
+
+        function formatReportDate(isoStr) {
+            if (!isoStr) return '-';
+            const d = new Date(isoStr);
+            return d.toLocaleDateString('id-ID', {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            }) + ' WIB';
+        }
+
+        const closeBtnHtml = `
+            <button type="button" onclick="closeReportBottomSheet()" title="Tutup Lembar Aduan" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center text-xs font-black transition ml-2 flex-shrink-0 cursor-pointer">
+                ✕
+            </button>
+        `;
+
+        const allRepaired = reportsAtSpot.every(r => r.status_perbaikan === 'SUDAH_DIPERBAIKI');
+
+        if (allRepaired) {
+            headerEl.innerHTML = `
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    </span>
+                    <div class="truncate">
+                        <span class="text-xs font-black text-slate-900 block truncate">Fasilitas Selesai Diperbaiki</span>
+                        <span class="text-[9px] text-emerald-700 font-extrabold">Terverifikasi Layak Pejalan Kaki</span>
+                    </div>
+                </div>
+                ${closeBtnHtml}
+            `;
+        } else if (reportsAtSpot.length > 1) {
+            headerEl.innerHTML = `
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="w-6 h-6 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg>
+                    </span>
+                    <div class="truncate">
+                        <span class="text-xs font-black text-slate-900 block truncate">Titik Rawan Hotspot</span>
+                        <span class="text-[9px] text-rose-700 font-extrabold">${reportsAtSpot.length} Laporan Aduan Warga</span>
+                    </div>
+                </div>
+                ${closeBtnHtml}
+            `;
+        } else {
+            const single = reportsAtSpot[0];
+            headerEl.innerHTML = `
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="w-6 h-6 rounded-lg bg-teal-100 text-brand-700 flex items-center justify-center shrink-0">
+                        <svg class="w-3.5 h-3.5 text-brand-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
+                    </span>
+                    <div class="truncate">
+                        <span class="text-xs font-black text-slate-900 block truncate">${single.kode_laporan || ('#LAP-' + String(single.laporan_id).padStart(4, '0'))}</span>
+                        <span class="text-[9px] text-brand-700 font-bold">${single.kategori_nama}</span>
+                    </div>
+                </div>
+                ${closeBtnHtml}
+            `;
+        }
+
+        let multiNoticeHtml = '';
+        if (reportsAtSpot.length > 1) {
+            multiNoticeHtml = `
+                <div class="mb-3 px-3 py-1.5 bg-rose-50 border border-rose-200/80 rounded-xl flex items-center justify-between text-[10px] text-rose-900 font-semibold">
+                    <span>Daftar ${reportsAtSpot.length} aduan aktif di lokasi ini</span>
+                    <span class="text-rose-600 font-bold">Gulir ke bawah ↓</span>
+                </div>
+            `;
+        }
+
+        const itemsHtml = reportsAtSpot.map((rep, idx) => {
+            const icon = catIcons[rep.kategori_nama] || defaultCatIcon;
+            const isRepaired = (rep.status_perbaikan === 'SUDAH_DIPERBAIKI');
+            const isRepairing = (rep.status_perbaikan === 'SEDANG_DIPERBAIKI');
+
+            // Visual Proof Section: Before vs After Photos
+            let visualProofHtml = '';
+            if (isRepaired && rep.foto_perbaikan_url) {
+                visualProofHtml = `
+                    <div class="mb-2.5 p-2 bg-slate-50 rounded-xl border border-slate-200">
+                        <span class="text-[9px] font-black text-slate-500 uppercase tracking-wider block mb-1.5 text-center">Komparasi Bukti Fisik Lapangan</span>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <span class="text-[8px] font-bold text-rose-700 bg-rose-50 px-1 py-0.5 rounded flex items-center justify-center gap-1 mb-1 truncate text-center"><span class="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span> SEBELUM (Rusak)</span>
+                                <div class="w-full h-24 bg-slate-200 rounded-lg overflow-hidden relative shadow-inner">
+                                    <img src="${rep.foto_url || 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=300'}" alt="Foto Sebelum" class="w-full h-full object-cover">
+                                </div>
+                            </div>
+                            <div>
+                                <span class="text-[8px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded flex items-center justify-center gap-1 mb-1 truncate text-center"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span> SESUDAH (Selesai)</span>
+                                <div class="w-full h-24 bg-emerald-100 rounded-lg overflow-hidden relative shadow-inner border border-emerald-300">
+                                    <img src="${rep.foto_perbaikan_url}" alt="Foto Sesudah" class="w-full h-full object-cover">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (rep.foto_url) {
+                visualProofHtml = `
+                    <div class="relative w-full h-32 bg-slate-100 rounded-xl overflow-hidden mb-2.5 shadow-inner">
+                        <img src="${rep.foto_url}" alt="Foto Bukti" class="w-full h-full object-cover">
+                        <span class="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 backdrop-blur-md text-white text-[9px] font-bold rounded-md flex items-center gap-1.5">
+                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            <span>Foto Aduan Warga</span>
+                        </span>
+                        ${isRepaired ? '<span class="absolute top-2 right-2 px-2 py-0.5 bg-emerald-600/90 text-white text-[9px] font-extrabold rounded-md shadow-sm flex items-center gap-1"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Telah Selesai</span>' : ''}
+                    </div>
+                `;
+            } else {
+                visualProofHtml = `
+                    <div class="w-full h-16 bg-slate-50 border border-dashed border-slate-200 rounded-xl flex items-center justify-center text-slate-400 text-xs font-semibold gap-1.5 mb-2.5">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        <span>Foto bukti belum dilampirkan</span>
+                    </div>
+                `;
+            }
+
+            // Official verification / audit proof card
+            let auditProofHtml = '';
+            if (isRepaired) {
+                auditProofHtml = `
+                    <div class="mb-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-left">
+                        <div class="flex items-center gap-1.5 mb-1 text-emerald-900">
+                            <svg class="w-3.5 h-3.5 text-emerald-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            <strong class="text-[10px] font-black uppercase tracking-wider">Bukti Verifikasi Selesai:</strong>
+                        </div>
+                        <p class="text-[11px] text-emerald-950 font-medium leading-relaxed mb-1.5">
+                            "${rep.catatan_perbaikan || 'Fasilitas pejalan kaki telah selesai diperbaiki dan diverifikasi layak oleh unit teknis di lapangan.'}"
+                        </p>
+                        <div class="flex items-center justify-between text-[9px] text-emerald-800 border-t border-emerald-200/60 pt-1">
+                            <span>Oleh: <strong>${rep.verifikator || 'Dinas Terkait (Admin)'}</strong></span>
+                            <span>Selesai: ${formatReportDate(rep.tanggal_perbaikan)}</span>
+                        </div>
+                        <div class="mt-1.5 pt-1 border-t border-emerald-200/60 flex items-center justify-between text-[9px]">
+                            <span class="font-bold text-emerald-900">Pemulihan Skor Jalur (WSM):</span>
+                            <span class="px-1.5 py-0.5 bg-emerald-600 text-white font-extrabold rounded">Pulih: ${rep.skor_segmen || '100.0'} (Layak)</span>
+                        </div>
+                    </div>
+                `;
+            } else if (isRepairing) {
+                auditProofHtml = `
+                    <div class="mb-2 p-2 bg-sky-50 border border-sky-200 rounded-xl text-left">
+                        <div class="flex items-center gap-1.5 mb-0.5 text-sky-900">
+                            <svg class="w-3.5 h-3.5 text-sky-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            <strong class="text-[10px] font-black uppercase tracking-wider">Proses Pengerjaan Lapangan:</strong>
+                        </div>
+                        <p class="text-[11px] text-sky-950 leading-relaxed font-medium">
+                            "${rep.catatan_perbaikan || 'Petugas sedang melakukan penanganan fisik perbaikan di lokasi.'}"
+                        </p>
+                        <span class="text-[9px] text-sky-700 block mt-1">Penanggung jawab: <strong>${rep.verifikator || 'Dinas Terkait'}</strong></span>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="${idx > 0 ? 'pt-3.5 border-t border-slate-200 mt-3.5' : ''}">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-black text-slate-900">${rep.kode_laporan || ('#LAP-' + String(rep.laporan_id).padStart(4, '0'))}</span>
+                            <span class="px-2 py-0.5 bg-teal-50 text-brand-700 text-[10px] font-bold rounded-md flex items-center gap-1">${icon} <span>${rep.kategori_nama}</span></span>
+                        </div>
+                        ${getReparationBadge(rep.status_perbaikan)}
+                    </div>
+
+                    ${visualProofHtml}
+
+                    <div class="mb-2">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Penjelasan Laporan Warga:</span>
+                        <p class="text-xs text-slate-700 bg-slate-50 p-2 rounded-xl border border-slate-100 leading-relaxed font-medium">
+                            "${rep.deskripsi || 'Tidak ada deskripsi rinci.'}"
+                        </p>
+                    </div>
+
+                    ${auditProofHtml}
+
+                    <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1">
+                        <span class="truncate max-w-[150px] flex items-center gap-1">
+                            <svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
+                            <span class="truncate">${rep.alamat || 'Surabaya'}</span>
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <span>${formatReportDate(rep.tanggal_lapor)}</span>
+                        </span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        bodyEl.innerHTML = multiNoticeHtml + itemsHtml;
+    }
+
+    let lastSheetOpenTimestamp = 0;
+
+    function openReportBottomSheet(cluster, marker) {
+        if (!cluster || !cluster.reports || cluster.reports.length === 0) return;
+        lastSheetOpenTimestamp = Date.now();
+
+        // Clear previous active marker glow
+        if (activeSelectedMarker) {
+            const prevEl = activeSelectedMarker.getElement ? activeSelectedMarker.getElement() : activeSelectedMarker._icon;
+            if (prevEl) prevEl.classList.remove('heat-marker-selected');
+        }
+
+        activeSelectedMarker = marker;
+        const currEl = marker.getElement ? marker.getElement() : marker._icon;
+        if (currEl) currEl.classList.add('heat-marker-selected');
+
+        isUserViewingSheet = true;
+
+        // Move and focus camera on marker in upper zone
+        focusOnMarkerUpperZone(marker);
+
+        // Render content into sheet
+        renderReportSheetContent(cluster);
+
+        // Animate sheet in
+        const sheet = document.getElementById('reportBottomSheet');
+        if (sheet) {
+            sheet.classList.remove('translate-y-full', 'opacity-0', 'pointer-events-none');
+            sheet.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+        }
+    }
+
+    // Dismiss bottom sheet when clicking outside on the map canvas
+    map.on('click', (e) => {
+        // Do not close if click was on a marker or happened during sheet opening
+        if (Date.now() - lastSheetOpenTimestamp < 250) {
+            return;
+        }
+        if (e.originalEvent && (
+            e.originalEvent.target.closest('.custom-heat-marker') ||
+            e.originalEvent.target.closest('#reportBottomSheet')
+        )) {
+            return;
+        }
+        if (isUserViewingSheet) {
+            closeReportBottomSheet();
+        }
+    });
+
+    // Dismiss with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isUserViewingSheet) {
+            closeReportBottomSheet();
+        }
+    });
+
+    // Touch swipe down on drag handle to dismiss
+    const dragHandle = document.getElementById('sheetDragHandle');
+    if (dragHandle) {
+        let touchStartY = 0;
+        dragHandle.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+        dragHandle.addEventListener('touchend', (e) => {
+            const touchEndY = e.changedTouches[0].clientY;
+            if (touchEndY - touchStartY > 35) {
+                closeReportBottomSheet();
+            }
+        }, { passive: true });
+    }
 
     // Debounce helper (FR-F6-07: max 1 request per 500ms)
     function debounce(func, wait) {
@@ -785,8 +1185,8 @@
     async function loadHeatmap() {
         if (currentMapMode !== 'heatmap') return;
 
-        // Never wipe layers or cancel popup while user is actively reading a popup
-        if (isUserViewingPopup) {
+        // Never wipe layers or cancel sheet while user is actively reading
+        if (isUserViewingSheet) {
             return;
         }
 
@@ -947,216 +1347,6 @@
                 }
             }
 
-            // Helper to build rich popup card showing report identity, photo, explanation, and reparation status
-            function buildReportPopupHtml(reportsAtSpot) {
-                const catIcons = {
-                    'Trotoar Rusak': `<span class="w-4 h-4 rounded bg-teal-100 text-brand-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>`,
-                    'Masalah Drainase': `<span class="w-4 h-4 rounded bg-sky-100 text-sky-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg></span>`,
-                    'Guiding Block Rusak': `<span class="w-4 h-4 rounded bg-amber-100 text-amber-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="16" cy="4" r="1"/><path stroke-linecap="round" stroke-linejoin="round" d="m18 19 1-7-6 1M5 8l3-3 5.5 3-2.36 3.5M4.24 14.5a5 5 0 0 0 6.88 6M13.76 17.5a5 5 0 0 0-6.88-6"/></svg></span>`,
-                    'Guiding Block': `<span class="w-4 h-4 rounded bg-amber-100 text-amber-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="16" cy="4" r="1"/><path stroke-linecap="round" stroke-linejoin="round" d="m18 19 1-7-6 1M5 8l3-3 5.5 3-2.36 3.5M4.24 14.5a5 5 0 0 0 6.88 6M13.76 17.5a5 5 0 0 0-6.88-6"/></svg></span>`,
-                    'Penyebrangan Rusak': `<span class="w-4 h-4 rounded bg-emerald-100 text-emerald-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect width="10" height="18" x="7" y="3" rx="4"/><circle cx="12" cy="7.5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="16.5" r="1.5" fill="currentColor"/></svg></span>`,
-                    'Penyeberangan': `<span class="w-4 h-4 rounded bg-emerald-100 text-emerald-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect width="10" height="18" x="7" y="3" rx="4"/><circle cx="12" cy="7.5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="16.5" r="1.5" fill="currentColor"/></svg></span>`,
-                    'Parkir Liar': `<span class="w-4 h-4 rounded bg-rose-100 text-rose-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="m4.93 4.93 14.14 14.14"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg></span>`,
-                };
-                const defaultCatIcon = `<span class="w-4 h-4 rounded bg-slate-100 text-slate-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13.5"/><circle cx="12" cy="17.2" r="1.1" fill="currentColor" stroke="none"/></svg></span>`;
-
-                function getReparationBadge(status) {
-                    if (status === 'SUDAH_DIPERBAIKI') {
-                        return `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-extrabold rounded-full flex items-center gap-1 shadow-sm"><svg class="w-3 h-3 text-emerald-700" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Selesai Diperbaiki</span>`;
-                    }
-                    if (status === 'SEDANG_DIPERBAIKI') {
-                        return `<span class="px-2 py-0.5 bg-sky-100 text-sky-800 text-[10px] font-extrabold rounded-full flex items-center gap-1 shadow-sm"><svg class="w-3 h-3 text-sky-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Sedang Dikerjakan</span>`;
-                    }
-                    return `<span class="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-extrabold rounded-full flex items-center gap-1 shadow-sm"><svg class="w-3 h-3 text-amber-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Belum Ditangani</span>`;
-                }
-
-                function formatReportDate(isoStr) {
-                    if (!isoStr) return '-';
-                    const d = new Date(isoStr);
-                    return d.toLocaleDateString('id-ID', {
-                        day: 'numeric', month: 'short', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit'
-                    }) + ' WIB';
-                }
-
-                const itemsHtml = reportsAtSpot.map((rep, idx) => {
-                    const icon = catIcons[rep.kategori_nama] || defaultCatIcon;
-                    const isRepaired = (rep.status_perbaikan === 'SUDAH_DIPERBAIKI');
-                    const isRepairing = (rep.status_perbaikan === 'SEDANG_DIPERBAIKI');
-
-                    // Visual Proof Section: Before vs After Photos
-                    let visualProofHtml = '';
-                    if (isRepaired && rep.foto_perbaikan_url) {
-                        visualProofHtml = `
-                            <div class="mb-2.5 p-2 bg-slate-50 rounded-xl border border-slate-200">
-                                <span class="text-[9px] font-black text-slate-500 uppercase tracking-wider block mb-1.5 text-center">Komparasi Bukti Fisik Lapangan</span>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <span class="text-[8px] font-bold text-rose-700 bg-rose-50 px-1 py-0.5 rounded flex items-center justify-center gap-1 mb-1 truncate text-center"><span class="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span> SEBELUM (Rusak)</span>
-                                        <div class="w-full h-24 bg-slate-200 rounded-lg overflow-hidden relative shadow-inner">
-                                            <img src="${rep.foto_url || 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=300'}" alt="Foto Sebelum" class="w-full h-full object-cover">
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <span class="text-[8px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded flex items-center justify-center gap-1 mb-1 truncate text-center"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span> SESUDAH (Selesai)</span>
-                                        <div class="w-full h-24 bg-emerald-100 rounded-lg overflow-hidden relative shadow-inner border border-emerald-300">
-                                            <img src="${rep.foto_perbaikan_url}" alt="Foto Sesudah" class="w-full h-full object-cover">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    } else if (rep.foto_url) {
-                        visualProofHtml = `
-                            <div class="relative w-full h-32 bg-slate-100 rounded-xl overflow-hidden mb-2.5 shadow-inner">
-                                <img src="${rep.foto_url}" alt="Foto Bukti" class="w-full h-full object-cover">
-                                <span class="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 backdrop-blur-md text-white text-[9px] font-bold rounded-md flex items-center gap-1.5">
-                                    <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                                    <span>Foto Aduan Warga</span>
-                                </span>
-                                ${isRepaired ? '<span class="absolute top-2 right-2 px-2 py-0.5 bg-emerald-600/90 text-white text-[9px] font-extrabold rounded-md shadow-sm flex items-center gap-1"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Telah Selesai</span>' : ''}
-                            </div>
-                        `;
-                    } else {
-                        visualProofHtml = `
-                            <div class="w-full h-16 bg-slate-50 border border-dashed border-slate-200 rounded-xl flex items-center justify-center text-slate-400 text-xs font-semibold gap-1.5 mb-2.5">
-                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                                <span>Foto bukti belum dilampirkan</span>
-                            </div>
-                        `;
-                    }
-
-                    // Official verification / audit proof card
-                    let auditProofHtml = '';
-                    if (isRepaired) {
-                        auditProofHtml = `
-                            <div class="mb-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-left">
-                                <div class="flex items-center gap-1.5 mb-1 text-emerald-900">
-                                    <svg class="w-3.5 h-3.5 text-emerald-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                                    <strong class="text-[10px] font-black uppercase tracking-wider">Bukti Verifikasi Selesai:</strong>
-                                </div>
-                                <p class="text-[11px] text-emerald-950 font-medium leading-relaxed mb-1.5">
-                                    "${rep.catatan_perbaikan || 'Fasilitas pejalan kaki telah selesai diperbaiki dan diverifikasi layak oleh unit teknis di lapangan.'}"
-                                </p>
-                                <div class="flex items-center justify-between text-[9px] text-emerald-800 border-t border-emerald-200/60 pt-1">
-                                    <span>Oleh: <strong>${rep.verifikator || 'Dinas Terkait (Admin)'}</strong></span>
-                                    <span>Selesai: ${formatReportDate(rep.tanggal_perbaikan)}</span>
-                                </div>
-                                <div class="mt-1.5 pt-1 border-t border-emerald-200/60 flex items-center justify-between text-[9px]">
-                                    <span class="font-bold text-emerald-900">Pemulihan Skor Jalur (WSM):</span>
-                                    <span class="px-1.5 py-0.5 bg-emerald-600 text-white font-extrabold rounded">Pulih: ${rep.skor_segmen || '100.0'} (Layak)</span>
-                                </div>
-                            </div>
-                        `;
-                    } else if (isRepairing) {
-                        auditProofHtml = `
-                            <div class="mb-2 p-2 bg-sky-50 border border-sky-200 rounded-xl text-left">
-                                <div class="flex items-center gap-1.5 mb-0.5 text-sky-900">
-                                    <svg class="w-3.5 h-3.5 text-sky-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                                    <strong class="text-[10px] font-black uppercase tracking-wider">Proses Pengerjaan Lapangan:</strong>
-                                </div>
-                                <p class="text-[11px] text-sky-950 leading-relaxed font-medium">
-                                    "${rep.catatan_perbaikan || 'Petugas sedang melakukan penanganan fisik perbaikan di lokasi.'}"
-                                </p>
-                                <span class="text-[9px] text-sky-700 block mt-1">Penanggung jawab: <strong>${rep.verifikator || 'Dinas Terkait'}</strong></span>
-                            </div>
-                        `;
-                    }
-
-                    return `
-                        <div class="${idx > 0 ? 'pt-3.5 border-t border-slate-200 mt-3.5' : ''}">
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="text-xs font-black text-slate-900">${rep.kode_laporan || ('#LAP-' + String(rep.laporan_id).padStart(4, '0'))}</span>
-                                    <span class="px-2 py-0.5 bg-teal-50 text-brand-700 text-[10px] font-bold rounded-md flex items-center gap-1">${icon} <span>${rep.kategori_nama}</span></span>
-                                </div>
-                                ${getReparationBadge(rep.status_perbaikan)}
-                            </div>
-
-                            ${visualProofHtml}
-
-                            <div class="mb-2">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Penjelasan Laporan Warga:</span>
-                                <p class="text-xs text-slate-700 bg-slate-50 p-2 rounded-xl border border-slate-100 leading-relaxed font-medium">
-                                    "${rep.deskripsi || 'Tidak ada deskripsi rinci.'}"
-                                </p>
-                            </div>
-
-                            ${auditProofHtml}
-
-                            <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1">
-                                <span class="truncate max-w-[150px] flex items-center gap-1">
-                                    <svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
-                                    <span class="truncate">${rep.alamat || 'Surabaya'}</span>
-                                </span>
-                                <span class="flex items-center gap-1">
-                                    <svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                    <span>${formatReportDate(rep.tanggal_lapor)}</span>
-                                </span>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-                const closeBtnHtml = `
-                    <button type="button" onclick="map.closePopup();" title="Tutup Popup" class="w-6 h-6 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-white text-xs font-black transition ml-2 flex-shrink-0 cursor-pointer">
-                        ✕
-                    </button>
-                `;
-
-                const allRepaired = reportsAtSpot.every(r => r.status_perbaikan === 'SUDAH_DIPERBAIKI');
-
-                let densityHeader = '';
-                if (allRepaired) {
-                    densityHeader = `
-                        <div class="bg-gradient-to-r from-emerald-700 to-teal-600 text-white px-4 py-2.5 flex items-center justify-between">
-                            <div class="flex items-center gap-1.5">
-                                <svg class="w-4 h-4 text-emerald-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span class="text-xs font-black tracking-tight">Fasilitas Selesai Diperbaiki</span>
-                            </div>
-                            <div class="flex items-center gap-1.5">
-                                <span class="px-2 py-0.5 bg-white/20 backdrop-blur-md rounded-full text-[9px] font-bold">Terverifikasi</span>
-                                ${closeBtnHtml}
-                            </div>
-                        </div>
-                    `;
-                } else if (reportsAtSpot.length > 1) {
-                    densityHeader = `
-                        <div class="bg-gradient-to-r from-rose-600 via-rose-500 to-amber-600 text-white px-4 py-2.5 flex items-center justify-between">
-                            <div class="flex items-center gap-1.5">
-                                <svg class="w-4 h-4 text-amber-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg>
-                                <span class="text-xs font-black tracking-tight">Titik Rawan: ${reportsAtSpot.length} Laporan di Area Ini</span>
-                            </div>
-                            <div class="flex items-center gap-1.5">
-                                <span class="px-2 py-0.5 bg-white/20 backdrop-blur-md rounded-full text-[9px] font-bold">Hotspot</span>
-                                ${closeBtnHtml}
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    densityHeader = `
-                        <div class="bg-gradient-to-r from-brand-700 to-brand-600 text-white px-4 py-2.5 flex items-center justify-between">
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-xs font-extrabold tracking-tight">Detail Aduan Pejalan Kaki</span>
-                            </div>
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-[10px] font-bold text-teal-100">PedestriRoute</span>
-                                ${closeBtnHtml}
-                            </div>
-                        </div>
-                    `;
-                }
-
-                return `
-                    <div class="w-72 sm:w-80 font-sans text-left">
-                        ${densityHeader}
-                        <div class="p-4 max-h-96 overflow-y-auto">
-                            ${itemsHtml}
-                        </div>
-                    </div>
-                `;
-            }
-
             // 2. Render each cluster as an interactive heat dot with dynamic radial gradient
             clusters.forEach(cluster => {
                 const count = cluster.reports.length;
@@ -1195,14 +1385,11 @@
                 });
 
                 const marker = L.marker([lat, lon], { icon: markerIcon });
-                marker.bindPopup(buildReportPopupHtml(cluster.reports), {
-                    maxWidth: 340,
-                    minWidth: 280,
-                    autoPan: false,
-                    closeButton: false,
-                    closeOnClick: false,
-                    autoClose: false,
-                    className: 'custom-report-popup',
+                marker.on('click', (e) => {
+                    if (e && e.originalEvent) {
+                        L.DomEvent.stopPropagation(e);
+                    }
+                    openReportBottomSheet(cluster, marker);
                 });
 
                 heatmapLayerGroup.addLayer(marker);
