@@ -72,6 +72,7 @@ class ProcessReportCv implements ShouldQueue
 
         $label = $cvResult['label'];
         $confidence = $cvResult['confidence'];
+        $detectedCategory = $cvResult['detected_category'] ?? ($laporan->kategori->nama_kategori ?? 'Trotoar Rusak');
         $threshold = $cvService->getThreshold();
         $confPct = round($confidence * 100, 1);
 
@@ -79,6 +80,7 @@ class ProcessReportCv implements ShouldQueue
             $laporan,
             $label,
             $confidence,
+            $detectedCategory,
             $threshold,
             $confPct,
             $notificationService,
@@ -104,7 +106,7 @@ class ProcessReportCv implements ShouldQueue
                     'jenis' => 'VALIDASI',
                     'status' => 'TERVALIDASI',
                     'admin_id' => null,
-                    'catatan' => "Tervalidasi otomatis oleh Computer Vision (Confidence: {$confPct}%)",
+                    'catatan' => "Tervalidasi otomatis oleh Computer Vision: {$detectedCategory} (Confidence: {$confPct}%)",
                     'waktu' => now(),
                 ]);
 
@@ -122,12 +124,13 @@ class ProcessReportCv implements ShouldQueue
                 $locked->confidence_score = $confidence;
                 $locked->save();
 
+                $detDesc = $detectedCategory ? " - {$detectedCategory}" : "";
                 DB::table('riwayat_status_laporan')->insert([
                     'laporan_id' => $locked->laporan_id,
                     'jenis' => 'VALIDASI',
                     'status' => 'MENUNGGU_VALIDASI_ADMIN',
                     'admin_id' => null,
-                    'catatan' => "Hasil CV: {$label} ({$confPct}%), diteruskan ke verifikasi Admin",
+                    'catatan' => "Hasil CV: {$label}{$detDesc} ({$confPct}%), diteruskan ke verifikasi Admin",
                     'waktu' => now(),
                 ]);
 

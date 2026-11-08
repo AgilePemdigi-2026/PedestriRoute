@@ -7,30 +7,17 @@
     <!-- Top Header -->
     <div class="flex items-center justify-between mb-4">
         <div>
-            <h1 class="text-base font-extrabold text-slate-900 leading-tight">PedestriRoute</h1>
-            <p class="text-[10px] text-teal-800 font-semibold tracking-wider">ADMIN PORTAL</p>
+            <h1 class="text-base font-extrabold text-slate-900 tracking-tight">Antrean Validasi</h1>
+            <p id="queueSubtitle" class="text-xs text-slate-500 font-medium">Memuat antrean...</p>
         </div>
-        <button id="logoutBtn" class="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-100 hover:bg-rose-100 transition">
-            Keluar
-        </button>
-    </div>
-
-    <!-- Antrean Banner -->
-    <div class="bg-gradient-to-r from-teal-800 to-brand-600 rounded-2xl p-4 text-white shadow-md mb-4 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-            </div>
-            <div>
-                <h2 class="text-sm font-bold">Antrean Validasi</h2>
-                <p id="queueSubtitle" class="text-xs text-teal-100">Memuat laporan...</p>
-            </div>
+        <div class="flex items-center gap-2">
+            <span id="queueBadge" class="px-2.5 py-1 bg-teal-50 text-brand-700 text-xs font-extrabold rounded-full border border-teal-100">
+                0
+            </span>
+            <button id="logoutBtn" class="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-100 hover:bg-rose-100 transition">
+                Keluar
+            </button>
         </div>
-        <span id="queueBadge" class="px-2.5 py-1 bg-white text-brand-800 text-xs font-extrabold rounded-full shadow-sm">
-            0
-        </span>
     </div>
 
     <!-- Report List Container -->
@@ -107,16 +94,16 @@
             const reports = json.data;
 
             document.getElementById('queueBadge').innerText = reports.length;
-            document.getElementById('queueSubtitle').innerText = `${reports.length} Laporan Menunggu Verifikasi`;
+            document.getElementById('queueSubtitle').innerText = `${reports.length} laporan menunggu ditinjau`;
 
             const container = document.getElementById('reportsList');
 
             if (reports.length === 0) {
                 container.innerHTML = `
-                    <div class="text-center py-12 bg-white rounded-2xl border border-slate-100 p-6">
+                    <div class="text-center py-12 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
                         <span class="text-3xl mb-2 block">🎉</span>
                         <h3 class="text-sm font-bold text-slate-800">Antrean Bersih</h3>
-                        <p class="text-xs text-slate-500 mt-1">Tidak ada laporan yang perlu diverifikasi saat ini.</p>
+                        <p class="text-xs text-slate-500 mt-1">Tidak ada laporan yang perlu divalidasi saat ini.</p>
                     </div>
                 `;
                 return;
@@ -124,38 +111,47 @@
 
             let html = '';
             reports.forEach((lap) => {
+                let aiBadge = '';
+                if (lap.status === 'DIPROSES') {
+                    aiBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold text-sky-700 bg-sky-50 border border-sky-200 animate-pulse"><i class="fa-solid fa-spinner fa-spin text-[9px]"></i> AI: Memproses</span>`;
+                } else if (lap.cv_label === 'SPAM') {
+                    const pct = lap.confidence_score ? Math.round(lap.confidence_score * 100) : '';
+                    aiBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200"><i class="fa-solid fa-triangle-exclamation text-[9px]"></i> AI: SPAM ${pct ? pct + '%' : ''}</span>`;
+                } else if (lap.cv_label === 'BAIK') {
+                    const pct = lap.confidence_score ? Math.round(lap.confidence_score * 100) : '';
+                    aiBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200"><i class="fa-solid fa-circle-info text-[9px]"></i> AI: Normal ${pct ? pct + '%' : ''}</span>`;
+                } else if (lap.confidence_score) {
+                    const pct = Math.round(lap.confidence_score * 100);
+                    aiBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200"><i class="fa-solid fa-robot text-[9px]"></i> AI: ${pct}%</span>`;
+                }
+
                 html += `
-                    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex flex-col gap-2">
+                    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex flex-col gap-2.5 hover:border-brand-500/40 transition">
                         <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs font-mono font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md">
-                                    ${lap.kode_laporan}
-                                </span>
-                                <span class="text-[10px] text-slate-500 flex items-center gap-1 font-medium">
-                                    <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    ${formatTimeAgo(lap.tanggal_lapor)}
-                                </span>
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold text-brand-700 bg-brand-50 border border-brand-200/60 tracking-tight tabular-nums">${lap.kode_laporan}</span>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold text-slate-600 bg-slate-100">${lap.kategori}</span>
+                                ${aiBadge}
                             </div>
-                            <span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
-                                ${lap.kategori}
+                            <span class="text-[11px] text-slate-400 font-medium">
+                                ${formatTimeAgo(lap.tanggal_lapor)}
                             </span>
                         </div>
-                        <p class="text-xs text-slate-500 flex items-center gap-1">
-                            <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                            </svg>
-                            <span class="truncate">${lap.alamat}</span>
-                        </p>
-                        <p class="text-xs text-slate-700 bg-slate-50 rounded-xl p-2.5 italic">
-                            "${lap.deskripsi}"
-                        </p>
-                        <div class="flex items-center justify-between pt-1">
-                            <span class="text-[10px] text-slate-400">Pelapor: ${lap.pelapor_nama}</span>
+
+                        <div>
+                            <p class="text-xs font-bold text-slate-800 truncate mb-1">
+                                ${lap.alamat || 'Alamat tidak tersedia'}
+                            </p>
+                            <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                                ${lap.deskripsi}
+                            </p>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-2 border-t border-slate-50">
+                            <span class="text-[11px] text-slate-400">Pelapor: <strong class="text-slate-600 font-medium">${lap.pelapor_nama}</strong></span>
                             <a href="/admin/validasi/${lap.laporan_id}"
                                class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm">
-                                <span>Verifikasi</span>
+                                <span>Periksa</span>
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                 </svg>

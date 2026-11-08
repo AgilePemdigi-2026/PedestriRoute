@@ -5,15 +5,17 @@
 @section('content')
 <div class="px-5 pt-6 pb-24 flex flex-col flex-1">
     <!-- Header with Back Button -->
-    <div class="flex items-center gap-3 mb-4">
-        <a href="/admin/status-laporan" class="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition shadow-sm">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="flex items-center gap-2.5 mb-4">
+        <a href="/admin/status-laporan" class="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
         </a>
         <div>
-            <h1 class="text-base font-extrabold text-slate-900 leading-tight" id="reportCode">#LAP-....</h1>
-            <p class="text-[10px] text-teal-800 font-semibold tracking-wider">PEMBARUAN STATUS PERBAIKAN</p>
+            <div class="flex items-center gap-1.5">
+                <span id="reportCode" class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-extrabold text-brand-700 bg-brand-50 border border-brand-200/60 tracking-tight tabular-nums">#LAP-....</span>
+            </div>
+            <p class="text-[10px] text-slate-500 font-semibold tracking-wide mt-0.5">Status Perbaikan</p>
         </div>
     </div>
 
@@ -26,109 +28,125 @@
     </div>
 
     <!-- Main Content Container (hidden until loaded) -->
-    <div id="mainContent" class="hidden space-y-4">
+    <div id="mainContent" class="hidden space-y-3">
         <!-- Photo Preview Card -->
         <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm overflow-hidden">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-                <div>
-                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Foto Sebelum (Aduan Warga)</span>
-                    <div class="w-full h-44 bg-slate-100 rounded-xl overflow-hidden relative shadow-inner">
+            <div id="photoGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-3">
+                <div class="flex flex-col" id="reportPhotoCol">
+                    <div class="h-5 flex items-center mb-1.5">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Foto Aduan</span>
+                    </div>
+                    <div id="reportPhotoWrapper" class="w-full h-44 bg-slate-100 rounded-2xl overflow-hidden relative border border-slate-200/80 shadow-inner">
                         <img id="reportPhoto" src="" alt="Bukti Laporan" class="w-full h-full object-cover">
-                        <div class="absolute top-2 left-2 px-2 py-0.5 bg-black/60 backdrop-blur-md rounded-md text-white text-[9px] font-bold" id="badgeCategory">
+                        <div class="absolute top-2.5 left-2.5 px-2 py-0.5 bg-black/60 backdrop-blur-md rounded-md text-white text-[9px] font-bold" id="badgeCategory">
                             Kategori
                         </div>
                     </div>
                 </div>
-                <div id="repairPhotoCol" class="hidden">
-                    <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">Foto Sesudah (Bukti Perbaikan)</span>
-                    <div class="w-full h-44 bg-emerald-50 rounded-xl overflow-hidden relative border border-emerald-200 shadow-inner">
+                <div id="repairPhotoCol" class="hidden flex-col">
+                    <div class="h-5 flex items-center mb-1.5">
+                        <span id="repairPhotoTitle" class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider truncate">Foto Sesudah</span>
+                    </div>
+                    <div id="repairPhotoWrapper" class="w-full h-44 bg-emerald-50 rounded-2xl overflow-hidden relative border border-emerald-200 shadow-inner">
                         <img id="repairPhoto" src="" alt="Bukti Selesai Perbaikan" class="w-full h-full object-cover">
-                        <div class="absolute top-2 left-2 px-2 py-0.5 bg-emerald-600/90 backdrop-blur-md rounded-md text-white text-[9px] font-bold">
-                            ✓ Terverifikasi Selesai
+                        <div id="repairPhotoBadge" class="absolute top-2.5 left-2.5 px-2 py-0.5 bg-emerald-600/90 backdrop-blur-md rounded-md text-white text-[9px] font-bold">
+                            ✓ Selesai
                         </div>
                     </div>
                 </div>
             </div>
             <div>
                 <p class="text-xs font-bold text-slate-800" id="reportAddress">-</p>
-                <p class="text-[11px] text-slate-500 mt-1 leading-relaxed" id="reportDesc">-</p>
-                <div id="existingCatatanContainer" class="hidden mt-2 p-2.5 bg-emerald-50 border border-emerald-100 rounded-xl">
-                    <span class="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block mb-0.5">Catatan Resmi Perbaikan:</span>
-                    <p class="text-xs text-slate-700 font-medium leading-relaxed" id="existingCatatanText">-</p>
+                <p class="text-xs text-slate-600 mt-1 leading-relaxed" id="reportDesc">-</p>
+                <div id="existingCatatanContainer" class="hidden mt-2.5 p-2.5 bg-emerald-50/70 border border-emerald-100 rounded-xl">
+                    <span class="text-[10px] font-bold text-emerald-800 block mb-0.5">Catatan Perbaikan:</span>
+                    <p class="text-xs text-slate-700 leading-relaxed" id="existingCatatanText">-</p>
+                </div>
+                <div id="aiValidationCard" class="hidden mt-2.5 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold">✓</span>
+                        <div>
+                            <span class="font-bold text-emerald-950 block text-[11px]">Validasi Otomatis Computer Vision</span>
+                            <span id="aiValidationSubtitle" class="text-[10px] text-emerald-700">Skor keyakinan: -</span>
+                        </div>
+                    </div>
+                    <span id="aiLabelPill" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">
+                        RUSAK
+                    </span>
                 </div>
             </div>
         </div>
 
         <!-- Current Status Banner -->
-        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Status Perbaikan Saat Ini</span>
-            <div class="flex items-center justify-between" id="currentStatusContainer">
+        <div class="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-sm flex items-center justify-between">
+            <span class="text-[10px] font-medium text-slate-400">Status Saat Ini</span>
+            <div id="currentStatusContainer" class="flex items-center gap-2">
                 <!-- Injected via JS -->
             </div>
         </div>
 
         <!-- Repair Action Form -->
-        <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm" id="formCard">
-            <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">Tindakan Pembaruan Perbaikan</h3>
+        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm" id="formCard">
+            <h3 class="text-xs font-bold text-slate-800 mb-3">Perbarui Status</h3>
 
-            <div class="space-y-3 mb-5">
+            <div class="space-y-2 mb-4">
                 <!-- Option 1: Sedang Diperbaiki -->
-                <label id="labelSedang" class="block p-3.5 rounded-xl border border-slate-200 cursor-pointer hover:border-brand-500 transition relative">
-                    <div class="flex items-start gap-3">
+                <label id="labelSedang" class="block p-3 rounded-xl border border-slate-200 cursor-pointer hover:border-brand-500 transition relative">
+                    <div class="flex items-start gap-2.5">
                         <input type="radio" name="repairStatus" value="SEDANG_DIPERBAIKI" class="mt-0.5 text-brand-600 focus:ring-brand-500">
                         <div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1.5">
                                 <span class="text-xs font-bold text-slate-800">Sedang Diperbaiki</span>
-                                <span class="px-2 py-0.5 bg-sky-50 text-sky-700 text-[10px] font-bold rounded-md">Proses Lapangan</span>
+                                <span class="px-1.5 py-0.2 bg-sky-50 text-sky-700 text-[10px] font-semibold rounded">Proses</span>
                             </div>
-                            <p class="text-[11px] text-slate-500 mt-0.5">Petugas sedang melakukan penanganan fisik di lokasi. Skor jalur tetap dipantau.</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Petugas sedang menangani perbaikan di lokasi.</p>
                         </div>
                     </div>
                 </label>
 
                 <!-- Option 2: Sudah Diperbaiki -->
-                <label id="labelSudah" class="block p-3.5 rounded-xl border border-slate-200 cursor-pointer hover:border-brand-500 transition relative">
-                    <div class="flex items-start gap-3">
+                <label id="labelSudah" class="block p-3 rounded-xl border border-slate-200 cursor-pointer hover:border-brand-500 transition relative">
+                    <div class="flex items-start gap-2.5">
                         <input type="radio" name="repairStatus" value="SUDAH_DIPERBAIKI" class="mt-0.5 text-brand-600 focus:ring-brand-500">
                         <div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1.5">
                                 <span class="text-xs font-bold text-slate-800">Sudah Diperbaiki</span>
-                                <span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-md">Pemulihan Skor</span>
+                                <span class="px-1.5 py-0.2 bg-emerald-50 text-emerald-700 text-[10px] font-semibold rounded">Selesai</span>
                             </div>
-                            <p class="text-[11px] text-slate-500 mt-0.5">Fasilitas telah pulih sempurna. Laporan ditutup dan skor kelayakan segmen WSM dipulihkan.</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Fasilitas sudah pulih dan dapat digunakan kembali.</p>
                         </div>
                     </div>
                 </label>
             </div>
 
             <!-- Catatan Resmi Perbaikan -->
-            <div class="mb-3.5" id="catatanInputGroup">
-                <label class="block text-xs font-bold text-slate-700 mb-1">Catatan Resmi Perbaikan (Opsional)</label>
-                <textarea id="inputCatatanPerbaikan" rows="2" placeholder="Contoh: Paving amblas telah diganti dan diratakan semen oleh Satgas..."
+            <div class="mb-3" id="catatanInputGroup">
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan (Opsional)</label>
+                <textarea id="inputCatatanPerbaikan" rows="2" placeholder="Tuliskan catatan perbaikan..."
                     class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition"></textarea>
             </div>
 
-            <!-- Upload Foto Bukti Perbaikan Selesai -->
-            <div class="mb-5" id="fotoInputGroup">
-                <label class="block text-xs font-bold text-slate-700 mb-1">Foto Bukti Hasil Perbaikan (Opsional)</label>
+            <!-- Upload Foto Bukti Perbaikan -->
+            <div class="mb-4" id="fotoInputGroup">
+                <label id="labelFotoPerbaikan" class="block text-xs font-semibold text-slate-700 mb-1">Foto Bukti (Opsional)</label>
                 <input type="file" id="inputFotoPerbaikan" accept="image/jpeg,image/png"
-                    class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-teal-50 file:text-brand-700 hover:file:bg-teal-100 cursor-pointer">
-                <p class="text-[10px] text-slate-400 mt-1">Unggah foto fasilitas setelah selesai dikerjakan sebagai bukti publik transparan.</p>
+                    class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-teal-50 file:text-brand-700 hover:file:bg-teal-100 cursor-pointer">
+                <p id="helpFotoPerbaikan" class="text-[10px] text-slate-400 mt-1">Unggah dokumentasi hasil perbaikan lapangan.</p>
             </div>
 
-            <div id="disabledNotice" class="hidden mb-4 p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
-                <p class="text-xs font-semibold text-slate-600">Laporan ini telah selesai diperbaiki (status final) dan tidak dapat diubah lagi.</p>
+            <div id="disabledNotice" class="hidden mb-3 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-center">
+                <p class="text-xs font-semibold text-slate-600">Perbaikan telah selesai dan status sudah final.</p>
             </div>
 
-            <button type="button" id="btnSubmitRepair" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs transition shadow-md shadow-teal-900/10 flex items-center justify-center gap-2">
-                <span>Simpan Status Perbaikan</span>
+            <button type="button" id="btnSubmitRepair" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs transition shadow-sm flex items-center justify-center gap-2">
+                <span>Simpan Status</span>
             </button>
         </div>
 
         <!-- Riwayat Perjalanan Status Timeline -->
-        <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
-            <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4">Riwayat Perjalanan Status</h3>
-            <div id="timelineContainer" class="space-y-4">
+        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+            <h3 class="text-xs font-bold text-slate-800 mb-3">Riwayat Penanganan</h3>
+            <div id="timelineContainer" class="space-y-3">
                 <!-- Timeline items injected via JS -->
             </div>
         </div>
@@ -193,12 +211,75 @@
                 document.getElementById('reportPhoto').src = 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=600&auto=format&fit=crop&q=80';
             }
 
+            if (reportData.confidence_score !== null && reportData.confidence_score !== undefined) {
+                const aiCard = document.getElementById('aiValidationCard');
+                const aiSub = document.getElementById('aiValidationSubtitle');
+                const aiPill = document.getElementById('aiLabelPill');
+                if (aiCard) {
+                    aiCard.classList.remove('hidden');
+                    const pct = Math.round(reportData.confidence_score * 100);
+                    if (aiSub) aiSub.innerText = `Skor keyakinan model YOLOv8: ${pct}%`;
+                    if (aiPill) aiPill.innerText = reportData.cv_label || 'RUSAK';
+                }
+            }
+
+            // Current repair status rendering
+            const curStatusContainer = document.getElementById('currentStatusContainer');
+            const cur = reportData.status_perbaikan;
+
             // Proof photo & note rendering
+            const photoGrid = document.getElementById('photoGrid');
+            const repairPhotoCol = document.getElementById('repairPhotoCol');
+            const reportPhotoWrapper = document.getElementById('reportPhotoWrapper');
+
             if (reportData.foto_perbaikan_url) {
                 document.getElementById('repairPhoto').src = reportData.foto_perbaikan_url;
-                document.getElementById('repairPhotoCol').classList.remove('hidden');
+                repairPhotoCol.classList.remove('hidden');
+                repairPhotoCol.classList.add('flex');
+                if (photoGrid) {
+                    photoGrid.className = 'grid grid-cols-2 gap-2.5 mb-3';
+                }
+                if (reportPhotoWrapper) {
+                    reportPhotoWrapper.className = 'w-full h-44 bg-slate-100 rounded-2xl overflow-hidden relative border border-slate-200/80 shadow-inner';
+                }
+
+                const photoTitle = document.getElementById('repairPhotoTitle');
+                const photoBadge = document.getElementById('repairPhotoBadge');
+                const photoWrapper = document.getElementById('repairPhotoWrapper');
+                if (cur === 'SEDANG_DIPERBAIKI') {
+                    if (photoTitle) {
+                        photoTitle.innerText = 'Foto Pengerjaan';
+                        photoTitle.className = 'text-[10px] font-bold text-sky-700 uppercase tracking-wider truncate';
+                    }
+                    if (photoBadge) {
+                        photoBadge.innerText = '⚡ Sedang Dikerjakan';
+                        photoBadge.className = 'absolute top-2.5 left-2.5 px-2 py-0.5 bg-sky-600/90 backdrop-blur-md rounded-md text-white text-[9px] font-bold';
+                    }
+                    if (photoWrapper) {
+                        photoWrapper.className = 'w-full h-44 bg-sky-50 rounded-2xl overflow-hidden relative border border-sky-200 shadow-inner';
+                    }
+                } else {
+                    if (photoTitle) {
+                        photoTitle.innerText = 'Foto Sesudah';
+                        photoTitle.className = 'text-[10px] font-bold text-emerald-700 uppercase tracking-wider truncate';
+                    }
+                    if (photoBadge) {
+                        photoBadge.innerText = '✓ Terverifikasi Selesai';
+                        photoBadge.className = 'absolute top-2.5 left-2.5 px-2 py-0.5 bg-emerald-600/90 backdrop-blur-md rounded-md text-white text-[9px] font-bold';
+                    }
+                    if (photoWrapper) {
+                        photoWrapper.className = 'w-full h-44 bg-emerald-50 rounded-2xl overflow-hidden relative border border-emerald-200 shadow-inner';
+                    }
+                }
             } else {
-                document.getElementById('repairPhotoCol').classList.add('hidden');
+                repairPhotoCol.classList.add('hidden');
+                repairPhotoCol.classList.remove('flex');
+                if (photoGrid) {
+                    photoGrid.className = 'grid grid-cols-1 gap-2.5 mb-3';
+                }
+                if (reportPhotoWrapper) {
+                    reportPhotoWrapper.className = 'w-full h-52 bg-slate-100 rounded-2xl overflow-hidden relative border border-slate-200/80 shadow-inner';
+                }
             }
 
             if (reportData.catatan_perbaikan) {
@@ -207,10 +288,6 @@
             } else {
                 document.getElementById('existingCatatanContainer').classList.add('hidden');
             }
-
-            // Current repair status rendering
-            const curStatusContainer = document.getElementById('currentStatusContainer');
-            const cur = reportData.status_perbaikan;
 
             if (cur === 'SUDAH_DIPERBAIKI') {
                 curStatusContainer.innerHTML = `
@@ -246,6 +323,8 @@
                 if (rSedang) rSedang.checked = true;
             }
 
+            updateFormLabels();
+
             // Render Timeline
             const tlContainer = document.getElementById('timelineContainer');
             if (reportData.riwayat && reportData.riwayat.length > 0) {
@@ -274,6 +353,26 @@
             showToast('Gagal memuat detail laporan', 'error');
         }
     }
+
+    function updateFormLabels() {
+        const selected = document.querySelector('input[name="repairStatus"]:checked');
+        const val = selected ? selected.value : '';
+        const lbl = document.getElementById('labelFotoPerbaikan');
+        const hlp = document.getElementById('helpFotoPerbaikan');
+        if (!lbl || !hlp) return;
+
+        if (val === 'SEDANG_DIPERBAIKI') {
+            lbl.innerText = 'Foto Bukti Pengerjaan (Opsional)';
+            hlp.innerText = 'Unggah foto aktivitas penanganan di lapangan.';
+        } else {
+            lbl.innerText = 'Foto Bukti Selesai (Opsional)';
+            hlp.innerText = 'Unggah foto fasilitas setelah perbaikan rampung.';
+        }
+    }
+
+    document.querySelectorAll('input[name="repairStatus"]').forEach(radio => {
+        radio.addEventListener('change', updateFormLabels);
+    });
 
     // Submit repair status
     document.getElementById('btnSubmitRepair').addEventListener('click', async () => {
@@ -313,7 +412,7 @@
                 const errMsg = (data.error && data.error.message) ? data.error.message : 'Pembaruan status gagal disimpan. Silakan coba lagi.';
                 showToast(errMsg, 'error');
                 btn.disabled = false;
-                btn.innerHTML = '<span>Simpan Status Perbaikan</span>';
+                btn.innerHTML = '<span>Simpan Status</span>';
                 return;
             }
 
@@ -324,7 +423,7 @@
         } catch (err) {
             showToast('Pembaruan status gagal disimpan. Silakan coba lagi.', 'error');
             btn.disabled = false;
-            btn.innerHTML = '<span>Simpan Status Perbaikan</span>';
+            btn.innerHTML = '<span>Simpan Status</span>';
         }
     });
 

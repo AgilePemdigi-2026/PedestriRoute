@@ -94,6 +94,9 @@ class ReportController extends Controller
         $ditolak = Laporan::where('warga_id', $wargaId)
             ->where('status', 'DITOLAK')
             ->count();
+        $diproses = Laporan::where('warga_id', $wargaId)
+            ->where('status', 'DIPROSES')
+            ->count();
 
         return response()->json([
             'data' => [
@@ -101,6 +104,7 @@ class ReportController extends Controller
                 'menunggu_validasi' => $menunggu,
                 'tervalidasi' => $tervalidasi,
                 'ditolak' => $ditolak,
+                'diproses' => $diproses,
             ],
         ], 200);
     }

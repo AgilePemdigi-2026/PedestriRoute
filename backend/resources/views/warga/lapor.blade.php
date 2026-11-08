@@ -351,6 +351,17 @@
                 <span id="previewFilename" class="hidden absolute bottom-1 left-2 right-2 text-[11px] text-white bg-black/60 px-2 py-0.5 rounded truncate"></span>
             </div>
 
+            <!-- AI Verification Guidance Pill -->
+            <div class="mt-2.5 p-2.5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-xl flex items-start gap-2 text-xs">
+                <span class="w-5 h-5 rounded-md bg-emerald-500/20 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5 font-bold">
+                    <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i>
+                </span>
+                <div class="text-[11px] leading-snug text-slate-600">
+                    <strong class="text-emerald-900 font-bold">Analisis Otomatis AI:</strong>
+                    Arahkan foto tegak lurus ke kerusakan trotoar/fasilitas dengan pencahayaan jelas untuk auto-validasi instan (&le; 10 detik).
+                </div>
+            </div>
+
             <p id="compressInfo" class="hidden mt-2 text-xs text-teal-700 font-medium"></p>
         </div>
 

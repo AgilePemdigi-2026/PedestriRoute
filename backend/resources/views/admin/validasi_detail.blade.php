@@ -11,99 +11,45 @@
 
 @section('content')
 <div class="px-5 pt-5 pb-20 flex flex-col flex-1">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-4">
-        <div>
-            <h1 class="text-sm font-extrabold text-slate-900 leading-tight">PedestriRoute</h1>
-            <p class="text-[10px] text-teal-800 font-semibold tracking-wider">ADMIN</p>
-        </div>
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
+    <!-- Header with Back Button -->
+    <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2.5">
+            <a href="/admin/validasi" class="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                 </svg>
-            </div>
-            <div class="w-8 h-8 rounded-full overflow-hidden border border-slate-200">
-                <img src="https://ui-avatars.com/api/?name=Admin&background=006257&color=fff" class="w-full h-full object-cover">
-            </div>
-        </div>
-    </div>
-
-    <!-- Antrean Header Card -->
-    <div class="bg-teal-50 border border-teal-100 rounded-2xl p-3.5 mb-4 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-teal-800 text-white flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                </svg>
-            </div>
+            </a>
             <div>
-                <h2 id="headerTitle" class="text-xs font-bold text-slate-900">Antrean Validasi</h2>
-                <p id="headerSubtitle" class="text-[10px] text-teal-800 font-medium">Laporan Menunggu Verifikasi</p>
+                <div class="flex items-center gap-1.5">
+                    <span id="kodeLaporan" class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-extrabold text-brand-700 bg-brand-50 border border-brand-200/60 tracking-tight tabular-nums">
+                        #LAP-{{ str_pad($id, 4, '0', STR_PAD_LEFT) }}
+                    </span>
+                </div>
+                <div class="flex items-center gap-1.5 text-[11px] text-slate-400 mt-1">
+                    <span id="timeAgo">Baru saja</span>
+                    <span>•</span>
+                    <span id="categoryBadge" class="font-semibold text-slate-600">Trotoar</span>
+                </div>
             </div>
         </div>
-        <span id="headerStatusBadge" class="px-2.5 py-1 bg-white text-teal-800 text-[10px] font-extrabold rounded-full border border-teal-200">
-            • Review Aktif
-        </span>
-    </div>
-
-    <!-- Meta row -->
-    <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center gap-2">
-            <span id="kodeLaporan" class="text-xs font-mono font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-lg border border-teal-200">
-                #LAP-{{ str_pad($id, 4, '0', STR_PAD_LEFT) }}
+        <div>
+            <span id="headerStatusBadge" class="px-2.5 py-1 bg-amber-50 text-amber-700 text-[10px] font-bold rounded-full border border-amber-200/60">
+                Menunggu
             </span>
-            <span class="text-[11px] text-slate-500 flex items-center gap-1">
-                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span id="timeAgo">Baru saja</span>
-            </span>
+            <span id="headerTitle" class="hidden">Antrean Validasi</span>
+            <span id="headerSubtitle" class="hidden">Menunggu Verifikasi</span>
         </div>
-        <span id="categoryBadge" class="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-full">
-            Trotoar
-        </span>
     </div>
-
-    <!-- Location Address -->
-    <p class="text-xs font-semibold text-slate-700 flex items-center gap-1.5 mb-3">
-        <svg class="w-4 h-4 text-brand-600 shrink-0" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-        </svg>
-        <span id="reportAddress" class="truncate">Memuat alamat lokasi...</span>
-    </p>
-
-    <!-- Report location: additive card using the existing admin visual style. -->
-    <section class="bg-white rounded-2xl border border-teal-100 shadow-sm mb-3 overflow-hidden" aria-labelledby="reportMapTitle">
-        <div class="p-3">
-            <h3 id="reportMapTitle" class="text-xs font-bold text-slate-800">Lokasi Laporan</h3>
-            <p id="reportCoordinates" class="text-[10px] text-slate-500 mt-1">Memuat koordinat...</p>
-        </div>
-        <div id="reportMap" class="hidden" aria-label="Peta titik laporan dan segmen jalan"></div>
-        <p id="reportMapStatus" role="status" class="px-3 pb-3 text-xs text-slate-500">Memuat peta...</p>
-        <div class="p-3 bg-teal-50/50 border-t border-teal-100">
-            <p id="reportSnapInfo" class="text-[11px] text-teal-800 mb-2" role="status">Memuat informasi segmen...</p>
-            <div class="flex flex-wrap gap-2">
-                <a id="externalMapsLink" target="_blank" rel="noopener noreferrer" class="hidden px-3 py-2 rounded-xl bg-brand-600 text-white text-[11px] font-bold">Buka Google Maps ↗</a>
-                <a id="streetViewLink" target="_blank" rel="noopener noreferrer" class="hidden px-3 py-2 rounded-xl border border-teal-200 text-teal-800 text-[11px] font-bold">Buka Street View ↗</a>
-            </div>
-            <p class="text-[10px] text-slate-500 mt-2">Street View tersedia sesuai cakupan Google dan dapat menampilkan citra lama.</p>
-        </div>
-    </section>
 
     <!-- Photo Container -->
-    <div class="w-full h-56 bg-slate-100 rounded-2xl relative overflow-hidden mb-3 border border-slate-200 shadow-sm">
+    <div class="w-full h-52 bg-slate-100 rounded-2xl relative overflow-hidden mb-3 border border-slate-200 shadow-sm">
         <img id="reportPhoto" src="" class="w-full h-full object-cover hidden" alt="Foto Laporan" />
         <div id="photoSkeleton" class="w-full h-full flex items-center justify-center text-xs text-slate-400">
             Memuat foto...
         </div>
 
-        <span class="absolute top-2.5 left-2.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold rounded-lg flex items-center gap-1">
-            📷 Foto Warga
-        </span>
-
         <button type="button" id="btnZoomPhoto"
-            class="absolute bottom-2.5 right-2.5 px-3 py-1.5 bg-white/90 hover:bg-white text-slate-800 text-xs font-bold rounded-xl shadow flex items-center gap-1.5 transition">
+            class="absolute bottom-2.5 right-2.5 px-3 py-1.5 bg-black/60 hover:bg-black/75 backdrop-blur-sm text-white text-xs font-bold rounded-xl shadow flex items-center gap-1.5 transition">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
             </svg>
@@ -111,114 +57,113 @@
         </button>
     </div>
 
-    <!-- Deskripsi Pelapor Card -->
-    <div class="bg-teal-50/50 border border-teal-100 rounded-2xl p-3 mb-3">
-        <div class="flex items-center gap-1.5 text-xs font-bold text-slate-800 mb-1">
-            <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+    <!-- Info & Deskripsi Card -->
+    <div class="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-sm mb-3">
+        <div class="flex items-start gap-1.5 mb-2">
+            <svg class="w-4 h-4 text-brand-600 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
             </svg>
-            <span>Deskripsi Pelapor</span>
+            <p id="reportAddress" class="text-xs font-semibold text-slate-800 leading-snug">
+                Memuat lokasi...
+            </p>
         </div>
-        <p id="reportDesc" class="text-xs text-slate-700 leading-relaxed italic">
+        <p id="reportDesc" class="text-xs text-slate-600 bg-slate-50 rounded-xl p-2.5 leading-relaxed">
             "Memuat deskripsi..."
         </p>
     </div>
 
-    <!-- Computer Vision Analysis Section -->
-    <div class="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-sm mb-4">
-        <div class="flex items-center justify-between mb-2.5">
-            <div class="flex items-center gap-1.5">
-                <span class="text-base">🤖</span>
-                <span class="text-xs font-bold text-slate-800">Analisis Computer Vision</span>
+    <!-- Peta Lokasi Card -->
+    <section class="bg-white rounded-2xl border border-slate-100 shadow-sm mb-3 overflow-hidden" aria-labelledby="reportMapTitle">
+        <div class="px-3.5 py-2.5 flex items-center justify-between border-b border-slate-50">
+            <h3 id="reportMapTitle" class="text-xs font-bold text-slate-800">Peta Lokasi</h3>
+            <span id="reportCoordinates" class="text-[10px] text-slate-400 font-mono">Memuat koordinat...</span>
+        </div>
+        <div id="reportMap" class="hidden" aria-label="Peta titik laporan dan segmen jalan"></div>
+        <p id="reportMapStatus" role="status" class="p-3 text-xs text-slate-400">Memuat peta...</p>
+        <div class="p-2.5 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between gap-2">
+            <p id="reportSnapInfo" class="text-[11px] text-slate-600 truncate" role="status">Memuat segmen...</p>
+            <div class="flex items-center gap-1.5 shrink-0">
+                <a id="externalMapsLink" target="_blank" rel="noopener noreferrer" class="hidden px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-[10px] font-bold hover:bg-slate-50">Maps ↗</a>
+                <a id="streetViewLink" target="_blank" rel="noopener noreferrer" class="hidden px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-[10px] font-bold hover:bg-slate-50">Street View ↗</a>
             </div>
-            <span id="cvBadge" class="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">
-                Review Manual (Sprint 1)
+        </div>
+    </section>
+
+    <!-- Deteksi AI Section (Simplified & Clean) -->
+    <div class="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-sm mb-3">
+        <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-1.5">
+                <span class="text-sm">✨</span>
+                <span class="text-xs font-bold text-slate-800">Deteksi AI</span>
+            </div>
+            <span id="cvBadge" class="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
+                Tinjauan Manual
             </span>
         </div>
 
-        <div class="grid grid-cols-2 gap-2 mb-2.5">
-            <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5">
-                <p class="text-[10px] text-slate-500 font-semibold mb-0.5">Skor Validitas</p>
-                <p id="cvScoreText" class="text-sm font-extrabold text-slate-800">Manual / N/A</p>
-                <div class="w-full bg-slate-200 h-1.5 rounded-full mt-1.5 overflow-hidden">
+        <div class="grid grid-cols-2 gap-2 mb-2">
+            <div class="bg-slate-50 rounded-xl p-2.5">
+                <p class="text-[10px] text-slate-400 font-medium">Prediksi</p>
+                <p id="cvLabelText" class="text-xs font-bold text-slate-700 mt-0.5">Tinjau Langsung</p>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-2.5">
+                <p class="text-[10px] text-slate-400 font-medium">Keyakinan AI</p>
+                <p id="cvScoreText" class="text-xs font-bold text-slate-700 mt-0.5">-</p>
+                <div class="w-full bg-slate-200 h-1 rounded-full mt-1.5 overflow-hidden">
                     <div id="cvProgressBar" class="bg-brand-600 h-full rounded-full" style="width: 0%"></div>
                 </div>
             </div>
-            <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5">
-                <p class="text-[10px] text-slate-500 font-semibold mb-0.5">Prediksi Status</p>
-                <p id="cvLabelText" class="text-xs font-bold text-slate-700">Verifikasi Visual</p>
-                <p class="text-[10px] text-slate-400 truncate mt-1">Oleh Admin Dishub</p>
-            </div>
         </div>
 
-        <!-- System Callout Note (FR-F5-06) -->
-        <div class="bg-sky-50 border border-sky-100 rounded-xl p-2.5 flex items-start gap-2">
-            <svg class="w-4 h-4 text-sky-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p class="text-[10px] text-sky-900 leading-snug font-medium">
-                Catatan Sistem: Analisis otomatis tidak tersedia atau memerlukan validasi manual sesuai regulasi Sprint 1. Admin menentukan keputusan akhir.
-            </p>
-        </div>
+        <p id="cvNoteText" class="text-[11px] text-slate-500 leading-snug">
+            Analisis otomatis tidak tersedia. Silakan validasi laporan secara manual.
+        </p>
     </div>
 
     <!-- Admin Decision Box -->
     <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm mb-4">
-        <h3 class="text-xs font-extrabold text-slate-900 mb-0.5">Keputusan Admin</h3>
-        <p class="text-[11px] text-slate-500 mb-3">Tentukan status verifikasi laporan untuk pembaruan data navigasi publik.</p>
+        <h3 class="text-xs font-extrabold text-slate-900 mb-2">Keputusan Validasi</h3>
 
         <!-- Decision Radio Cards -->
-        <div class="grid grid-cols-2 gap-3 mb-3">
+        <div class="grid grid-cols-2 gap-2.5 mb-3">
             <button type="button" id="cardValid"
-                class="decision-card p-3 rounded-2xl border-2 border-slate-200 bg-slate-50 hover:bg-slate-100 text-center transition flex flex-col items-center gap-1">
-                <div class="w-8 h-8 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center font-bold">
-                    ✓
-                </div>
-                <span class="text-xs font-extrabold text-slate-800">Valid</span>
-                <span class="text-[10px] text-slate-500">Terima Laporan</span>
+                class="decision-card p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-center transition flex items-center justify-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center text-xs font-bold">✓</span>
+                <span class="text-xs font-bold text-slate-800">Valid</span>
             </button>
 
             <button type="button" id="cardTidakValid"
-                class="decision-card p-3 rounded-2xl border-2 border-slate-200 bg-slate-50 hover:bg-slate-100 text-center transition flex flex-col items-center gap-1">
-                <div class="w-8 h-8 rounded-full bg-rose-100 text-rose-800 flex items-center justify-center font-bold">
-                    ✕
-                </div>
-                <span class="text-xs font-extrabold text-slate-800">Tidak Valid</span>
-                <span class="text-[10px] text-slate-500">Tolak Laporan</span>
+                class="decision-card p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-center transition flex items-center justify-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-rose-100 text-rose-800 flex items-center justify-center text-xs font-bold">✕</span>
+                <span class="text-xs font-bold text-slate-800">Tidak Valid</span>
             </button>
         </div>
 
-        <!-- Status History Notice (if already validated/rejected) -->
+        <!-- Status History Banner (if already validated/rejected) -->
         <div id="statusHistoryBanner" class="hidden mb-3 rounded-xl p-3 text-xs leading-relaxed font-medium"></div>
 
         <!-- Rejection Reason Container (Mandatory if Tidak Valid) -->
         <div id="rejectionContainer" class="hidden mb-3">
             <label class="block text-xs font-bold text-rose-700 mb-1">
-                Alasan Penolakan <span id="rejectionRequiredBadge" class="text-rose-500">*Wajib diisi</span>
+                Alasan Penolakan <span id="rejectionRequiredBadge" class="text-rose-500 text-[10px] font-normal">*Wajib</span>
             </label>
             <textarea id="alasanPenolakan" rows="2"
-                placeholder="Tulis alasan spesifik (misal: Foto tidak menunjukkan kerusakan fasilitas pejalan kaki)..."
+                placeholder="Contoh: Foto tidak menunjukkan kerusakan fasilitas..."
                 class="w-full p-2.5 bg-rose-50/50 border border-rose-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-rose-500 transition"></textarea>
         </div>
 
         <!-- Action Buttons -->
         <button type="button" disabled id="btnDisabledDecision"
-            class="hidden w-full py-3 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 mb-2 cursor-not-allowed shadow-sm"></button>
+            class="hidden w-full py-2.5 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 mb-2 cursor-not-allowed shadow-sm"></button>
 
         <button type="button" id="btnSubmitDecision"
-            class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 shadow-md shadow-teal-900/10 transition mb-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-            </svg>
+            class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm transition mb-2">
             <span>Simpan Keputusan</span>
         </button>
 
         <a href="/admin/validasi"
-            class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            <span>Kembali</span>
+            class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl flex items-center justify-center gap-1 transition">
+            <span>Kembali ke Antrean</span>
         </a>
     </div>
 </div>
@@ -255,15 +200,15 @@
 
     cardValid.addEventListener('click', () => {
         selectedDecision = 'VALID';
-        cardValid.className = 'decision-card p-3 rounded-2xl border-2 border-teal-600 bg-teal-50 text-center transition flex flex-col items-center gap-1 shadow-sm';
-        cardTidakValid.className = 'decision-card p-3 rounded-2xl border-2 border-slate-200 bg-slate-50 hover:bg-slate-100 text-center transition flex flex-col items-center gap-1';
+        cardValid.className = 'decision-card p-3 rounded-xl border-2 border-brand-600 bg-teal-50 text-center transition flex items-center justify-center gap-2 shadow-sm';
+        cardTidakValid.className = 'decision-card p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-center transition flex items-center justify-center gap-2';
         rejectionContainer.classList.add('hidden');
     });
 
     cardTidakValid.addEventListener('click', () => {
         selectedDecision = 'TIDAK_VALID';
-        cardTidakValid.className = 'decision-card p-3 rounded-2xl border-2 border-rose-600 bg-rose-50 text-center transition flex flex-col items-center gap-1 shadow-sm';
-        cardValid.className = 'decision-card p-3 rounded-2xl border-2 border-slate-200 bg-slate-50 hover:bg-slate-100 text-center transition flex flex-col items-center gap-1';
+        cardTidakValid.className = 'decision-card p-3 rounded-xl border-2 border-rose-600 bg-rose-50 text-center transition flex items-center justify-center gap-2 shadow-sm';
+        cardValid.className = 'decision-card p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-center transition flex items-center justify-center gap-2';
         rejectionContainer.classList.remove('hidden');
         alasanPenolakanInput.focus();
     });
@@ -415,10 +360,39 @@
                 document.getElementById('photoSkeleton').innerText = 'Foto tidak tersedia.';
             }
 
-            if (report.confidence_score) {
+            if (report.confidence_score !== null && report.confidence_score !== undefined) {
                 const percent = Math.round(report.confidence_score * 100);
-                document.getElementById('cvScoreText').innerText = `${percent}% / 100%`;
+                document.getElementById('cvScoreText').innerText = `${percent}%`;
                 document.getElementById('cvProgressBar').style.width = `${percent}%`;
+                const badge = document.getElementById('cvBadge');
+                const note = document.getElementById('cvNoteText');
+                const label = report.cv_label || 'RUSAK';
+
+                if (label === 'SPAM') {
+                    if (badge) {
+                        badge.innerText = '⚠️ Terdeteksi SPAM';
+                        badge.className = 'text-[10px] font-bold text-rose-800 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full';
+                    }
+                    if (note) {
+                        note.innerHTML = `<span class="text-rose-700 font-bold">Peringatan:</span> AI menandai foto ini sebagai konten non-infrastruktur / tidak relevan (${percent}%). Disarankan ditolak.`;
+                    }
+                } else if (label === 'BAIK') {
+                    if (badge) {
+                        badge.innerText = 'ℹ️ Terdeteksi Normal';
+                        badge.className = 'text-[10px] font-bold text-blue-800 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full';
+                    }
+                    if (note) {
+                        note.innerHTML = `<span class="text-blue-700 font-bold">Catatan:</span> AI mendeteksi fasilitas pejalan kaki dalam kondisi baik/tidak rusak (${percent}%).`;
+                    }
+                } else {
+                    if (badge) {
+                        badge.innerText = percent >= 80 ? '✓ Terverifikasi AI' : 'Tinjauan AI';
+                        badge.className = `text-[10px] font-bold ${percent >= 80 ? 'text-emerald-800 bg-emerald-50 border border-emerald-200' : 'text-amber-800 bg-amber-50 border border-amber-200'} px-2 py-0.5 rounded-full`;
+                    }
+                    if (note) {
+                        note.innerText = `AI mendeteksi kerusakan fasilitas dengan keyakinan ${percent}%.`;
+                    }
+                }
             }
             if (report.cv_label) {
                 document.getElementById('cvLabelText').innerText = report.cv_label;
@@ -433,34 +407,34 @@
             const rejectionRequiredBadge = document.getElementById('rejectionRequiredBadge');
 
             if (report.status === 'TERVALIDASI') {
-                headerStatusBadge.className = 'px-2.5 py-1 bg-emerald-100 text-emerald-800 text-[10px] font-extrabold rounded-full border border-emerald-300';
-                headerStatusBadge.innerText = '✓ Tervalidasi';
+                headerStatusBadge.className = 'px-2.5 py-1 bg-emerald-100 text-emerald-800 text-[10px] font-extrabold rounded-full border border-emerald-200';
+                headerStatusBadge.innerText = '✓ Valid';
                 headerSubtitle.innerText = 'Laporan telah diverifikasi Valid';
 
                 selectedDecision = 'VALID';
-                cardValid.className = 'decision-card p-3 rounded-2xl border-2 border-emerald-600 bg-emerald-50 text-center flex flex-col items-center gap-1 shadow-sm pointer-events-none';
-                cardTidakValid.className = 'decision-card p-3 rounded-2xl border-2 border-slate-200 bg-slate-50 opacity-40 text-center flex flex-col items-center gap-1 pointer-events-none';
+                cardValid.className = 'decision-card p-3 rounded-xl border-2 border-emerald-600 bg-emerald-50 text-center flex items-center justify-center gap-2 shadow-sm pointer-events-none';
+                cardTidakValid.className = 'decision-card p-3 rounded-xl border border-slate-200 bg-slate-50 opacity-40 text-center flex items-center justify-center gap-2 pointer-events-none';
 
                 const formattedTime = report.tanggal_validasi ? new Date(report.tanggal_validasi).toLocaleString('id-ID', {day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit'}) : '';
                 statusHistoryBanner.className = 'mb-3 rounded-xl p-3 text-xs leading-relaxed font-semibold bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-start gap-2';
                 statusHistoryBanner.innerHTML = `
                     <span class="text-base mt-0.5">✅</span>
-                    <div>Laporan ini telah dinyatakan <strong>VALID</strong>${formattedTime ? ' pada ' + formattedTime : ''}. Skor kelayakan segmen jalan telah diperbarui.</div>
+                    <div>Laporan dinyatakan <strong>VALID</strong>${formattedTime ? ' pada ' + formattedTime : ''}. Skor segmen telah diperbarui.</div>
                 `;
                 statusHistoryBanner.classList.remove('hidden');
 
                 btnSubmitDecision.classList.add('hidden');
-                btnDisabledDecision.className = 'w-full py-3 bg-emerald-600 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 mb-2 cursor-not-allowed shadow-sm';
-                btnDisabledDecision.innerText = '✓ Status Laporan: VALID';
+                btnDisabledDecision.className = 'w-full py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 mb-2 cursor-not-allowed shadow-sm';
+                btnDisabledDecision.innerText = '✓ Status: VALID';
                 btnDisabledDecision.classList.remove('hidden');
             } else if (report.status === 'DITOLAK') {
-                headerStatusBadge.className = 'px-2.5 py-1 bg-rose-100 text-rose-800 text-[10px] font-extrabold rounded-full border border-rose-300';
+                headerStatusBadge.className = 'px-2.5 py-1 bg-rose-100 text-rose-800 text-[10px] font-extrabold rounded-full border border-rose-200';
                 headerStatusBadge.innerText = '✕ Ditolak';
-                headerSubtitle.innerText = 'Laporan tidak valid / ditolak';
+                headerSubtitle.innerText = 'Laporan ditolak';
 
                 selectedDecision = 'TIDAK_VALID';
-                cardTidakValid.className = 'decision-card p-3 rounded-2xl border-2 border-rose-600 bg-rose-50 text-center flex flex-col items-center gap-1 shadow-sm pointer-events-none';
-                cardValid.className = 'decision-card p-3 rounded-2xl border-2 border-slate-200 bg-slate-50 opacity-40 text-center flex flex-col items-center gap-1 pointer-events-none';
+                cardTidakValid.className = 'decision-card p-3 rounded-xl border-2 border-rose-600 bg-rose-50 text-center flex items-center justify-center gap-2 shadow-sm pointer-events-none';
+                cardValid.className = 'decision-card p-3 rounded-xl border border-slate-200 bg-slate-50 opacity-40 text-center flex items-center justify-center gap-2 pointer-events-none';
 
                 rejectionContainer.classList.remove('hidden');
                 if (rejectionRequiredBadge) rejectionRequiredBadge.classList.add('hidden');
@@ -471,13 +445,13 @@
                 statusHistoryBanner.className = 'mb-3 rounded-xl p-3 text-xs leading-relaxed font-semibold bg-rose-50 border border-rose-200 text-rose-900 flex items-start gap-2';
                 statusHistoryBanner.innerHTML = `
                     <span class="text-base mt-0.5">❌</span>
-                    <div>Laporan ini telah dinyatakan <strong>TIDAK VALID</strong>${formattedTime ? ' pada ' + formattedTime : ''}.</div>
+                    <div>Laporan dinyatakan <strong>DITOLAK</strong>${formattedTime ? ' pada ' + formattedTime : ''}.</div>
                 `;
                 statusHistoryBanner.classList.remove('hidden');
 
                 btnSubmitDecision.classList.add('hidden');
-                btnDisabledDecision.className = 'w-full py-3 bg-rose-600 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 mb-2 cursor-not-allowed shadow-sm';
-                btnDisabledDecision.innerText = '✕ Status Laporan: DITOLAK';
+                btnDisabledDecision.className = 'w-full py-2.5 bg-rose-600 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 mb-2 cursor-not-allowed shadow-sm';
+                btnDisabledDecision.innerText = '✕ Status: DITOLAK';
                 btnDisabledDecision.classList.remove('hidden');
             }
         } catch (e) {

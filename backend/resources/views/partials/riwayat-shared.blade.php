@@ -13,7 +13,7 @@
 <script>
     const STATUS_META = {
         MENUNGGU_VALIDASI_ADMIN: { label: 'Menunggu', cls: 'bg-amber-50 text-amber-800 border-amber-100' },
-        DIPROSES:                { label: 'Diproses', cls: 'bg-amber-50 text-amber-800 border-amber-100' },
+        DIPROSES:                { label: 'Dianalisis AI', cls: 'bg-sky-50 text-sky-800 border-sky-200' },
         TERVALIDASI:             { label: 'Valid',    cls: 'bg-emerald-50 text-emerald-800 border-emerald-100' },
         DITOLAK:                 { label: 'Ditolak',  cls: 'bg-rose-50 text-rose-800 border-rose-100' },
     };
@@ -68,19 +68,64 @@
 
             body.innerHTML = `
                 <div class="flex items-center justify-between mb-3">
-                    <span class="font-mono font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md">${kodeLaporan(d.laporan_id)}</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold text-brand-700 bg-brand-50 border border-brand-200/60 tracking-tight tabular-nums">${kodeLaporan(d.laporan_id)}</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium text-slate-600 bg-slate-100">${esc(d.kategori?.nama || '-')}</span>
+                    </div>
                     ${statusBadge(d.status)}
                 </div>
-                ${d.foto_url ? `<img src="${esc(d.foto_url)}" alt="Foto laporan" class="w-full rounded-2xl mb-3 object-cover max-h-64">` : ''}
-                <dl class="space-y-2 mb-3">
-                    <div><dt class="text-[10px] uppercase font-bold text-slate-400">Kategori</dt><dd>${esc(d.kategori?.nama)}</dd></div>
-                    <div><dt class="text-[10px] uppercase font-bold text-slate-400">Lokasi</dt><dd>${esc(d.lokasi?.alamat || d.lokasi?.nama_jalan || '-')}</dd></div>
-                    <div><dt class="text-[10px] uppercase font-bold text-slate-400">Deskripsi</dt><dd class="bg-slate-50 rounded-xl p-2.5 italic">"${esc(d.deskripsi)}"</dd></div>
-                    <div><dt class="text-[10px] uppercase font-bold text-slate-400">Tanggal lapor</dt><dd>${fmtDate(d.tanggal_lapor)}</dd></div>
-                    ${d.tanggal_validasi ? `<div><dt class="text-[10px] uppercase font-bold text-slate-400">Tanggal validasi</dt><dd>${fmtDate(d.tanggal_validasi)}</dd></div>` : ''}
-                    ${d.alasan_penolakan ? `<div><dt class="text-[10px] uppercase font-bold text-rose-500">Alasan penolakan</dt><dd class="bg-rose-50 rounded-xl p-2.5 text-rose-800">${esc(d.alasan_penolakan)}</dd></div>` : ''}
-                </dl>
-                ${riwayat ? `<h4 class="text-[10px] uppercase font-bold text-slate-400 mb-2">Riwayat status</h4><ul class="space-y-2.5">${riwayat}</ul>` : ''}
+                ${d.foto_url ? `<img src="${esc(d.foto_url)}" alt="Foto laporan" class="w-full rounded-2xl mb-3 object-cover max-h-56 shadow-sm border border-slate-100">` : ''}
+                ${d.status === 'DIPROSES' ? `
+                    <a href="/laporan/${d.laporan_id}/analisis" class="w-full mb-3 py-2.5 px-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-center text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm animate-pulse">
+                        <i class="fa-solid fa-radar"></i>
+                        <span>Lihat Analisis AI Langsung</span>
+                    </a>
+                ` : ''}
+                ${(d.confidence_score !== null && d.confidence_score !== undefined) ? `
+                    <div class="mb-3 p-3 rounded-2xl ${d.status === 'TERVALIDASI' ? 'bg-emerald-50 border border-emerald-200 text-emerald-950' : 'bg-amber-50 border border-amber-200 text-amber-950'} space-y-1">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wide flex items-center gap-1.5">
+                                <i class="fa-solid fa-robot text-brand-600"></i> Verifikasi AI (YOLOv8)
+                            </span>
+                            <span class="text-[11px] font-extrabold px-2 py-0.5 rounded-full ${d.status === 'TERVALIDASI' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                                ${Math.round(d.confidence_score * 100)}% Keyakinan
+                            </span>
+                        </div>
+                        <p class="text-xs font-semibold">
+                            Hasil Prediksi: <span class="font-bold">${esc(d.cv_label || 'RUSAK')}</span>
+                        </p>
+                    </div>
+                ` : ''}
+                ${d.foto_perbaikan_url ? `
+                    <div class="mb-3 p-2.5 bg-slate-50 border border-slate-200 rounded-2xl">
+                        <span class="text-[10px] font-bold ${d.status_perbaikan === 'SUDAH_DIPERBAIKI' ? 'text-emerald-700' : 'text-sky-700'} uppercase tracking-wider block mb-1">
+                            ${d.status_perbaikan === 'SUDAH_DIPERBAIKI' ? '✓ Bukti Perbaikan Selesai' : '⚡ Bukti Pengerjaan'}
+                        </span>
+                        <img src="${esc(d.foto_perbaikan_url)}" alt="Foto perbaikan" class="w-full rounded-xl object-cover max-h-52">
+                    </div>
+                ` : ''}
+                <div class="space-y-2 mb-3">
+                    <div class="bg-slate-50 rounded-xl p-3">
+                        <p class="text-[11px] font-bold text-slate-800 flex items-center gap-1 mb-1">
+                            <svg class="w-3.5 h-3.5 text-brand-600 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                            </svg>
+                            <span>${esc(d.lokasi?.alamat || d.lokasi?.nama_jalan || 'Lokasi tidak tersedia')}</span>
+                        </p>
+                        <p class="text-xs text-slate-600 leading-relaxed italic">"${esc(d.deskripsi)}"</p>
+                    </div>
+                    ${d.alasan_penolakan ? `
+                        <div class="bg-rose-50 border border-rose-100 rounded-xl p-3 text-rose-800">
+                            <span class="text-[10px] uppercase font-bold text-rose-600 block mb-0.5">Alasan Penolakan</span>
+                            <p class="text-xs">${esc(d.alasan_penolakan)}</p>
+                        </div>
+                    ` : ''}
+                    <div class="flex items-center justify-between text-[11px] text-slate-400 px-1 pt-1">
+                        <span>Dilaporkan: ${fmtDate(d.tanggal_lapor)}</span>
+                        ${d.tanggal_validasi ? `<span>Divalidasi: ${fmtDate(d.tanggal_validasi)}</span>` : ''}
+                    </div>
+                </div>
+                ${riwayat ? `<div class="pt-2 border-t border-slate-100"><h4 class="text-[11px] font-bold text-slate-700 mb-2.5">Riwayat Status</h4><ul class="space-y-2.5">${riwayat}</ul></div>` : ''}
             `;
         } catch (e) {
             body.innerHTML = '<p class="text-center text-rose-600 py-8">Gagal terhubung ke server.</p>';
