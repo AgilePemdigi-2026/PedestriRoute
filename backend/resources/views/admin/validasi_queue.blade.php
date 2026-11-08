@@ -3,22 +3,8 @@
 @section('title', 'Antrean Validasi - PedestriRoute Admin')
 
 @section('content')
-<div class="px-5 pt-6 pb-20 flex flex-col flex-1">
-    <!-- Top Header -->
-    <div class="flex items-center justify-between mb-4">
-        <div>
-            <h1 class="text-base font-extrabold text-slate-900 tracking-tight">Antrean Validasi</h1>
-            <p id="queueSubtitle" class="text-xs text-slate-500 font-medium">Memuat antrean...</p>
-        </div>
-        <div class="flex items-center gap-2">
-            <span id="queueBadge" class="px-2.5 py-1 bg-teal-50 text-brand-700 text-xs font-extrabold rounded-full border border-teal-100">
-                0
-            </span>
-            <button id="logoutBtn" class="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-100 hover:bg-rose-100 transition">
-                Keluar
-            </button>
-        </div>
-    </div>
+<div class="px-5 pt-6 pb-24 flex flex-col flex-1">
+    @include('partials.admin-header', ['title' => 'Antrean Validasi', 'subtitle' => 'Memuat antrean...', 'subtitleId' => 'queueSubtitle', 'badgeId' => 'queueBadge'])
 
     <!-- Report List Container -->
     <div id="reportsList" class="space-y-3">

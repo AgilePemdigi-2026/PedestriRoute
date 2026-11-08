@@ -3,14 +3,8 @@
 @section('title', 'Riwayat Validasi - PedestriRoute Admin')
 
 @section('content')
-<div class="px-5 pt-6 pb-20 flex flex-col flex-1">
-    <div class="flex items-center justify-between mb-4">
-        <div>
-            <h1 class="text-base font-extrabold text-slate-900 tracking-tight">Riwayat Validasi</h1>
-            <p id="riwayatSubtitle" class="text-xs text-slate-500 font-medium">Memuat...</p>
-        </div>
-        <button id="logoutBtn" class="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-100 hover:bg-rose-100 transition">Keluar</button>
-    </div>
+<div class="px-5 pt-6 pb-24 flex flex-col flex-1">
+    @include('partials.admin-header', ['title' => 'Riwayat Validasi', 'subtitle' => 'Memuat...', 'subtitleId' => 'riwayatSubtitle'])
 
     <div id="filterChips" class="flex items-center gap-1.5 mb-3 overflow-x-auto scrollbar-none"></div>
     <div id="reportsList" class="space-y-3"></div>
