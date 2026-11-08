@@ -3,628 +3,320 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hasil Analisis AI - PedestriRoute Surabaya</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Hasil Analisis Laporan - PedestriRoute</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#eefcf5',
-                            100: '#d7f7e6',
-                            500: '#10b981',
-                            600: '#059669',
-                            700: '#047857',
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
     <style>
-        @keyframes laserScan {
-            0% { top: 2%; opacity: 0.8; }
-            50% { top: 92%; opacity: 1; }
-            100% { top: 2%; opacity: 0.8; }
-        }
-        .laser-beam {
-            position: absolute;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, rgba(16,185,129,0) 0%, rgba(16,185,129,0.9) 50%, rgba(16,185,129,0) 100%);
-            box-shadow: 0 0 14px 4px rgba(16,185,129,0.7);
-            animation: laserScan 2.4s ease-in-out infinite;
-            z-index: 20;
-        }
+        :root { color-scheme: light; --teal: #006257; --teal-dark: #004f46; }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #f4f7fb; color: #0f172a; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; line-height: 1.6; }
+        [hidden] { display: none !important; }
+        a { color: inherit; text-decoration: none; }
+        button { font: inherit; cursor: pointer; }
+        .app { width: 100%; max-width: 448px; min-height: 100vh; margin: 0 auto; background: #fff; box-shadow: 0 4px 32px #0f172a08; }
+        header { display: flex; gap: 12px; align-items: center; padding: 20px; border-bottom: 1px solid #f1f5f9; }
+        .back { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; border-radius: 12px; background: #f1f5f9; color: #475569; }
+        header div { min-width: 0; }
+        h1 { margin: 0; font-size: 16px; line-height: 1.4; }
+        .subtitle { color: #64748b; font-size: 12px; margin: 3px 0 0; overflow-wrap: anywhere; }
+        main { display: grid; gap: 16px; padding: 20px 20px max(28px, env(safe-area-inset-bottom)); }
+        .state { border: 1px solid #ccebe7; border-radius: 20px; padding: 20px; background: #f0faf8; }
+        .state[data-tone="pending"] { background: #fffbeb; border-color: #fde68a; }
+        .state[data-tone="rejected"] { background: #fff1f2; border-color: #fecdd3; }
+        .state[data-tone="neutral"] { background: #f8fafc; border-color: #e2e8f0; }
+        .eyebrow { color: #475569; text-transform: uppercase; letter-spacing: .08em; font-size: 10px; font-weight: 800; margin: 0 0 10px; }
+        .state-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; margin-bottom: 12px; color: var(--teal); background: #dff2ee; font-size: 20px; font-weight: 800; }
+        .state[data-tone="pending"] .state-icon { color: #92400e; background: #fef3c7; }
+        .state[data-tone="rejected"] .state-icon { color: #be123c; background: #ffe4e6; }
+        .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid #00625730; border-top-color: var(--teal); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        h2 { font-size: 20px; line-height: 1.4; margin: 0; overflow-wrap: anywhere; }
+        .state p:last-child { margin: 8px 0 0; color: #475569; font-size: 13px; }
+        .fade-in { animation: appear .25s ease-out; }
+        @keyframes appear { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        .result { border: 1px solid #e2e8f0; border-radius: 18px; padding: 16px; min-width: 0; }
+        .label { display: block; color: #64748b; font-size: 12px; margin-bottom: 4px; }
+        .value { font-size: 14px; font-weight: 800; overflow-wrap: anywhere; }
+        .metric { margin-top: 16px; padding-top: 16px; border-top: 1px solid #f1f5f9; }
+        .metric-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+        .badge { display: inline-block; color: var(--teal); background: #e6f5f3; border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 700; }
+        .percent { font-size: 22px; font-weight: 800; color: var(--teal); }
+        .track { height: 6px; border-radius: 99px; background: #edf2f7; overflow: hidden; margin-top: 10px; }
+        .fill { width: 0; height: 100%; background: #008775; border-radius: inherit; transition: width .3s ease; }
+        .hint { margin: 8px 0 0; color: #64748b; font-size: 11px; }
+        .actions { display: grid; gap: 10px; }
+        .button { display: flex; min-height: 46px; align-items: center; justify-content: center; padding: 11px 14px; border: 1px solid var(--teal); border-radius: 12px; background: var(--teal); color: white; text-align: center; font-size: 12px; font-weight: 800; }
+        .button:hover { background: var(--teal-dark); }
+        .button.secondary { color: var(--teal); background: white; border-color: #ccebe7; }
+        .button.secondary:hover { background: #f0faf8; }
+        .notice { border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; color: #475569; background: #f8fafc; font-size: 12px; }
+        .notice p { margin: 0 0 8px; }
+        .retry { padding: 6px 10px; border: 1px solid #ccebe7; border-radius: 8px; background: white; color: var(--teal); font-size: 12px; font-weight: 700; }
+        .retry:disabled { opacity: .6; cursor: wait; }
+        details { min-width: 0; border: 1px solid #e2e8f0; border-radius: 16px; }
+        summary { padding: 14px 16px; font-size: 12px; font-weight: 700; cursor: pointer; color: #475569; }
+        .details-body { padding: 0 16px 16px; overflow-wrap: anywhere; }
+        .photo { width: 100%; max-height: 240px; object-fit: contain; border-radius: 12px; background: #f8fafc; margin: 8px 0 12px; }
+        dl { margin: 0; } dt { color: #64748b; font-size: 11px; margin-top: 12px; } dd { margin: 2px 0 0; font-size: 12px; }
+        h3 { font-size: 12px; margin: 18px 0 8px; }
+        ul { list-style: none; padding: 0; margin: 0; }
+        li { padding: 10px 0; border-top: 1px solid #f1f5f9; font-size: 12px; }
+        li p { margin: 3px 0; } time { font-size: 10px; color: #64748b; }
+        :focus-visible { outline: 2px solid #008775; outline-offset: 3px; }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col items-center">
+<body>
+<div class="app">
+    <header>
+        <a class="back" href="/riwayat-laporan" aria-label="Kembali ke riwayat laporan">←</a>
+        <div><h1>Hasil Analisis Laporan</h1><p id="reportSubtitle" class="subtitle">Laporan #LAP-{{ $id }}</p></div>
+    </header>
+    <main>
+        <section id="statusCard" class="state" data-tone="neutral" aria-labelledby="statusTitle" aria-live="polite" aria-busy="true">
+            <p class="eyebrow">Status laporan</p>
+            <div id="processingIcon" class="state-icon" aria-hidden="true"><span class="spinner"></span></div>
+            <div id="resultIcon" class="state-icon" aria-hidden="true" hidden>✓</div>
+            <h2 id="statusTitle">Memuat hasil analisis</h2>
+            <p id="statusDescription">Mohon tunggu, kami sedang memeriksa status laporanmu.</p>
+        </section>
 
-    <div class="w-full max-w-md bg-white min-h-screen shadow-md flex flex-col">
-        <!-- Top App Bar -->
-        <header class="bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 py-3.5 flex items-center justify-between sticky top-0 z-30">
-            <div class="flex items-center gap-3">
-                <a href="/riwayat-laporan" class="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition">
-                    <i class="fa-solid fa-arrow-left text-sm"></i>
-                </a>
-                <div>
-                    <h1 class="text-sm font-extrabold text-slate-900 leading-tight">Hasil Analisis Otomatis (AI)</h1>
-                    <p id="reportSubtitle" class="text-[11px] text-slate-400 font-medium">Memuat aduan #LAP-{{ $id }}...</p>
-                </div>
+        <section id="resultCard" class="result" aria-label="Ringkasan hasil analisis" hidden>
+            <span id="categoryLabel" class="label">Kategori laporan</span>
+            <div id="categoryValue" class="value">Belum tersedia</div>
+            <p id="predictionNote" class="hint" hidden></p>
+            <div class="metric">
+                <span class="label">Tingkat keyakinan AI</span>
+                <div class="metric-row"><span id="confidenceBadge" class="badge">Belum tersedia</span><span id="confidencePercent" class="percent">—</span></div>
+                <div id="confidenceTrack" class="track" role="progressbar" aria-label="Tingkat keyakinan AI" aria-valuemin="0" aria-valuemax="100" hidden><div id="confidenceBar" class="fill"></div></div>
+                <p class="hint">Keyakinan AI terhadap hasil deteksi. Keputusan laporan mengikuti status di atas.</p>
             </div>
-            <span id="headerStatusBadge" class="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                Memeriksa...
-            </span>
-        </header>
+        </section>
 
-        <!-- Main Content -->
-        <main class="flex-1 p-4 space-y-3.5">
+        <div id="requestNotice" class="notice" role="status" hidden>
+            <p id="noticeText"></p><button type="button" id="retryButton" class="retry">Periksa lagi</button>
+        </div>
 
-            <!-- Photo Preview Card with Scanner HUD -->
-            <div class="relative w-full h-64 bg-slate-950 rounded-2xl overflow-hidden shadow-inner flex items-center justify-center border border-slate-200">
-                <img id="reportPhoto" src="" alt="Foto Laporan" class="w-full h-full object-cover hidden transition-transform duration-500">
-                
-                <!-- Loading Skeleton -->
-                <div id="photoSkeleton" class="flex flex-col items-center justify-center text-slate-500">
-                    <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-brand-500"></i>
-                    <span class="text-xs font-semibold">Mengambil foto laporan...</span>
-                </div>
+        <nav class="actions" aria-label="Navigasi laporan">
+            <a class="button" href="/riwayat-laporan">Lihat Riwayat Laporan</a>
+            <a class="button secondary" href="/beranda-warga">Kembali ke Beranda</a>
+        </nav>
 
-                <!-- Laser scanning beam (active during DIPROSES) -->
-                <div id="laserBeam" class="laser-beam hidden"></div>
-
-                <!-- Viewfinder Corner HUD Markers -->
-                <div class="absolute inset-2 pointer-events-none z-10 flex flex-col justify-between">
-                    <div class="flex justify-between">
-                        <div class="w-3.5 h-3.5 border-t-2 border-l-2 border-emerald-400/80 rounded-tl-sm"></div>
-                        <div class="w-3.5 h-3.5 border-t-2 border-r-2 border-emerald-400/80 rounded-tr-sm"></div>
-                    </div>
-                    <div class="flex justify-between">
-                        <div class="w-3.5 h-3.5 border-b-2 border-l-2 border-emerald-400/80 rounded-bl-sm"></div>
-                        <div class="w-3.5 h-3.5 border-b-2 border-r-2 border-emerald-400/80 rounded-br-sm"></div>
-                    </div>
-                </div>
-
-                <!-- Top HUD Badge -->
-                <div class="absolute top-3 left-3 z-20 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10 text-white text-[10px] font-bold">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                    <span id="hudModelText">YOLOv8s-cls · Spesialis {{ $laporan->kategori->nama_kategori ?? 'Infrastruktur' }} (384x384)</span>
-                </div>
-
-                <!-- Bottom Photo Overlay Status -->
-                <div id="hudFooter" class="absolute bottom-3 inset-x-3 z-20 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-white flex items-center justify-between text-[11px]">
-                    <span id="hudStateText" class="font-medium text-emerald-300 flex items-center gap-1.5">
-                        <i class="fa-solid fa-eye"></i> Memindai citra...
-                    </span>
-                    <span id="hudLatencyText" class="text-[10px] text-slate-300">SLA &le; 10s</span>
-                </div>
+        <details id="reportDetails" hidden>
+            <summary>Lihat foto dan detail laporan</summary>
+            <div class="details-body">
+                <img id="reportPhoto" class="photo" alt="Foto bukti laporan warga" hidden>
+                <p id="photoMessage" class="hint" hidden>Foto tidak tersedia.</p>
+                <dl>
+                    <dt>Lokasi</dt><dd id="detailAddress">—</dd>
+                    <dt>Kategori yang dilaporkan</dt><dd id="detailCategory">—</dd>
+                    <dt>Waktu laporan</dt><dd id="detailDate">—</dd>
+                    <dt>Deskripsi</dt><dd id="detailDescription">—</dd>
+                </dl>
+                <h3>Riwayat status</h3><ul id="timelineList"></ul>
             </div>
+        </details>
+    </main>
+</div>
+<script>
+    const reportId = {{ $id }};
+    const POLL_MS = 3000;
+    const MAX_POLLS = 20;
+    let pollInterval = null;
+    let pollCount = 0;
+    let inFlight = false;
+    let activeRequest = null;
+    let latestReport = null;
+    let leavingPage = false;
+    const el = id => document.getElementById(id);
+    const statusLabels = {
+        DIPROSES: 'Sedang dianalisis',
+        MENUNGGU_VALIDASI_ADMIN: 'Menunggu verifikasi petugas',
+        TERVALIDASI: 'Laporan tervalidasi',
+        DITOLAK: 'Laporan ditolak',
+        SEDANG_DIPERBAIKI: 'Sedang diperbaiki',
+        SUDAH_DIPERBAIKI: 'Sudah diperbaiki'
+    };
+    const predictionLabels = {RUSAK: 'Kerusakan fasilitas', TERHALANG: 'Fasilitas terhalang', BAIK: 'Kondisi terlihat baik', SPAM: 'Foto perlu diperiksa petugas'};
 
-            <!-- Processing Pipeline Card (State: DIPROSES) -->
-            <div id="processingCard" class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-4 shadow-sm space-y-3">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <div class="w-7 h-7 rounded-lg bg-brand-500/20 text-brand-400 flex items-center justify-center">
-                            <i class="fa-solid fa-microchip text-xs"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-xs font-bold text-white">Analisis Computer Vision Aktif</h3>
-                            <p class="text-[10px] text-slate-400">Model sedang memproses citra laporan</p>
-                        </div>
-                    </div>
-                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30 flex items-center gap-1">
-                        <i class="fa-solid fa-circle-notch fa-spin text-[9px]"></i> Asinkron
-                    </span>
-                </div>
+    function stopPolling() {
+        if (pollInterval !== null) clearInterval(pollInterval);
+        pollInterval = null;
+    }
 
-                <!-- Live Evaluation Progress Bar -->
-                <div class="space-y-2 p-3 bg-slate-950/70 rounded-xl border border-slate-700/80 shadow-inner">
-                    <div class="flex items-center justify-between text-xs">
-                        <span id="evalStatusLabel" class="text-[11px] font-semibold text-emerald-300 flex items-center gap-1.5 truncate max-w-[75%]">
-                            <i class="fa-solid fa-gear fa-spin text-[10px] text-emerald-400"></i>
-                            <span>Memeriksa resolusi & pencahayaan citra...</span>
-                        </span>
-                        <span id="evalProgressPercent" class="text-xs font-black text-white font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-700">12%</span>
-                    </div>
+    function showNotice(message) {
+        el('noticeText').textContent = message;
+        el('requestNotice').hidden = false;
+    }
 
-                    <!-- Animated Progress Track -->
-                    <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden p-0.5 border border-slate-700 relative">
-                        <div id="evalProgressBar" class="bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 h-full rounded-full transition-all duration-300 shadow-sm" style="width: 12%"></div>
-                    </div>
+    function formatDate(value) {
+        const date = value ? new Date(value) : null;
+        return date && !Number.isNaN(date.getTime())
+            ? date.toLocaleString('id-ID', {day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'}) : '—';
+    }
 
-                    <div class="flex items-center justify-between text-[10px] text-slate-400 font-medium">
-                        <span id="evalElapsedText" class="flex items-center gap-1">
-                            <i class="fa-solid fa-stopwatch text-slate-500"></i> <span id="elapsedSeconds">0.5s</span>
-                        </span>
-                        <span>Estimasi: &le; 3 detik</span>
-                    </div>
-                </div>
-
-                <!-- Live Pipeline Stepper -->
-                <div class="space-y-2 pt-1 border-t border-slate-700/60 text-xs">
-                    <div id="stepItem1" class="flex items-center justify-between text-slate-300 text-[11px]">
-                        <span class="flex items-center gap-2">
-                            <span id="stepIcon1" class="w-4 h-4 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-[9px] font-black">✓</span>
-                            <span>Pra-pemrosesan citra (224x224 RGB)</span>
-                        </span>
-                        <span id="stepStatus1" class="text-emerald-400 font-semibold text-[10px]">Selesai</span>
-                    </div>
-
-                    <div id="stepItem2" class="flex items-center justify-between text-slate-300 text-[11px]">
-                        <span class="flex items-center gap-2">
-                            <span id="stepIcon2" class="w-4 h-4 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-[9px] font-black">✓</span>
-                            <span>Filter Heuristik & Anti-Spam (Stage 0)</span>
-                        </span>
-                        <span id="stepStatus2" class="text-emerald-400 font-semibold text-[10px]">Lolos</span>
-                    </div>
-
-                    <div id="stepItem3" class="flex items-center justify-between text-slate-200 text-[11px]">
-                        <span class="flex items-center gap-2">
-                            <span id="stepIcon3" class="w-4 h-4 rounded-full bg-brand-500 text-slate-950 flex items-center justify-center text-[9px] font-black animate-pulse">3</span>
-                            <span class="font-bold text-white">Klasifikasi Cacat YOLOv8</span>
-                        </span>
-                        <span id="stepStatus3" class="text-brand-400 font-bold text-[10px] animate-pulse">Berjalan...</span>
-                    </div>
-
-                    <div id="stepItem4" class="flex items-center justify-between text-slate-400 text-[11px]">
-                        <span class="flex items-center gap-2">
-                            <span id="stepIcon4" class="w-4 h-4 rounded-full bg-slate-700 text-slate-400 flex items-center justify-center text-[9px] font-bold">4</span>
-                            <span>Rekalkulasi Indeks Kelayakan WSM</span>
-                        </span>
-                        <span id="stepStatus4" class="text-slate-500 text-[10px]">Menunggu</span>
-                    </div>
-                </div>
-
-                <div class="p-2.5 bg-slate-800/80 rounded-xl border border-slate-700 flex items-center gap-2 text-[10px] text-slate-300">
-                    <i class="fa-solid fa-clock-rotate-left text-brand-400"></i>
-                    <span>Polling otomatis setiap 3 detik. Halaman ini akan diperbarui instan saat hasil selesai.</span>
-                </div>
-            </div>
-
-            <!-- Analysis Result Card (State: Completed) -->
-            <div id="resultCard" class="hidden space-y-3.5">
-                
-                <!-- Main Verdict Banner -->
-                <div id="verdictBannerCard" class="rounded-2xl p-4 border shadow-sm transition-all">
-                    <!-- Injected by JS -->
-                </div>
-
-                <!-- Confidence Gauge Card -->
-                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
-                    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-                        <div class="flex items-center gap-1.5">
-                            <i class="fa-solid fa-chart-simple text-brand-600 text-xs"></i>
-                            <h4 class="text-xs font-bold text-slate-800">Tingkat Keyakinan Model (Confidence)</h4>
-                        </div>
-                        <span id="verdictScorePill" class="text-xs font-extrabold text-brand-700 bg-brand-50 px-2.5 py-0.5 rounded-full border border-brand-200">
-                            0%
-                        </span>
-                    </div>
-
-                    <!-- Visual Progress Bar -->
-                    <div class="space-y-1.5">
-                        <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden p-0.5 border border-slate-200">
-                            <div id="confidenceBar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-1000 shadow-sm" style="width: 0%"></div>
-                        </div>
-                        <div class="flex justify-between text-[10px] text-slate-400 font-medium">
-                            <span>0%</span>
-                            <span class="text-emerald-700 font-bold flex items-center gap-1">
-                                <i class="fa-solid fa-flag-checkered text-[9px]"></i> Ambang Auto-Validasi: 80%
-                            </span>
-                            <span>100%</span>
-                        </div>
-                    </div>
-
-                    <!-- Category Detection Matching Comparison -->
-                    <div class="pt-2 border-t border-slate-100 space-y-2">
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="text-slate-500 font-medium">Kategori Dilaporkan:</span>
-                            <span id="reportedCatBadge" class="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md">-</span>
-                        </div>
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="text-slate-500 font-medium">Prediksi Computer Vision:</span>
-                            <span id="aiCatBadge" class="font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">-</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Live Audit Trail Log -->
-                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-2.5">
-                    <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                        <i class="fa-solid fa-list-check text-slate-400"></i>
-                        <span>Riwayat Validasi Sistem</span>
-                    </h4>
-                    <ul id="timelineList" class="space-y-2 text-xs divide-y divide-slate-50">
-                        <!-- Populated by JS -->
-                    </ul>
-                </div>
-
-            </div>
-
-            <!-- Report Details Card -->
-            <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-2.5">
-                <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                    <i class="fa-solid fa-circle-info text-slate-400"></i>
-                    <span>Informasi Aduan</span>
-                </h4>
-                
-                <div class="flex justify-between text-xs py-1 border-b border-slate-50">
-                    <span class="text-slate-500">ID Laporan</span>
-                    <span id="detailId" class="font-bold text-slate-800 font-mono">#LAP-{{ $id }}</span>
-                </div>
-
-                <div class="flex justify-between text-xs py-1 border-b border-slate-50">
-                    <span class="text-slate-500">Lokasi / Jalan</span>
-                    <span id="detailAlamat" class="font-semibold text-slate-800 text-right max-w-[65%] truncate">-</span>
-                </div>
-
-                <div class="flex justify-between text-xs py-1 border-b border-slate-50">
-                    <span class="text-slate-500">Waktu Kirim</span>
-                    <span id="detailWaktu" class="font-semibold text-slate-800">-</span>
-                </div>
-
-                <div class="pt-1">
-                    <span class="text-[11px] text-slate-400 block mb-0.5">Deskripsi Warga:</span>
-                    <p id="detailDeskripsi" class="text-xs text-slate-700 italic bg-slate-50 p-2.5 rounded-xl border border-slate-100 leading-relaxed">
-                        -
-                    </p>
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="pt-2 space-y-2">
-                <a href="/beranda-warga" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm transition text-sm">
-                    <i class="fa-solid fa-map-location-dot"></i>
-                    <span>Lihat di Peta Interaktif</span>
-                </a>
-                
-                <div class="grid grid-cols-2 gap-2">
-                    <a href="/riwayat-laporan" class="py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center justify-center gap-1.5 transition text-xs">
-                        <i class="fa-solid fa-clock-rotate-left"></i>
-                        <span>Riwayat Saya</span>
-                    </a>
-                    <a href="/lapor-kondisi" class="py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center justify-center gap-1.5 transition text-xs">
-                        <i class="fa-solid fa-camera"></i>
-                        <span>Lapor Lagi</span>
-                    </a>
-                </div>
-            </div>
-
-        </main>
-    </div>
-
-    <script>
-        const reportId = {{ $id }};
-        let pollInterval = null;
-        let pollCount = 0;
-        const maxPolls = 20; // 20 x 3s = 60s max polling (FR-F4-07)
-
-        // Evaluation Progress Bar State
-        let evalPercent = 15;
-        let evalTimer = null;
-        let evalStartTime = Date.now();
-        let isCompleted = false;
-
-        const evalSteps = [
-            { at: 15, text: "Memeriksa resolusi & kualitas citra..." },
-            { at: 35, text: "Menjalankan filter kualitas & anti-spam (Stage 0)..." },
-            { at: 60, text: "Klasifikasi fitur cacat model spesialis (384x384)..." },
-            { at: 82, text: "Mengevaluasi tingkat keyakinan (threshold 80%)..." },
-            { at: 90, text: "Sinkronisasi validasi & pembaruan indeks WSM..." },
-        ];
-
-        function startEvaluationProgressBar() {
-            evalStartTime = Date.now();
-            evalTimer = setInterval(() => {
-                const elapsedSec = ((Date.now() - evalStartTime) / 1000).toFixed(1);
-                const elapsedEl = document.getElementById('elapsedSeconds');
-                if (elapsedEl) elapsedEl.innerText = `${elapsedSec}s`;
-
-                if (evalPercent < 90) {
-                    evalPercent += Math.floor(Math.random() * 4) + 2;
-                    if (evalPercent > 90) evalPercent = 90;
-                    updateEvalProgress(evalPercent);
-                }
-            }, 250);
+    function renderReport(data) {
+        latestReport = data;
+        const processing = data.status === 'DIPROSES';
+        const category = typeof data.kategori === 'string' ? data.kategori : data.kategori?.nama || 'Belum tersedia';
+        const label = data.cv_label || '';
+        const hasScore = data.confidence_score !== null && data.confidence_score !== undefined &&
+            data.confidence_score !== '' && Number.isFinite(Number(data.confidence_score)) &&
+            Number(data.confidence_score) >= 0 && Number(data.confidence_score) <= 1;
+        const score = hasScore ? Number(data.confidence_score) : null;
+        const percent = hasScore ? Math.round(score * 100) : null;
+        const history = Array.isArray(data.riwayat) ? data.riwayat : [];
+        // Prefer the latest validation entry; a manual decision must not be labelled AI.
+        const validation = [...history].reverse().find(item => ['TERVALIDASI', 'DITOLAK'].includes(item.status));
+        const autoValidated = data.status === 'TERVALIDASI' && validation?.status === 'TERVALIDASI' &&
+            /tervalidasi otomatis oleh computer vision/i.test(validation.catatan || '');
+        let title = statusLabels[data.status] || 'Status sedang diperbarui';
+        let description = 'Lihat perkembangan laporan melalui halaman Riwayat Laporan.';
+        let tone = 'neutral';
+        let icon = 'i';
+        if (processing) {
+            description = 'Foto sedang dianalisis. Status diperiksa otomatis setiap 3 detik.';
+        } else if (data.status === 'TERVALIDASI') {
+            title = autoValidated ? 'Tervalidasi otomatis oleh AI' : 'Laporan tervalidasi';
+            description = 'Laporan dinyatakan valid. Pantau perkembangan penanganannya di Riwayat Laporan.';
+            tone = 'valid'; icon = '✓';
+        } else if (data.status === 'MENUNGGU_VALIDASI_ADMIN') {
+            description = label === 'BAIK'
+                ? 'Foto tampak dalam kondisi baik. Petugas akan memeriksa kembali laporanmu.'
+                : label === 'SPAM'
+                    ? 'Foto perlu diperiksa lebih lanjut. Petugas akan menentukan hasil verifikasi.'
+                    : 'Laporan sudah diterima. Petugas akan memeriksa hasil analisis sebelum menentukan keputusan.';
+            tone = 'pending'; icon = '…';
+        } else if (data.status === 'DITOLAK') {
+            description = data.alasan_penolakan || 'Lihat alasan dan riwayat verifikasi pada detail laporan.';
+            tone = 'rejected'; icon = '×';
         }
-
-        function updateEvalProgress(pct) {
-            const bar = document.getElementById('evalProgressBar');
-            const percentLabel = document.getElementById('evalProgressPercent');
-            const statusLabel = document.getElementById('evalStatusLabel');
-            if (bar) bar.style.width = `${pct}%`;
-            if (percentLabel) percentLabel.innerText = `${pct}%`;
-
-            if (statusLabel) {
-                for (let i = evalSteps.length - 1; i >= 0; i--) {
-                    if (pct >= evalSteps[i].at) {
-                        statusLabel.innerHTML = `<i class="fa-solid fa-gear fa-spin text-[10px] text-emerald-400"></i> <span>${evalSteps[i].text}</span>`;
-                        break;
-                    }
-                }
-            }
-
-            // Update stepper icons dynamically
-            const sIcon3 = document.getElementById('stepIcon3');
-            const sStatus3 = document.getElementById('stepStatus3');
-            const sIcon4 = document.getElementById('stepIcon4');
-            const sStatus4 = document.getElementById('stepStatus4');
-
-            if (pct >= 60 && sIcon3) {
-                sIcon3.className = 'w-4 h-4 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-[9px] font-black';
-                sIcon3.innerText = '✓';
-                if (sStatus3) { sStatus3.className = 'text-emerald-400 font-semibold text-[10px]'; sStatus3.innerText = 'Aktif'; }
-            }
-            if (pct >= 85 && sIcon4) {
-                sIcon4.className = 'w-4 h-4 rounded-full bg-brand-500 text-slate-950 flex items-center justify-center text-[9px] font-black animate-pulse';
-                if (sStatus4) { sStatus4.className = 'text-brand-400 font-bold text-[10px] animate-pulse'; sStatus4.innerText = 'Menyesuaikan...'; }
-            }
+        const statusCard = el('statusCard');
+        const changed = statusCard.dataset.status !== data.status;
+        statusCard.dataset.status = data.status;
+        statusCard.dataset.tone = tone;
+        statusCard.setAttribute('aria-busy', processing ? 'true' : 'false');
+        el('statusTitle').textContent = title;
+        el('statusDescription').textContent = description;
+        el('processingIcon').hidden = !processing;
+        el('resultIcon').hidden = processing;
+        el('resultIcon').textContent = icon;
+        el('resultCard').hidden = processing;
+        if (changed && !processing) {
+            statusCard.classList.remove('fade-in');
+            requestAnimationFrame(() => statusCard.classList.add('fade-in'));
         }
+        el('categoryLabel').textContent = data.status === 'TERVALIDASI' ? 'Kategori terverifikasi' : 'Kategori laporan';
+        el('categoryValue').textContent = category;
+        el('predictionNote').hidden = !label;
+        el('predictionNote').textContent = label ? `Hasil deteksi AI: ${predictionLabels[label] || label}` : '';
+        // Presentation labels only; these do not change server validation rules.
+        el('confidenceBadge').textContent = !hasScore ? 'Belum tersedia' : score >= 0.8 ? 'Sangat yakin' : score >= 0.6 ? 'Cukup yakin' : 'Keyakinan rendah';
+        el('confidencePercent').textContent = hasScore ? `${percent}%` : '—';
+        el('confidenceTrack').hidden = !hasScore;
+        el('confidenceTrack').setAttribute('aria-valuenow', hasScore ? String(percent) : '0');
+        el('confidenceBar').style.width = hasScore ? `${percent}%` : '0%';
+        el('reportSubtitle').textContent = `Laporan #LAP-${String(data.laporan_id ?? reportId).padStart(4, '0')}`;
+        el('detailAddress').textContent = data.lokasi?.alamat || data.lokasi?.nama_jalan || 'Lokasi tidak tersedia';
+        el('detailCategory').textContent = category;
+        el('detailDate').textContent = formatDate(data.tanggal_lapor);
+        el('detailDescription').textContent = data.deskripsi || 'Tidak ada deskripsi.';
+        el('reportDetails').hidden = false;
+        const photo = el('reportPhoto');
+        if (data.foto_url) {
+            photo.onload = () => { photo.hidden = false; el('photoMessage').hidden = true; };
+            photo.onerror = () => { photo.hidden = true; el('photoMessage').hidden = false; };
+            if (photo.getAttribute('src') !== data.foto_url) photo.src = data.foto_url;
+        } else {
+            photo.removeAttribute('src'); photo.hidden = true; el('photoMessage').hidden = false;
+        }
+        const list = el('timelineList');
+        list.replaceChildren();
+        if (!history.length) {
+            const item = document.createElement('li'); item.textContent = 'Belum ada pembaruan status.'; list.append(item);
+        }
+        for (const entry of history) {
+            const item = document.createElement('li');
+            const heading = document.createElement('strong'); heading.textContent = statusLabels[entry.status] || entry.status || 'Pembaruan laporan';
+            const note = document.createElement('p'); note.textContent = entry.catatan || '';
+            const time = document.createElement('time'); time.textContent = formatDate(entry.waktu);
+            item.append(heading, note, time); list.append(item);
+        }
+    }
 
-        function finishEvaluationProgress(callback) {
-            if (isCompleted) {
-                if (typeof callback === 'function') callback();
+    async function fetchReportData() {
+        if (inFlight || leavingPage) return;
+        inFlight = true;
+        el('retryButton').disabled = true;
+        const request = new AbortController();
+        activeRequest = request;
+        const timeout = setTimeout(() => request.abort(), 10000);
+        try {
+            const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+            const headers = {'Accept': 'application/json'};
+            if (token) headers.Authorization = `Bearer ${token}`;
+            const response = await fetch(`/api/v1/reports/${reportId}`, {headers, signal: request.signal});
+            if (response.status === 401) { stopPolling(); window.location.href = '/login'; return; }
+            if (response.status === 403 || response.status === 404) {
+                stopPolling(); el('statusTitle').textContent = 'Laporan tidak tersedia';
+                el('statusDescription').textContent = response.status === 403 ? 'Kamu tidak memiliki akses ke laporan ini.' : 'Laporan yang diminta tidak ditemukan.';
+                el('processingIcon').hidden = true;
+                el('resultIcon').hidden = false;
+                el('statusCard').setAttribute('aria-busy', 'false');
                 return;
             }
-            isCompleted = true;
-            if (evalTimer) {
-                clearInterval(evalTimer);
-                evalTimer = null;
+            if (!response.ok) throw new Error('request_failed');
+            const json = await response.json();
+            if (!json.data || !json.data.status) throw new Error('invalid_response');
+            if (leavingPage) return;
+            el('requestNotice').hidden = true;
+            renderReport(json.data);
+            if (json.data.status !== 'DIPROSES') stopPolling();
+        } catch (error) {
+            if (leavingPage) return;
+            showNotice('Status belum dapat diperbarui. Periksa koneksi atau tekan Periksa lagi.');
+            if (!latestReport) {
+                el('statusTitle').textContent = 'Hasil belum dapat dimuat';
+                el('statusDescription').textContent = 'Kamu tetap bisa memeriksa laporan melalui halaman Riwayat.';
+                el('processingIcon').hidden = true;
+                el('resultIcon').hidden = false;
+                el('statusCard').setAttribute('aria-busy', 'false');
             }
-
-            updateEvalProgress(100);
-            const statusLabel = document.getElementById('evalStatusLabel');
-            if (statusLabel) statusLabel.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> <span>Analisis Selesai! (100%)</span>`;
-
-            const sIcon4 = document.getElementById('stepIcon4');
-            const sStatus4 = document.getElementById('stepStatus4');
-            if (sIcon4) {
-                sIcon4.className = 'w-4 h-4 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-[9px] font-black';
-                sIcon4.innerText = '✓';
-            }
-            if (sStatus4) {
-                sStatus4.className = 'text-emerald-400 font-semibold text-[10px]';
-                sStatus4.innerText = 'Selesai';
-            }
-
-            setTimeout(() => {
-                if (typeof callback === 'function') callback();
-            }, 450);
+        } finally {
+            clearTimeout(timeout);
+            if (activeRequest === request) activeRequest = null;
+            inFlight = false;
+            el('retryButton').disabled = false;
         }
+    }
 
-        async function fetchReportData() {
-            try {
-                const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
-                const headers = { 'Accept': 'application/json' };
-                if (token) headers['Authorization'] = `Bearer ${token}`;
-
-                const res = await fetch(`/api/v1/reports/${reportId}`, { headers });
-                if (!res.ok) {
-                    if (res.status === 401) {
-                        window.location.href = '/login';
-                        return;
-                    }
-                    throw new Error('Gagal memuat detail aduan');
-                }
-
-                const json = await res.json();
-                const data = json.data;
-
-                // Stop polling if status is no longer DIPROSES
-                if (data.status !== 'DIPROSES') {
-                    if (pollInterval) {
-                        clearInterval(pollInterval);
-                        pollInterval = null;
-                    }
-                    finishEvaluationProgress(() => renderReport(data));
-                } else {
-                    renderReport(data);
-                }
-            } catch (err) {
-                console.error("Error polling report:", err);
-            }
-        }
-
-        function renderReport(data) {
-            // Photo rendering
-            if (data.foto_url) {
-                const img = document.getElementById('reportPhoto');
-                img.src = data.foto_url;
-                img.classList.remove('hidden');
-                document.getElementById('photoSkeleton').classList.add('hidden');
-            }
-
-            // Report Meta Details
-            const kategoriNama = data.kategori?.nama || data.kategori || 'Fasilitas Pejalan Kaki';
-            document.getElementById('reportSubtitle').innerText = `Aduan #LAP-${String(data.laporan_id).padStart(4, '0')} · ${kategoriNama}`;
-            document.getElementById('detailAlamat').innerText = data.lokasi?.alamat || data.lokasi?.nama_jalan || 'Surabaya';
-            document.getElementById('detailDeskripsi').innerText = `"${data.deskripsi || 'Tidak ada deskripsi'}"`;
-            document.getElementById('reportedCatBadge').innerText = kategoriNama;
-
-            if (data.tanggal_lapor) {
-                const d = new Date(data.tanggal_lapor);
-                document.getElementById('detailWaktu').innerText = d.toLocaleDateString('id-ID', {
-                    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                });
-            }
-
-            // Timeline audit
-            if (data.riwayat && data.riwayat.length > 0) {
-                const tl = document.getElementById('timelineList');
-                tl.innerHTML = data.riwayat.map(r => `
-                    <li class="pt-2 flex items-start gap-2">
-                        <span class="w-2 h-2 rounded-full bg-brand-600 mt-1 shrink-0"></span>
-                        <div class="flex-1">
-                            <div class="flex items-center justify-between">
-                                <span class="font-bold text-slate-800 text-[11px]">${r.status}</span>
-                                <span class="text-[10px] text-slate-400">${r.waktu ? new Date(r.waktu).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}) : '-'}</span>
-                            </div>
-                            <p class="text-[11px] text-slate-600 mt-0.5 leading-snug">${r.catatan}</p>
-                        </div>
-                    </li>
-                `).join('');
-            }
-
-            // State Handling: DIPROSES vs Completed
-            const processingCard = document.getElementById('processingCard');
-            const resultCard = document.getElementById('resultCard');
-            const laserBeam = document.getElementById('laserBeam');
-            const headerBadge = document.getElementById('headerStatusBadge');
-            const hudState = document.getElementById('hudStateText');
-
-            if (data.status === 'DIPROSES') {
-                processingCard.classList.remove('hidden');
-                resultCard.classList.add('hidden');
-                laserBeam.classList.remove('hidden');
-
-                headerBadge.className = 'text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800 border border-sky-200 animate-pulse';
-                headerBadge.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Sedang Dianalisis';
-                hudState.innerHTML = '<i class="fa-solid fa-radar text-emerald-400 animate-spin"></i> Mengevaluasi Citra...';
-            } else {
-                processingCard.classList.add('hidden');
-                resultCard.classList.remove('hidden');
-                laserBeam.classList.add('hidden');
-
-                const conf = (data.confidence_score !== null && data.confidence_score !== undefined) 
-                    ? Math.round(data.confidence_score * 100) 
-                    : 0;
-                const label = data.cv_label || 'TERTUNDA';
-
-                document.getElementById('verdictScorePill').innerText = `${conf}%`;
-                document.getElementById('confidenceBar').style.width = `${Math.min(100, Math.max(5, conf))}%`;
-                document.getElementById('aiCatBadge').innerText = `${label} (${conf}%)`;
-
-                const vCard = document.getElementById('verdictBannerCard');
-
-                if (data.status === 'TERVALIDASI') {
-                    headerBadge.className = 'text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200';
-                    headerBadge.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Valid (AI)';
-                    hudState.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> Terverifikasi (${conf}%)`;
-
-                    const isCategoryAdjusted = data.riwayat && data.riwayat.some(r => r.catatan && r.catatan.includes('Kategori disesuaikan'));
-
-                    vCard.className = 'bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-4 shadow-sm space-y-2';
-                    vCard.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center text-lg shadow-sm shrink-0">
-                                <i class="fa-solid fa-shield-check"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-sm font-extrabold text-emerald-950">Aduan Tervalidasi Otomatis (AI)</h3>
-                                <p class="text-[11px] text-emerald-700">Tingkat keyakinan model mencapai ${conf}% (&ge; ambang batas 80%)</p>
-                            </div>
-                        </div>
-                        ${isCategoryAdjusted ? `
-                            <div class="flex items-center gap-2 p-2.5 bg-emerald-100/70 border border-emerald-300/80 text-emerald-900 rounded-xl text-xs font-semibold">
-                                <i class="fa-solid fa-wand-magic-sparkles text-emerald-600"></i>
-                                <span>Kategori disesuaikan otomatis oleh AI ke: <strong>${kategoriNama}</strong></span>
-                            </div>
-                        ` : ''}
-                        <div class="p-3 bg-white/80 backdrop-blur-sm rounded-xl border border-emerald-100 text-xs text-emerald-900 leading-relaxed space-y-1">
-                            <p><strong>Dampak Langsung:</strong> ${label === 'TERHALANG' ? 'Jalur pejalan kaki terkonfirmasi terhalang kendaraan' : 'Kerusakan fasilitas pada segmen ini telah dikonfirmasi'} dan <em>Indeks Kelayakan Jalur (WSM)</em> telah otomatis diperbarui pada Heatmap Kota.</p>
-                            <p class="text-[11px] text-emerald-700 pt-0.5">Petugas Dinas Perhubungan menerima laporan ini dalam antrean penertiban/perbaikan.</p>
-                        </div>
-                    `;
-                } else if (data.status === 'MENUNGGU_VALIDASI_ADMIN') {
-                    headerBadge.className = 'text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200';
-                    headerBadge.innerHTML = '<i class="fa-solid fa-user-clock mr-1"></i> Tinjauan Admin';
-                    hudState.innerHTML = `<i class="fa-solid fa-user-check text-amber-400"></i> Menunggu Admin (${conf}%)`;
-
-                    const isSpam = label === 'SPAM';
-                    const isBaik = label === 'BAIK';
-
-                    if (isBaik) {
-                        vCard.className = 'bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 shadow-sm space-y-2';
-                        vCard.innerHTML = `
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-lg shadow-sm shrink-0">
-                                    <i class="fa-solid fa-circle-info"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-sm font-extrabold text-amber-950">Terindikasi Kondisi Normal (${conf}%)</h3>
-                                    <p class="text-[11px] text-amber-800">Model AI mendeteksi fasilitas trotoar terlihat baik / tidak ditemukan kerusakan</p>
-                                </div>
-                            </div>
-                            <div class="p-3 bg-white/80 backdrop-blur-sm rounded-xl border border-amber-100 text-xs text-amber-900 leading-relaxed space-y-1.5">
-                                <p><strong>Mengapa ke Admin?</strong> Sistem kami tidak otomatis menolak aduan. Laporan dialihkan ke Admin Dinas Perhubungan untuk memastikan tidak ada kerusakan tersembunyi yang luput dari kamera.</p>
-                                <p class="text-[11px] text-slate-500 pt-0.5">Bila Anda tidak sengaja mengunggah foto yang keliru, Anda dapat membuat aduan baru dengan foto kerusakan fasilitas yang lebih jelas.</p>
-                            </div>
-                        `;
-                    } else if (isSpam) {
-                        vCard.className = 'bg-gradient-to-br from-rose-50 to-orange-50 border border-rose-200 rounded-2xl p-4 shadow-sm space-y-2';
-                        vCard.innerHTML = `
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-2xl bg-rose-500 text-white flex items-center justify-center text-lg shadow-sm shrink-0">
-                                    <i class="fa-solid fa-triangle-exclamation"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-sm font-extrabold text-rose-950">Terindikasi Bukan Fasilitas Trotoar (${conf}%)</h3>
-                                    <p class="text-[11px] text-rose-800">AI menandai foto sebagai konten non-infrastruktur publik</p>
-                                </div>
-                            </div>
-                            <div class="p-3 bg-white/80 backdrop-blur-sm rounded-xl border border-rose-100 text-xs text-rose-900 leading-relaxed">
-                                Foto laporan ini dialihkan ke antrean Admin Dinas Perhubungan untuk verifikasi keabsahan foto atau penolakan laporan.
-                            </div>
-                        `;
-                    } else {
-                        vCard.className = 'bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 shadow-sm space-y-2';
-                        vCard.innerHTML = `
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-lg shadow-sm shrink-0">
-                                    <i class="fa-solid fa-clipboard-question"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-sm font-extrabold text-amber-950">Diteruskan ke Verifikasi Petugas</h3>
-                                    <p class="text-[11px] text-amber-800">Skor keyakinan AI (${conf}%) di bawah batas auto-validasi (80%)</p>
-                                </div>
-                            </div>
-                            <div class="p-3 bg-white/80 backdrop-blur-sm rounded-xl border border-amber-100 text-xs text-amber-900 leading-relaxed">
-                                Petugas Dinas Perhubungan akan memeriksa secara langsung untuk memastikan validitas kerusakan sebelum dimasukkan ke antrean perbaikan.
-                            </div>
-                        `;
-                    }
-                } else if (data.status === 'DITOLAK') {
-                    headerBadge.className = 'text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-200';
-                    headerBadge.innerHTML = '<i class="fa-solid fa-xmark mr-1"></i> Ditolak';
-                    hudState.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-400"></i> Laporan Ditolak`;
-
-                    vCard.className = 'bg-rose-50 border border-rose-200 rounded-2xl p-4 shadow-sm space-y-2';
-                    vCard.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-2xl bg-rose-500 text-white flex items-center justify-center text-lg shadow-sm shrink-0">
-                                <i class="fa-solid fa-ban"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-sm font-extrabold text-rose-950">Aduan Ditolak</h3>
-                                <p class="text-[11px] text-rose-700">Tidak memenuhi kriteria kerusakan fasilitas publik</p>
-                            </div>
-                        </div>
-                        <div class="p-3 bg-white/80 rounded-xl border border-rose-100 text-xs text-rose-900 leading-relaxed">
-                            <strong>Alasan Penolakan:</strong> ${data.alasan_penolakan || 'Foto tidak memenuhi kriteria kerusakan infrastruktur trotoar atau gambar tidak jelas.'}
-                        </div>
-                    `;
-                }
-            }
-        }
-
-        // Start progress bar & polling (FR-F4-07: Poll every 3 seconds)
-        startEvaluationProgressBar();
-        fetchReportData();
+    function startPolling() {
+        if (inFlight) return;
+        stopPolling();
+        pollCount = 0;
+        // Create the interval before the first request so a fast result can stop it.
         pollInterval = setInterval(() => {
             pollCount++;
-            if (pollCount >= maxPolls) {
-                if (pollInterval) clearInterval(pollInterval);
-            } else {
-                fetchReportData();
+            if (pollCount >= MAX_POLLS) {
+                stopPolling();
+                showNotice('Analisis masih berlangsung atau status belum tersedia. Periksa lagi atau lihat Riwayat Laporan.');
+                return;
             }
-        }, 3000);
-    </script>
+            fetchReportData();
+        }, POLL_MS);
+        fetchReportData();
+    }
+    el('retryButton').addEventListener('click', startPolling);
+    window.addEventListener('pagehide', () => {
+        leavingPage = true;
+        stopPolling();
+        if (activeRequest) activeRequest.abort();
+    });
+    window.addEventListener('pageshow', event => {
+        if (!event.persisted) return;
+        leavingPage = false;
+        if (!inFlight) startPolling();
+    });
+    startPolling();
+</script>
 </body>
 </html>
