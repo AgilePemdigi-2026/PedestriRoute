@@ -15,6 +15,7 @@ Project_Context.zip
 *.zip
 .vscode/
 bdd/.venv/
+bdd/pretty.output
 .venv/
 __pycache__/
 *.pyc
