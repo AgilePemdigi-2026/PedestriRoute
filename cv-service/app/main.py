@@ -1,9 +1,10 @@
 import os
 import re
 import io
+from typing import Optional
 import numpy as np
 from PIL import Image
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 
 app = FastAPI(title="PedestriRoute CV Service", version="1.0.0")
@@ -107,7 +108,10 @@ def run_onnx_inference(pil_img: Image.Image) -> np.ndarray:
 
 
 @app.post("/analyze")
-async def analyze_image(file: UploadFile = File(...)):
+async def analyze_image(
+    file: UploadFile = File(...),
+    category: Optional[str] = Form(None)
+):
     filename = file.filename or "image.jpg"
     contents = await file.read()
     
@@ -219,7 +223,10 @@ async def analyze_image(file: UploadFile = File(...)):
         detected_category = None
     else:
         label = "RUSAK"
-        detected_category = CATEGORY_DISPLAY_NAMES.get(top_class, "Trotoar Rusak")
+        if category and category.strip():
+            detected_category = category.strip()
+        else:
+            detected_category = CATEGORY_DISPLAY_NAMES.get(top_class, "Trotoar Rusak")
 
     return {
         "label": label,

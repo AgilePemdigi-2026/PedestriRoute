@@ -106,7 +106,7 @@ class CvValidationFeatureTest extends TestCase
         ]);
     }
 
-    public function test_cv_job_auto_adjusts_category_when_defect_category_differs(): void
+    public function test_cv_job_preserves_reported_category_context(): void
     {
         // Citizen reported kategori 1: "Trotoar Rusak"
         $laporanId = $this->createReportWithPhoto('DIPROSES', 1);
@@ -114,10 +114,10 @@ class CvValidationFeatureTest extends TestCase
         $mockCv = Mockery::mock(CvService::class);
         $mockCv->shouldReceive('isCategorySupported')->andReturn(true);
         $mockCv->shouldReceive('getThreshold')->andReturn(0.80);
-        $mockCv->shouldReceive('analyze')->once()->andReturn([
+        $mockCv->shouldReceive('analyze')->once()->with(Mockery::any(), 'Trotoar Rusak')->andReturn([
             'label' => 'RUSAK',
             'confidence' => 0.95,
-            'detected_category' => 'Masalah Drainase',
+            'detected_category' => 'Trotoar Rusak',
         ]);
         $this->app->instance(CvService::class, $mockCv);
 
@@ -125,8 +125,8 @@ class CvValidationFeatureTest extends TestCase
 
         $laporan = Laporan::with('kategori')->find($laporanId);
         $this->assertEquals('TERVALIDASI', $laporan->status);
-        $this->assertEquals('Masalah Drainase', $laporan->kategori->nama_kategori);
-        $this->assertEquals(2, $laporan->kategori_id);
+        $this->assertEquals('Trotoar Rusak', $laporan->kategori->nama_kategori);
+        $this->assertEquals(1, $laporan->kategori_id);
 
         $this->assertDatabaseHas('riwayat_status_laporan', [
             'laporan_id' => $laporanId,

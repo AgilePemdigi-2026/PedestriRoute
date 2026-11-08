@@ -61,8 +61,9 @@ class ProcessReportCv implements ShouldQueue
             return;
         }
 
-        // Send to CV Service (Timeout <= 10s per SLA)
-        $cvResult = $cvService->analyze($photoPath);
+        // Send to CV Service (Timeout <= 10s per SLA) with reported category context
+        $reportedCategory = $laporan->kategori->nama_kategori ?? 'Trotoar Rusak';
+        $cvResult = $cvService->analyze($photoPath, $reportedCategory);
 
         // FR-F4-05: If CV fails or returns null
         if (!$cvResult) {
@@ -72,7 +73,7 @@ class ProcessReportCv implements ShouldQueue
 
         $label = $cvResult['label'];
         $confidence = $cvResult['confidence'];
-        $detectedCategory = $cvResult['detected_category'] ?? ($laporan->kategori->nama_kategori ?? 'Trotoar Rusak');
+        $detectedCategory = $cvResult['detected_category'] ?? $reportedCategory;
         $threshold = $cvService->getThreshold();
         $confPct = round($confidence * 100, 1);
 
@@ -80,6 +81,7 @@ class ProcessReportCv implements ShouldQueue
             $laporan,
             $label,
             $confidence,
+            $reportedCategory,
             $detectedCategory,
             $threshold,
             $confPct,
@@ -94,16 +96,6 @@ class ProcessReportCv implements ShouldQueue
 
             // FR-F4-03: label == RUSAK and confidence >= threshold -> Auto-Validated
             if ($label === 'RUSAK' && $confidence >= $threshold) {
-                $categoryAdjustedNote = "";
-                if ($detectedCategory && $locked->kategori && $detectedCategory !== $locked->kategori->nama_kategori) {
-                    $newCat = \App\Models\KategoriMasalah::where('nama_kategori', $detectedCategory)->first();
-                    if ($newCat) {
-                        $oldName = $locked->kategori->nama_kategori;
-                        $locked->kategori_id = $newCat->kategori_id;
-                        $categoryAdjustedNote = " (Kategori disesuaikan dari '{$oldName}')";
-                    }
-                }
-
                 $locked->status = 'TERVALIDASI';
                 $locked->cv_label = $label;
                 $locked->confidence_score = $confidence;
@@ -116,7 +108,7 @@ class ProcessReportCv implements ShouldQueue
                     'jenis' => 'VALIDASI',
                     'status' => 'TERVALIDASI',
                     'admin_id' => null,
-                    'catatan' => "Tervalidasi otomatis oleh Computer Vision: {$detectedCategory} (Confidence: {$confPct}%){$categoryAdjustedNote}",
+                    'catatan' => "Tervalidasi otomatis oleh Computer Vision: {$reportedCategory} (Confidence: {$confPct}%)",
                     'waktu' => now(),
                 ]);
 

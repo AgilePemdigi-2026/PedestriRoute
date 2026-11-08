@@ -48,7 +48,7 @@ class CvService
      * Send photo file to cv-service for analysis.
      * Returns: ['label' => 'RUSAK'|'BAIK'|'SPAM', 'confidence' => float, 'detected_category' => ?string]
      */
-    public function analyze(string $photoPath): ?array
+    public function analyze(string $photoPath, ?string $category = null): ?array
     {
         if (!$this->enabled) {
             return null;
@@ -63,9 +63,13 @@ class CvService
             $fileContents = Storage::disk('public')->get($photoPath);
             $fileName = basename($photoPath);
 
-            $response = Http::timeout($this->timeout)
-                ->attach('file', $fileContents, $fileName)
-                ->post("{$this->url}/analyze");
+            $httpReq = Http::timeout($this->timeout)->attach('file', $fileContents, $fileName);
+            $payload = [];
+            if ($category) {
+                $payload['category'] = $category;
+            }
+
+            $response = $httpReq->post("{$this->url}/analyze", $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
