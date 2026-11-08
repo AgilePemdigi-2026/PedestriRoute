@@ -33,22 +33,17 @@
         h1 { margin: 0; font-size: 16px; font-weight: 800; line-height: 1.4; }
         .subtitle { color: #64748b; font-size: 12px; margin: 3px 0 0; overflow-wrap: anywhere; }
         main { display: grid; gap: 16px; padding: 20px 20px max(28px, env(safe-area-inset-bottom)); }
-        .state { border: 1px solid #ccebe7; border-radius: 14px; padding: 12px 14px; background: #f0faf8; display: flex; align-items: flex-start; gap: 12px; }
+        .state { border: 1px solid #ccebe7; border-radius: 14px; padding: 12px 16px; background: #f0faf8; }
         .state[data-tone="pending"] { background: #fffbeb; border-color: #fde68a; }
         .state[data-tone="rejected"] { background: #fff1f2; border-color: #fecdd3; }
         .state[data-tone="neutral"] { background: #f8fafc; border-color: #e2e8f0; }
-        .state-icon-wrap { flex-shrink: 0; }
-        .state-icon { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; color: var(--teal); background: #dff2ee; font-size: 14px; font-weight: 800; }
-        .state[data-tone="pending"] .state-icon { color: #92400e; background: #fef3c7; }
-        .state[data-tone="rejected"] .state-icon { color: #be123c; background: #ffe4e6; }
-        .state-content { min-width: 0; flex: 1; }
-        .eyebrow { color: #64748b; text-transform: uppercase; letter-spacing: .08em; font-size: 9px; font-weight: 800; margin: 0 0 2px; }
+        .eyebrow { color: #64748b; text-transform: uppercase; letter-spacing: .08em; font-size: 9px; font-weight: 800; margin: 0; }
         .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #00625730; border-top-color: var(--teal); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        h2, #statusTitle { font-size: 13px; line-height: 1.35; margin: 0; overflow-wrap: anywhere; font-weight: 700; color: #0f172a; }
+        h2, #statusTitle { font-size: 13.5px; line-height: 1.35; margin: 4px 0 0; overflow-wrap: anywhere; font-weight: 700; color: #0f172a; }
         .state[data-tone="pending"] #statusTitle { color: #92400e; }
         .state[data-tone="rejected"] #statusTitle { color: #be123c; }
-        #statusDescription { margin: 3px 0 0; color: #64748b; font-size: 11.5px; line-height: 1.4; }
+        #statusDescription { margin: 4px 0 0; color: #475569; font-size: 11.5px; line-height: 1.4; }
         .fade-in { animation: appear .25s ease-out; }
         @keyframes appear { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
         .result { border: 1px solid #e2e8f0; border-radius: 18px; padding: 18px; min-width: 0; background: #ffffff; }
@@ -179,15 +174,13 @@
     </header>
     <main>
         <section id="statusCard" class="state" data-tone="neutral" aria-labelledby="statusTitle" aria-live="polite" aria-busy="true">
-            <div class="state-icon-wrap">
-                <div id="processingIcon" class="state-icon" aria-hidden="true"><span class="spinner"></span></div>
-                <div id="resultIcon" class="state-icon" aria-hidden="true" hidden>✓</div>
-            </div>
-            <div class="state-content">
+            <span id="resultIcon" style="display: none !important;" aria-hidden="true"></span>
+            <div style="display: flex; align-items: center; justify-content: space-between;">
                 <p class="eyebrow">Status Laporan</p>
-                <h2 id="statusTitle">Memproses Analisis ML</h2>
-                <p id="statusDescription">Mohon tunggu, foto laporanmu sedang dianalisis oleh model Machine Learning.</p>
+                <span id="processingIcon" class="spinner" aria-hidden="true"></span>
             </div>
+            <h2 id="statusTitle">Memproses Analisis ML</h2>
+            <p id="statusDescription">Mohon tunggu, foto laporanmu sedang dianalisis oleh model Machine Learning.</p>
         </section>
 
         <section id="resultCard" class="result" aria-label="Ringkasan hasil analisis ML" hidden>
