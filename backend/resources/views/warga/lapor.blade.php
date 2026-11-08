@@ -1434,13 +1434,14 @@
             }
 
             showToast('Laporan terkirim', 'success');
-            const reportId = resData.data ? resData.data.laporan_id : null;
-            const isProcessing = resData.data && resData.data.status === 'DIPROSES';
+
+            const reportId = resData.data?.laporan_id;
+
             setTimeout(() => {
-                if (isProcessing && reportId) {
+                if (reportId) {
                     window.location.href = `/laporan/${reportId}/analisis`;
                 } else {
-                    window.location.href = '/beranda-warga';
+                    window.location.href = '/riwayat-laporan';
                 }
             }, 800);
         } catch (err) {
