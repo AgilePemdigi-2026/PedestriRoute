@@ -52,16 +52,19 @@ class CreateReportTest extends TestCase
                 'foto' => $file,
             ]);
 
+        $expectedStatus = config('services.cv.enabled') ? 'DIPROSES' : 'MENUNGGU_VALIDASI_ADMIN';
+
         $response->assertStatus(201)
             ->assertJsonPath('message', MessageCatalog::REPORT_SENT)
-            ->assertJsonPath('data.status', 'MENUNGGU_VALIDASI_ADMIN');
+            ->assertJsonPath('data.status', $expectedStatus);
 
         $laporanId = $response->json('data.laporan_id');
         $this->assertDatabaseHas('laporan', [
             'laporan_id' => $laporanId,
-            'status' => 'MENUNGGU_VALIDASI_ADMIN',
             'warga_id' => $this->warga->warga_id,
         ]);
+        $laporanDb = \Illuminate\Support\Facades\DB::table('laporan')->where('laporan_id', $laporanId)->first();
+        $this->assertTrue(in_array($laporanDb->status, ['DIPROSES', 'TERVALIDASI', 'MENUNGGU_VALIDASI_ADMIN']));
 
         $this->assertDatabaseHas('foto_laporan', [
             'laporan_id' => $laporanId,

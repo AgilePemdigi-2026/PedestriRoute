@@ -45,6 +45,17 @@ class NotificationService
     }
 
     /**
+     * Notify Warga that report was auto-validated by Computer Vision (FR-F4-03).
+     */
+    public function notifyAutoValidated(Laporan $laporan): void
+    {
+        $jalan = $laporan->lokasi->alamat ?? $laporan->lokasi->segmen->nama_jalan ?? 'Surabaya';
+        $pesan = MessageCatalog::format(MessageCatalog::NOTIF_AUTO_VALIDATED, ['jalan' => $jalan]);
+
+        $this->create('WARGA', $laporan->warga_id, 'STATUS_LAPORAN', $pesan, $laporan->laporan_id);
+    }
+
+    /**
      * Notify all Admins about report in validation queue.
      */
     public function notifyAdminsQueue(Laporan $laporan): void

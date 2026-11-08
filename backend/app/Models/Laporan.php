@@ -60,6 +60,11 @@ class Laporan extends Model
         return $this->hasOne(FotoLaporan::class, 'laporan_id', 'laporan_id');
     }
 
+    public function fotoLaporan()
+    {
+        return $this->hasMany(FotoLaporan::class, 'laporan_id', 'laporan_id');
+    }
+
     public function riwayat()
     {
         return $this->hasMany(RiwayatStatusLaporan::class, 'laporan_id', 'laporan_id')->orderBy('waktu', 'asc');

@@ -49,5 +49,19 @@ services:
     depends_on:
       - app
 
+  cv-service:
+    build:
+      context: ../cv-service
+      dockerfile: Dockerfile
+    container_name: pedestriroute_cv
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    environment:
+      - CV_MOCK=false
+      - CV_MODEL_PATH=/app/models/pedestriroute_classifier.onnx
+    volumes:
+      - ../cv-service:/app
+
 volumes:
   pedestriroute_pgdata:

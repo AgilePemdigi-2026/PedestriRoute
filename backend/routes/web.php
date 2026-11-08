@@ -29,6 +29,10 @@ Route::get('/riwayat-laporan', function () {
     return view('warga.riwayat');
 })->name('warga.riwayat');
 
+Route::get('/laporan/{id}/analisis', function ($id) {
+    return view('warga.analisis', ['id' => $id]);
+})->name('warga.analisis');
+
 // Admin views
 Route::get('/admin', function () {
     return redirect('/admin/validasi');

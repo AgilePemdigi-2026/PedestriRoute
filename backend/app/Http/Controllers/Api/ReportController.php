@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessReportCv;
 use App\Models\Admin;
 use App\Models\FotoLaporan;
 use App\Models\KategoriMasalah;
 use App\Models\Laporan;
 use App\Models\Lokasi;
 use App\Models\Warga;
+use App\Services\CvService;
 use App\Services\NotificationService;
 use App\Services\PhotoStorageService;
 use App\Support\MessageCatalog;
@@ -282,8 +284,14 @@ class ReportController extends Controller
                     'segmen_id' => $nearestSegment->segmen_id,
                 ], 'lokasi_id');
 
-                // In Sprint 1 stub: CFG_CV_ENABLED = false -> status langsung MENUNGGU_VALIDASI_ADMIN
-                $initialStatus = 'MENUNGGU_VALIDASI_ADMIN';
+                // Feature 4: Computer Vision Pipeline Check
+                $cvService = app(CvService::class);
+                $kategoriModel = DB::table('kategori_masalah')->where('kategori_id', $kategoriId)->first();
+                $kategoriNama = $kategoriModel->nama_kategori ?? null;
+
+                $initialStatus = ($cvService->isEnabled() && $cvService->isCategorySupported($kategoriNama))
+                    ? 'DIPROSES'
+                    : 'MENUNGGU_VALIDASI_ADMIN';
 
                 // Insert laporan
                 $laporanId = DB::table('laporan')->insertGetId([
@@ -310,12 +318,16 @@ class ReportController extends Controller
                 ]);
 
                 // Insert riwayat_status_laporan
+                $catatanAwal = $initialStatus === 'DIPROSES'
+                    ? 'Laporan masuk antrean analisis Computer Vision'
+                    : 'Laporan masuk antrean validasi Admin';
+
                 DB::table('riwayat_status_laporan')->insert([
                     'laporan_id' => $laporanId,
                     'jenis' => 'VALIDASI',
                     'status' => $initialStatus,
                     'admin_id' => null,
-                    'catatan' => 'Laporan masuk antrean validasi',
+                    'catatan' => $catatanAwal,
                     'waktu' => now(),
                 ]);
 
@@ -333,8 +345,12 @@ class ReportController extends Controller
             ], 500);
         }
 
-        // 6. Send notifications (Sprint 1 stub: DB notifications)
-        $this->notificationService->notifyPendingAdmin($laporan);
+        // 6. Asynchronous CV Processing / Notification
+        if ($laporan->status === 'DIPROSES') {
+            ProcessReportCv::dispatch($laporan->laporan_id);
+        } else {
+            $this->notificationService->notifyPendingAdmin($laporan);
+        }
 
         return response()->json([
             'data' => [

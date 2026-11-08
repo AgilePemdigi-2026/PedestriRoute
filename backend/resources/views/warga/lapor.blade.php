@@ -6,26 +6,35 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
     #laporMap {
-        height: 380px;
+        height: 340px;
         width: 100%;
         border-radius: 0.875rem;
         z-index: 10;
     }
 
-    /* Heatmap Gradient Dots */
+    /* Custom Leaflet Marker Container - Strict Flex Centering */
+    .custom-heat-marker {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    /* Heatmap Marker Dots - Clean, Geometric & Optically Centered */
     .heat-dot-fixed {
         width: 32px;
         height: 32px;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(16, 185, 129, 0.95) 30%, rgba(5, 150, 105, 0.45) 60%, rgba(16, 185, 129, 0) 100%);
+        background: rgba(5, 150, 105, 0.2);
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: transform 0.2s ease;
+        transition: transform 0.15s ease;
     }
     .heat-dot-fixed:hover {
-        transform: scale(1.2);
+        transform: scale(1.15);
     }
     .heat-dot-fixed-core {
         width: 20px;
@@ -34,112 +43,137 @@
         background-color: #059669;
         border: 2px solid #ffffff;
         color: #ffffff;
-        font-size: 10px;
-        font-weight: 900;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 0 8px rgba(16, 185, 129, 0.9);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.25);
     }
 
-    .heat-dot-low {
-        width: 30px;
-        height: 30px;
+    .heat-dot-repairing {
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(16, 185, 129, 0.95) 20%, rgba(16, 185, 129, 0.45) 55%, rgba(16, 185, 129, 0) 100%);
+        background: rgba(2, 132, 199, 0.2);
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: transform 0.2s ease;
+        transition: transform 0.15s ease;
     }
-    .heat-dot-low:hover {
-        transform: scale(1.2);
-    }
-    .heat-dot-low-core {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background-color: #059669;
-        border: 2px solid #ffffff;
-        box-shadow: 0 0 6px rgba(16, 185, 129, 0.9);
-    }
-
-    .heat-dot-medium {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(245, 158, 11, 0.95) 22%, rgba(245, 158, 11, 0.45) 55%, rgba(245, 158, 11, 0) 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        animation: heatPulseMedium 2.5s infinite ease-in-out;
-    }
-    .heat-dot-medium:hover {
-        animation-play-state: paused;
+    .heat-dot-repairing:hover {
         transform: scale(1.15);
     }
-    .heat-dot-medium-core {
+    .heat-dot-repairing-core {
         width: 20px;
         height: 20px;
         border-radius: 50%;
-        background-color: #D97706;
+        background-color: #0284c7;
         border: 2px solid #ffffff;
         color: #ffffff;
-        font-size: 10px;
-        font-weight: 800;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 0 8px rgba(245, 158, 11, 0.9);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.25);
     }
 
-    .heat-dot-high {
-        width: 50px;
-        height: 50px;
+    .heat-dot-low {
+        width: 28px;
+        height: 28px;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(220, 38, 38, 0.95) 20%, rgba(239, 68, 68, 0.55) 50%, rgba(248, 113, 113, 0.25) 75%, rgba(239, 68, 68, 0) 100%);
+        background: rgba(217, 119, 6, 0.2);
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        animation: heatPulseHigh 1.8s infinite ease-in-out;
+        transition: transform 0.15s ease;
+    }
+    .heat-dot-low:hover {
+        transform: scale(1.15);
+    }
+    .heat-dot-low-core {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background-color: #d97706;
+        border: 2px solid #ffffff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .heat-dot-medium {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: rgba(234, 88, 12, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.15s ease;
+    }
+    .heat-dot-medium:hover {
+        transform: scale(1.15);
+    }
+    .heat-dot-medium-core {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background-color: #ea580c;
+        border: 2px solid #ffffff;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    }
+
+    .heat-dot-high {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: rgba(220, 38, 38, 0.22);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.15s ease;
+        animation: heatPulseHigh 2s infinite ease-in-out;
     }
     .heat-dot-high:hover {
         animation-play-state: paused;
         transform: scale(1.15);
     }
     .heat-dot-high-core {
-        width: 24px;
-        height: 24px;
+        width: 26px;
+        height: 26px;
         border-radius: 50%;
-        background-color: #B91C1C;
+        background-color: #dc2626;
         border: 2px solid #ffffff;
         color: #ffffff;
-        font-size: 10px;
+        font-size: 12px;
         font-weight: 900;
+        font-variant-numeric: tabular-nums;
+        line-height: 1;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 0 10px rgba(220, 38, 38, 1);
-    }
-
-    @keyframes heatPulseMedium {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.08); }
+        position: relative;
+        box-shadow: 0 1px 4px rgba(220, 38, 38, 0.4);
     }
 
     @keyframes heatPulseHigh {
-        0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
-        50% { transform: scale(1.12); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.08); }
     }
 
     /* Custom Leaflet Popup Card */
     .leaflet-popup-content-wrapper {
         padding: 0 !important;
         border-radius: 1rem !important;
-        box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.15) !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
         border: 1px solid #e2e8f0 !important;
         overflow: hidden !important;
     }
@@ -154,23 +188,23 @@
 <div class="px-5 pt-5 pb-24 flex flex-col flex-1">
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
-        <a href="/beranda-warga" class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <a href="/beranda-warga" class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition" aria-label="Kembali">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
             </svg>
         </a>
         <div class="text-center">
-            <h1 class="text-sm font-extrabold text-slate-900 leading-tight">PedestriRoute</h1>
-            <p class="text-[10px] text-teal-800 font-semibold tracking-wider">Lapor</p>
+            <h1 class="text-sm font-extrabold text-slate-900 leading-tight">Lapor Fasilitas</h1>
         </div>
         <div class="relative">
-            <button id="userMenuBtn" class="w-9 h-9 rounded-full overflow-hidden border-2 border-brand-500 focus:outline-none">
-                <img id="navAvatar" src="https://ui-avatars.com/api/?name=Warga&background=006257&color=fff" alt="Avatar" class="w-full h-full object-cover">
+            <button id="userMenuBtn" class="w-8 h-8 rounded-xl overflow-hidden border border-slate-200 focus:outline-none relative flex items-center justify-center bg-teal-800 text-white font-bold text-xs shadow-sm" aria-label="Menu Pengguna">
+                <img id="navAvatar" src="" alt="Avatar" class="w-full h-full object-cover hidden" onerror="this.classList.add('hidden'); document.getElementById('navAvatarFallback')?.classList.remove('hidden');">
+                <span id="navAvatarFallback" class="w-full h-full flex items-center justify-center bg-teal-800 text-white font-bold text-xs uppercase">W</span>
             </button>
             <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50">
                 <div class="px-4 py-2 border-b border-slate-100">
                     <p id="menuUserName" class="text-xs font-bold text-slate-900 truncate">Warga</p>
-                    <p id="menuUserEmail" class="text-[10px] text-slate-500 truncate">user@gmail.com</p>
+                    <p id="menuUserEmail" class="text-[11px] text-slate-500 truncate">user@gmail.com</p>
                 </div>
                 <button id="logoutBtn" class="w-full text-left px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,72 +216,44 @@
         </div>
     </div>
 
-    <!-- Title Badge & Narrative -->
-    <div class="mb-4">
-        <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 border border-teal-200 rounded-full mb-2">
-            <svg class="w-3.5 h-3.5 text-teal-700" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
-            </svg>
-            <span class="text-[10px] font-bold text-teal-800 uppercase tracking-wider">Partisipasi Warga</span>
-        </div>
-        <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">Lapor Fasilitas Pejalan Kaki</h2>
-        <p class="text-xs text-slate-500 font-medium mt-1 leading-relaxed">
-            Bantu sesama pejalan kaki dengan mendata trotoar rusak atau fasilitas yang terhalang.
-        </p>
-    </div>
-
-    <form id="reportForm" class="space-y-4">
+    <form id="reportForm" class="space-y-3">
         <!-- 1. Lokasi Kejadian Card -->
         <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
-            <div class="flex items-center justify-between mb-2.5">
-                <div class="flex items-center gap-1.5">
-                    <svg class="w-4 h-4 text-brand-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                    </svg>
-                    <span class="text-xs font-bold text-slate-800">Lokasi Kejadian</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <!-- Toggle Heatmap Button -->
-                    <button type="button" id="btnToggleHeatmap" onclick="toggleLaporHeatmap()"
-                        class="px-2.5 py-1 rounded-full text-[10px] font-bold border transition flex items-center gap-1 bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
-                        title="Tampilkan titik aduan dan kelayakan jalur di peta">
-                        <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/>
-                        </svg>
-                        <span id="heatmapToggleText">Heatmap: Off</span>
-                    </button>
-                    <span id="gpsBadge" class="text-[10px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-100">
-                        GPS Siap
-                    </span>
-                </div>
+            <div class="flex items-center justify-end mb-2">
+                <!-- Toggle Heatmap Button -->
+                <button type="button" id="btnToggleHeatmap" onclick="toggleLaporHeatmap()"
+                    class="px-2.5 py-1 rounded-full text-xs font-bold border transition flex items-center gap-1 bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
+                    title="Tampilkan titik aduan dan kelayakan jalur di peta">
+                    <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                    <span id="heatmapToggleText">Heatmap: Off</span>
+                </button>
+                <span id="gpsBadge" class="hidden"></span>
             </div>
 
-            <!-- Service area notice -->
-            <div class="mb-2 rounded-xl border border-teal-200 bg-teal-50 px-3 py-2" role="note">
-                <p class="text-[10px] font-bold text-teal-800">Wilayah Layanan Aktif: Kecamatan Mulyorejo, Surabaya</p>
-                <p class="text-[10px] text-slate-500 mt-0.5">Batas wilayah administratif resmi Kecamatan Mulyorejo.</p>
-            </div>
-
-            <!-- Input / Pencarian Alamat Manual -->
+            <!-- Unified Single Container: Cari Alamat -->
             <div class="relative mb-2.5">
                 <div class="relative flex items-center">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-brand-600">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                         </svg>
                     </div>
                     <input type="text" id="manualAddressInput" autocomplete="off"
-                        placeholder="Ketik alamat atau cari jalan (contoh: Jl. Raya Mulyosari)..."
-                        class="w-full pl-9 pr-20 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition" />
+                        placeholder="Ketik alamat atau cari jalan..."
+                        class="w-full pl-9 pr-20 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition font-medium" />
                     <div class="absolute inset-y-0 right-0 pr-1.5 flex items-center gap-1">
                         <button type="button" id="btnClearAddress" class="hidden p-1 text-slate-400 hover:text-slate-600 rounded-md" title="Hapus teks pencarian">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                         </button>
+                        <span id="accuracyBadge" class="hidden"></span>
                         <button type="button" id="btnSearchAddress" class="px-2.5 py-1 bg-brand-600 hover:bg-brand-700 text-white text-[10px] font-bold rounded-lg transition shadow-sm">
                             Cari
                         </button>
                     </div>
                 </div>
+
+                <!-- Hidden element to keep alamatText reference safe for any code -->
+                <span id="alamatText" class="hidden"></span>
 
                 <!-- Suggestions Dropdown -->
                 <div id="addressSuggestions" class="hidden absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-56 overflow-y-auto divide-y divide-slate-100 text-xs">
@@ -289,17 +295,6 @@
                 </div>
             </div>
 
-            <!-- Address bar with accuracy -->
-            <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex items-center justify-between mb-2.5 text-xs text-slate-700">
-                <div class="flex items-center gap-2 truncate pr-2">
-                    <span class="w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>
-                    <span id="alamatText" class="truncate font-medium">Jl. Raya Mulyosari, Mulyorejo, Surabaya</span>
-                </div>
-                <span id="accuracyBadge" class="text-[10px] font-semibold text-brand-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded shrink-0">
-                    Titik Terpilih
-                </span>
-            </div>
-
             <!-- Coordinates & GPS button -->
             <div class="flex items-center gap-2">
                 <input type="text" id="coordDisplay" readonly
@@ -319,137 +314,118 @@
         <!-- 2. Foto Bukti Card -->
         <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
             <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-1.5">
-                    <svg class="w-4 h-4 text-brand-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M4 4h3l2-2h6l2 2h3a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm8 3a5 5 0 100 10 5 5 0 000-10zm0 2a3 3 0 110 6 3 3 0 010-6z"/>
-                    </svg>
-                    <span class="text-xs font-bold text-slate-800">Foto Bukti</span>
-                </div>
-                <span id="photoBadge" class="text-[10px] font-semibold text-slate-400">Maks. 15MB</span>
+                <span class="text-xs font-bold text-slate-800">Foto Bukti</span>
+                <span id="photoBadge" class="text-xs font-medium text-slate-400">Maks. 15MB</span>
             </div>
 
             <input type="file" id="fotoInput" accept="image/jpeg,image/png" class="hidden">
             <input type="file" id="fotoCameraInput" accept="image/*" capture="environment" class="hidden">
 
-            <!-- Dua Pilihan: Ambil Foto (Kamera Langsung) atau Unggah dari Galeri/Penyimpanan -->
-            <div class="grid grid-cols-2 gap-2.5 mb-3">
+            <div class="grid grid-cols-2 gap-2 mb-3">
                 <button type="button" id="btnOpenCamera"
-                    class="py-3 px-2 border-2 border-dashed border-teal-200 hover:border-brand-500 bg-teal-50/50 hover:bg-teal-50 rounded-2xl flex flex-col items-center justify-center text-center transition group">
-                    <div class="w-9 h-9 rounded-full bg-teal-100 group-hover:bg-teal-200 text-brand-600 flex items-center justify-center mb-1.5 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                    </div>
-                    <span class="text-xs font-bold text-slate-800">Ambil Foto</span>
-                    <span class="text-[10px] text-slate-500">Kamera langsung</span>
+                    class="py-2.5 px-3 border border-slate-200 hover:border-brand-500 bg-slate-50 hover:bg-teal-50 rounded-xl flex items-center justify-center gap-2 text-xs font-bold text-slate-700 hover:text-brand-700 transition">
+                    <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>Ambil Foto</span>
                 </button>
 
                 <button type="button" id="btnPickPhoto"
-                    class="py-3 px-2 border-2 border-dashed border-slate-200 hover:border-brand-500 bg-slate-50 hover:bg-slate-100 rounded-2xl flex flex-col items-center justify-center text-center transition group">
-                    <div class="w-9 h-9 rounded-full bg-slate-200 group-hover:bg-slate-300 text-slate-700 flex items-center justify-center mb-1.5 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                    <span class="text-xs font-bold text-slate-800">Unggah Foto</span>
-                    <span class="text-[10px] text-slate-500">Pilih dari berkas</span>
+                    class="py-2.5 px-3 border border-slate-200 hover:border-brand-500 bg-slate-50 hover:bg-slate-100 rounded-xl flex items-center justify-center gap-2 text-xs font-bold text-slate-700 transition">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>Pilih Berkas</span>
                 </button>
             </div>
 
-            <!-- Preview Box (Full Width) -->
-            <div id="previewContainer" class="h-36 bg-slate-100 rounded-2xl border border-slate-200 relative overflow-hidden flex items-center justify-center">
-                <span id="previewPlaceholder" class="text-xs text-slate-400 font-medium">Belum ada foto yang dipilih</span>
+            <!-- Preview Box -->
+            <div id="previewContainer" class="h-32 bg-slate-50 rounded-xl border border-slate-200 relative overflow-hidden flex items-center justify-center">
+                <span id="previewPlaceholder" class="text-xs text-slate-400">Belum ada foto yang dipilih</span>
                 <img id="previewImg" class="w-full h-full object-cover hidden" alt="Pratinjau foto bukti" />
                 <button type="button" id="btnRemovePhoto"
-                    class="hidden absolute top-2 right-2 w-7 h-7 rounded-full bg-slate-900/70 text-white flex items-center justify-center hover:bg-slate-900 transition">
+                    class="hidden absolute top-2 right-2 w-7 h-7 rounded-full bg-slate-900/70 text-white flex items-center justify-center hover:bg-slate-900 transition text-xs font-bold">
                     ✕
                 </button>
-                <span id="previewFilename" class="hidden absolute bottom-1 left-2 right-2 text-[10px] text-white bg-black/60 px-1.5 py-0.5 rounded truncate"></span>
+                <span id="previewFilename" class="hidden absolute bottom-1 left-2 right-2 text-[11px] text-white bg-black/60 px-2 py-0.5 rounded truncate"></span>
             </div>
 
-            <!-- Indikator optimasi berkas -->
-            <p id="compressInfo" class="hidden mt-2 text-[11px] text-teal-700 font-medium"></p>
-            <p class="text-[10px] text-slate-400 mt-1">Format JPG atau PNG (Maks. 15MB). Ketuk foto pratinjau untuk melihat ukuran penuh.</p>
+            <p id="compressInfo" class="hidden mt-2 text-xs text-teal-700 font-medium"></p>
         </div>
 
         <!-- 3. Kategori Masalah Card -->
         <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
             <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-1.5">
-                    <svg class="w-4 h-4 text-brand-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2l4 8h-8l4-8zm0 13a2 2 0 100-4 2 2 0 000 4zm-7 7l4-8H1l4 8zm14 0l4-8h-8l4 8z"/>
-                    </svg>
-                    <span class="text-xs font-bold text-slate-800">Kategori Masalah</span>
-                </div>
+                <span class="text-xs font-bold text-slate-800">Kategori Masalah</span>
                 <span class="text-[10px] font-bold text-rose-500">*Wajib</span>
             </div>
 
             <!-- Categories Grid (5 Kategori) -->
-            <div id="categoriesGrid" class="grid grid-cols-2 gap-2.5">
+            <div id="categoriesGrid" class="grid grid-cols-2 gap-2">
                 <!-- 1: Trotoar Rusak -->
                 <button type="button" data-id="1" data-slug="trotoar_rusak"
-                    class="cat-chip p-3 rounded-xl border-2 border-brand-500 bg-teal-50/70 text-brand-900 text-left transition flex flex-col justify-between shadow-sm ring-1 ring-brand-500/30">
-                    <div class="flex items-center gap-2 mb-1.5">
-                        <div class="w-8 h-8 rounded-lg bg-teal-100 text-brand-700 flex items-center justify-center shrink-0">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-                            </svg>
-                        </div>
-                        <p class="font-bold text-xs text-slate-900 leading-tight">Trotoar Rusak</p>
+                    class="cat-chip p-3 rounded-xl border-2 border-brand-500 bg-teal-50/70 text-brand-900 text-left transition flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-teal-100 text-brand-700 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                        </svg>
                     </div>
-                    <p class="text-[10px] text-slate-500 leading-tight line-clamp-2">Paving amblas, paving pecah, retak beton, lubang trotoar</p>
+                    <div class="min-w-0">
+                        <p class="font-bold text-xs text-slate-800 leading-tight">Trotoar Rusak</p>
+                        <p class="text-[11px] text-slate-400 truncate mt-0.5">Lubang / amblas</p>
+                    </div>
                 </button>
 
                 <!-- 2: Masalah Drainase -->
                 <button type="button" data-id="2" data-slug="masalah_drainase"
-                    class="cat-chip p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100/80 text-left transition flex flex-col justify-between">
-                    <div class="flex items-center gap-2 mb-1.5">
-                        <div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
-                            </svg>
-                        </div>
-                        <p class="font-bold text-xs text-slate-900 leading-tight">Masalah Drainase</p>
+                    class="cat-chip p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-left transition flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                        </svg>
                     </div>
-                    <p class="text-[10px] text-slate-500 leading-tight line-clamp-2">Tutup gorong-gorong/manhole rusak, patah, atau terbuka</p>
+                    <div class="min-w-0">
+                        <p class="font-bold text-xs text-slate-800 leading-tight">Drainase</p>
+                        <p class="text-[11px] text-slate-400 truncate mt-0.5">Manhole / saluran</p>
+                    </div>
                 </button>
 
                 <!-- 3: Guiding Block Rusak -->
                 <button type="button" data-id="3" data-slug="guiding_block_rusak"
-                    class="cat-chip p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100/80 text-left transition flex flex-col justify-between">
-                    <div class="flex items-center gap-2 mb-1.5">
-                        <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <circle cx="16" cy="4" r="1"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="m18 19 1-7-6 1M5 8l3-3 5.5 3-2.36 3.5M4.24 14.5a5 5 0 0 0 6.88 6M13.76 17.5a5 5 0 0 0-6.88-6"/>
-                            </svg>
-                        </div>
-                        <p class="font-bold text-xs text-slate-900 leading-tight">Guiding Block Rusak</p>
+                    class="cat-chip p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-left transition flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <circle cx="16" cy="4" r="1"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m18 19 1-7-6 1M5 8l3-3 5.5 3-2.36 3.5M4.24 14.5a5 5 0 0 0 6.88 6M13.76 17.5a5 5 0 0 0-6.88-6"/>
+                        </svg>
                     </div>
-                    <p class="text-[10px] text-slate-500 leading-tight line-clamp-2">Ubin pemandu tunanetra terkelupas, hilang, atau pecah</p>
+                    <div class="min-w-0">
+                        <p class="font-bold text-xs text-slate-800 leading-tight">Guiding Block</p>
+                        <p class="text-[11px] text-slate-400 truncate mt-0.5">Ubin tunanetra</p>
+                    </div>
                 </button>
 
                 <!-- 4: Penyebrangan Rusak -->
                 <button type="button" data-id="4" data-slug="penyebrangan_rusak"
-                    class="cat-chip p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100/80 text-left transition flex flex-col justify-between">
-                    <div class="flex items-center gap-2 mb-1.5">
-                        <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <rect width="10" height="18" x="7" y="3" rx="4"/>
-                                <circle cx="12" cy="7.5" r="1.5" fill="currentColor"/>
-                                <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
-                                <circle cx="12" cy="16.5" r="1.5" fill="currentColor"/>
-                            </svg>
-                        </div>
-                        <p class="font-bold text-xs text-slate-900 leading-tight">Penyebrangan Rusak</p>
+                    class="cat-chip p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-left transition flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <rect width="10" height="18" x="7" y="3" rx="4"/>
+                            <circle cx="12" cy="7.5" r="1.5" fill="currentColor"/>
+                            <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+                            <circle cx="12" cy="16.5" r="1.5" fill="currentColor"/>
+                        </svg>
                     </div>
-                    <p class="text-[10px] text-slate-500 leading-tight line-clamp-2">Marka garis putih aus/pudar, atau penyeberangan rusak</p>
+                    <div class="min-w-0">
+                        <p class="font-bold text-xs text-slate-800 leading-tight">Penyeberangan</p>
+                        <p class="text-[11px] text-slate-400 truncate mt-0.5">Zebra cross / rambu</p>
+                    </div>
                 </button>
 
                 <!-- 5: Parkir Liar -->
                 <button type="button" data-id="5" data-slug="parkir_liar"
-                    class="cat-chip col-span-2 p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100/80 text-left transition flex items-center gap-3">
+                    class="cat-chip col-span-2 p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-left transition flex items-center gap-2.5">
                     <div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <circle cx="12" cy="12" r="10"/>
@@ -458,8 +434,8 @@
                         </svg>
                     </div>
                     <div class="min-w-0">
-                        <p class="font-bold text-xs text-slate-900 leading-tight">Parkir Liar</p>
-                        <p class="text-[10px] text-slate-500 leading-tight mt-0.5">Sepeda motor atau mobil di atas fasilitas pejalan kaki</p>
+                        <p class="font-bold text-xs text-slate-800 leading-tight">Parkir Liar</p>
+                        <p class="text-[11px] text-slate-400 truncate mt-0.5">Kendaraan di trotoar</p>
                     </div>
                 </button>
             </div>
@@ -468,33 +444,25 @@
         <!-- 4. Deskripsi Card -->
         <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
             <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center gap-1.5">
-                    <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-                    </svg>
-                    <span class="text-xs font-bold text-slate-800">Deskripsi</span>
-                </div>
+                <span class="text-xs font-bold text-slate-800">Deskripsi</span>
                 <span class="text-[10px] font-mono text-slate-400"><span id="charCount">0</span>/200</span>
             </div>
             <textarea id="deskripsi" rows="3" maxlength="200"
-                placeholder="Deskripsi singkat (contoh: Ubin pemandu tunanetra amblas)..."
+                placeholder="Tuliskan kendala yang Anda temui..."
                 class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition leading-relaxed"></textarea>
         </div>
 
         <!-- Submit Button -->
         <button type="submit" id="btnSubmitReport"
-            class="w-full py-3.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-teal-900/10 transition mt-2">
+            class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition mt-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
             <span>Kirim Laporan</span>
         </button>
 
-        <p class="text-[11px] text-slate-500 flex items-center justify-center gap-1.5 pt-1">
-            <svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            <span>Laporan diverifikasi dalam 1x24 jam oleh Dishub</span>
+        <p class="text-[11px] text-slate-400 text-center pt-1">
+            Laporan diverifikasi dalam 1x24 jam kerja
         </p>
     </form>
 </div>
@@ -507,38 +475,38 @@
 </div>
 
 <!-- Bottom Navigation Bar -->
-<div class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-200 py-2.5 px-6 flex items-center justify-between z-40">
-    <a href="/beranda-warga" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600">
+<div class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-200 py-2 px-6 flex items-center justify-between z-40">
+    <a href="/beranda-warga" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z"/>
         </svg>
-        <span class="text-[10px]">Peta</span>
+        <span class="text-[10px] tracking-tight">Peta</span>
     </a>
-    <a href="javascript:void(0)" onclick="showToast('Rute Pejalan Kaki aktif pada Sprint 3', 'info')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600">
+    <a href="javascript:void(0)" onclick="showToast('Rute Pejalan Kaki aktif pada Sprint 3', 'info')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
         </svg>
-        <span class="text-[10px] font-medium">Rute</span>
+        <span class="text-[10px] tracking-tight">Rute</span>
     </a>
     <a href="/lapor-kondisi" class="flex flex-col items-center gap-1 text-brand-600 font-bold">
-        <div class="w-10 h-10 -mt-5 bg-brand-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-teal-900/30">
+        <div class="w-10 h-10 -mt-5 bg-brand-600 hover:bg-brand-700 rounded-full flex items-center justify-center text-white shadow-md shadow-teal-900/20 transition">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
             </svg>
         </div>
-        <span class="text-[10px] mt-0.5">Lapor</span>
+        <span class="text-[10px] tracking-tight mt-0.5">Lapor</span>
     </a>
-    <a href="javascript:void(0)" onclick="showToast('Notifikasi aktif pada Sprint 3', 'info')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600">
+    <a href="/riwayat-laporan" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span class="text-[10px] font-medium">Notifikasi</span>
+        <span class="text-[10px] tracking-tight">Riwayat</span>
     </a>
-    <a href="javascript:void(0)" onclick="toggleUserDropdown()" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600">
+    <a href="javascript:void(0)" onclick="toggleUserDropdown()" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
-        <span class="text-[10px] font-medium">Profil</span>
+        <span class="text-[10px] tracking-tight">Profil</span>
     </a>
 </div>
 @endsection
@@ -556,14 +524,26 @@
     // User Profile & Dropdown
     function applyUserProfile(user) {
         if (!user) return;
-        document.getElementById('menuUserName').innerText = user.nama || 'Warga';
+        const displayName = user.nama || 'Warga';
+        const initial = displayName.trim().charAt(0).toUpperCase() || 'W';
+
+        document.getElementById('menuUserName').innerText = displayName;
         document.getElementById('menuUserEmail').innerText = user.email || '';
+
         const avatarEl = document.getElementById('navAvatar');
+        const fallbackEl = document.getElementById('navAvatarFallback');
+        if (fallbackEl) {
+            fallbackEl.innerText = initial;
+        }
+
         if (avatarEl) {
             if (user.avatar_url) {
                 avatarEl.src = user.avatar_url;
+                avatarEl.classList.remove('hidden');
+                if (fallbackEl) fallbackEl.classList.add('hidden');
             } else {
-                avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nama || 'Warga')}&background=006257&color=fff`;
+                avatarEl.classList.add('hidden');
+                if (fallbackEl) fallbackEl.classList.remove('hidden');
             }
         }
     }
@@ -772,14 +752,14 @@
                     });
 
                     const heatCanvas = L.heatLayer(heatPoints, {
-                        radius: 22,
-                        blur: 15,
-                        maxZoom: 18,
+                        radius: 24,
+                        blur: 16,
+                        maxZoom: 17,
                         gradient: {
-                            0.2: '#10B981',
-                            0.45: '#F59E0B',
-                            0.75: '#EF4444',
-                            1.0: '#991B1B'
+                            0.2: '#059669',
+                            0.45: '#D97706',
+                            0.70: '#EA580C',
+                            1.0: '#DC2626'
                         }
                     });
                     heatmapLayerGroup.addLayer(heatCanvas);
@@ -794,19 +774,19 @@
 
                 let iconClass = 'heat-dot-low';
                 let iconHtml = '<div class="heat-dot-low-core"></div>';
-                let iconSize = [30, 30];
-                let iconAnchor = [15, 15];
+                let iconSize = [28, 28];
+                let iconAnchor = [14, 14];
 
                 if (count >= 4) {
                     iconClass = 'heat-dot-high';
-                    iconHtml = `<div class="heat-dot-high-core flex items-center justify-center gap-0.5"><svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg><span>${count}</span></div>`;
-                    iconSize = [50, 50];
-                    iconAnchor = [25, 25];
+                    iconHtml = `<div class="heat-dot-high-core"><span>${count}</span></div>`;
+                    iconSize = [42, 42];
+                    iconAnchor = [21, 21];
                 } else if (count >= 2) {
                     iconClass = 'heat-dot-medium';
-                    iconHtml = `<div class="heat-dot-medium-core">${count}</div>`;
-                    iconSize = [40, 40];
-                    iconAnchor = [20, 20];
+                    iconHtml = `<div class="heat-dot-medium-core"><span>${count}</span></div>`;
+                    iconSize = [34, 34];
+                    iconAnchor = [17, 17];
                 }
 
                 const markerIcon = L.divIcon({
@@ -820,8 +800,8 @@
 
                 const firstRep = cluster.reports[0];
                 const headerTitle = count > 1 
-                    ? `<span class="text-rose-700 font-extrabold">🔥 Titik Rawan (${count} Aduan)</span>` 
-                    : `<span class="text-brand-700 font-extrabold">${firstRep.kode_laporan || '#Aduan'}</span>`;
+                    ? `<span class="text-rose-700 font-extrabold">Titik Rawan (${count} Aduan)</span>` 
+                    : `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold text-brand-700 bg-brand-50 border border-brand-200/60 tracking-tight tabular-nums">${firstRep.kode_laporan || '#Aduan'}</span>`;
                 const safeAddr = (firstRep.alamat || '').replace(/'/g, "\\'");
                 const statusBadge = firstRep.status_perbaikan === 'SEDANG_DIPERBAIKI'
                     ? `<span class="px-1.5 py-0.5 bg-sky-100 text-sky-800 text-[9px] font-bold rounded">Sedang Dikerjakan</span>`
@@ -1153,6 +1133,9 @@
         if (reverseGeocodeController) reverseGeocodeController.abort();
 
         alamatEl.innerText = 'Mendeteksi alamat...';
+        if (manualAddressInput && document.activeElement !== manualAddressInput && !manualAddressInput.value) {
+            manualAddressInput.placeholder = 'Mendeteksi alamat...';
+        }
 
         const sinceLast = Date.now() - lastGeocodeAt;
         const wait = Math.max(GEOCODE_DEBOUNCE_MS, GEOCODE_MIN_INTERVAL_MS - sinceLast);
@@ -1185,6 +1168,7 @@
             alamatEl.innerText = coordFallback;
             if (manualAddressInput && document.activeElement !== manualAddressInput && !manualAddressInput.value) {
                 manualAddressInput.value = coordFallback;
+                btnClearAddress?.classList.remove('hidden');
             }
         }, wait);
     }
@@ -1439,8 +1423,14 @@
             }
 
             showToast('Laporan terkirim', 'success');
+            const reportId = resData.data ? resData.data.laporan_id : null;
+            const isProcessing = resData.data && resData.data.status === 'DIPROSES';
             setTimeout(() => {
-                window.location.href = '/beranda-warga';
+                if (isProcessing && reportId) {
+                    window.location.href = `/laporan/${reportId}/analisis`;
+                } else {
+                    window.location.href = '/beranda-warga';
+                }
             }, 800);
         } catch (err) {
             showToast('Terjadi kesalahan koneksi. Silakan coba lagi.', 'error');
