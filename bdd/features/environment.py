@@ -60,16 +60,51 @@ def cleanup_test_data(context):
     php = """
     $wargas = App\\Models\\Warga::whereIn('email', [
         'ahmad.fauzi@gmail.com', 'johnmaps@gmail.com', 'andi.wijaya@gmail.com',
-        'otp.warga.test@gmail.com'
+        'otp.warga.test@gmail.com', 'other.cv.warga@pedestriroute.test'
     ])->orWhere('email', 'like', '%test%')->get();
 
-    foreach ($wargas as $w) {
-        App\\Models\\FotoLaporan::whereIn('laporan_id', function($q) use ($w) {
-            $q->select('laporan_id')->from('laporan')->where('warga_id', $w->warga_id);
-        })->delete();
-        App\\Models\\Laporan::where('warga_id', $w->warga_id)->delete();
-        App\\Models\\Notifikasi::where('penerima_id', $w->warga_id)->where('penerima_tipe', 'WARGA')->delete();
+    $wargaIds = $wargas->pluck('warga_id')->all();
+
+    if (!empty($wargaIds)) {
+        $laporanIds = Illuminate\\Support\\Facades\\DB::table('laporan')
+            ->whereIn('warga_id', $wargaIds)
+            ->pluck('laporan_id')->all();
+
+        if (!empty($laporanIds)) {
+            // Hapus berkas foto fisik sebelum record DB-nya dihapus.
+            $fotos = Illuminate\\Support\\Facades\\DB::table('foto_laporan')
+                ->whereIn('laporan_id', $laporanIds)->get();
+            foreach ($fotos as $foto) {
+                Illuminate\\Support\\Facades\\Storage::disk('public')->delete($foto->url_foto);
+            }
+
+            $lokasiIds = Illuminate\\Support\\Facades\\DB::table('laporan')
+                ->whereIn('laporan_id', $laporanIds)
+                ->pluck('lokasi_id')->all();
+
+            Illuminate\\Support\\Facades\\DB::table('notifikasi')
+                ->whereIn('laporan_id', $laporanIds)->delete();
+            Illuminate\\Support\\Facades\\DB::table('foto_laporan')
+                ->whereIn('laporan_id', $laporanIds)->delete();
+            Illuminate\\Support\\Facades\\DB::table('riwayat_status_laporan')
+                ->whereIn('laporan_id', $laporanIds)->delete();
+            Illuminate\\Support\\Facades\\DB::table('laporan')
+                ->whereIn('laporan_id', $laporanIds)->delete();
+            Illuminate\\Support\\Facades\\DB::table('lokasi')
+                ->whereIn('lokasi_id', $lokasiIds)->delete();
+        }
+
+        // Bersihkan token Sanctum milik warga test agar tidak menumpuk.
+        Illuminate\\Support\\Facades\\DB::table('personal_access_tokens')
+            ->where('tokenable_type', 'App\\\\Models\\\\Warga')
+            ->whereIn('tokenable_id', $wargaIds)
+            ->delete();
     }
+
+    // Segmen khusus F4 dibuat per skenario; bersihkan setelah suite selesai.
+    Illuminate\\Support\\Facades\\DB::table('segmen_jalur')
+        ->where('nama_jalan', 'like', 'Jl. BDD F4 %')
+        ->delete();
     """
     context.run_tinker(php)
 
@@ -108,6 +143,19 @@ def before_scenario(context, scenario):
     context.validation_decision = None
     context.alasan_penolakan = None
     context.current_report = None
+
+    # Feature 4 (Computer Vision) state
+    context.analysis_snapshot = None
+    context.current_report_id = None
+    context.current_report_warga_id = None
+    context.current_report_segmen_id = None
+    context.current_photo_path = None
+    context.initial_segment_score = None
+    context.other_report_id = None
+    context.other_warga_id = None
+    context.cv_mock_label = None
+    context.cv_mock_confidence = None
+    context.cv_mock_timeout = False
 
     # Clear rate limiter & cache between scenarios
     run_artisan("cache:clear")
