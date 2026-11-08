@@ -508,6 +508,8 @@
                     headerBadge.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Valid (AI)';
                     hudState.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> Terverifikasi (${conf}%)`;
 
+                    const isCategoryAdjusted = data.riwayat && data.riwayat.some(r => r.catatan && r.catatan.includes('Kategori disesuaikan'));
+
                     vCard.className = 'bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-4 shadow-sm space-y-2';
                     vCard.innerHTML = `
                         <div class="flex items-center gap-3">
@@ -519,6 +521,12 @@
                                 <p class="text-[11px] text-emerald-700">Tingkat keyakinan model mencapai ${conf}% (&ge; ambang batas 80%)</p>
                             </div>
                         </div>
+                        ${isCategoryAdjusted ? `
+                            <div class="flex items-center gap-2 p-2.5 bg-emerald-100/70 border border-emerald-300/80 text-emerald-900 rounded-xl text-xs font-semibold">
+                                <i class="fa-solid fa-wand-magic-sparkles text-emerald-600"></i>
+                                <span>Kategori disesuaikan otomatis oleh AI ke: <strong>${kategoriNama}</strong></span>
+                            </div>
+                        ` : ''}
                         <div class="p-3 bg-white/80 backdrop-blur-sm rounded-xl border border-emerald-100 text-xs text-emerald-900 leading-relaxed space-y-1">
                             <p><strong>Dampak Langsung:</strong> Kerusakan fasilitas pada segmen ini telah dikonfirmasi dan <em>Indeks Kelayakan Jalur (WSM)</em> telah otomatis diperbarui pada Heatmap Kota.</p>
                             <p class="text-[11px] text-emerald-700 pt-0.5">Petugas Dinas Perhubungan menerima laporan ini dalam antrean pengerjaan perbaikan.</p>
@@ -532,25 +540,56 @@
                     const isSpam = label === 'SPAM';
                     const isBaik = label === 'BAIK';
 
-                    let subtitle = `Skor AI ${conf}% memerlukan verifikasi visual langsung oleh petugas.`;
-                    if (isSpam) subtitle = `AI menandai foto sebagai non-fasilitas pejalan kaki (${conf}%). Petugas akan memeriksa manual.`;
-                    if (isBaik) subtitle = `AI mendeteksi kemungkinan fasilitas dalam kondisi normal (${conf}%). Diteruskan untuk kepastian.`;
-
-                    vCard.className = 'bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 shadow-sm space-y-2';
-                    vCard.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-lg shadow-sm shrink-0">
-                                <i class="fa-solid fa-clipboard-question"></i>
+                    if (isBaik) {
+                        vCard.className = 'bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 shadow-sm space-y-2';
+                        vCard.innerHTML = `
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-lg shadow-sm shrink-0">
+                                    <i class="fa-solid fa-circle-info"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-extrabold text-amber-950">Terindikasi Kondisi Normal (${conf}%)</h3>
+                                    <p class="text-[11px] text-amber-800">Model AI mendeteksi fasilitas trotoar terlihat baik / tidak ditemukan kerusakan</p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 class="text-sm font-extrabold text-amber-950">Diteruskan ke Verifikasi Petugas</h3>
-                                <p class="text-[11px] text-amber-800">${subtitle}</p>
+                            <div class="p-3 bg-white/80 backdrop-blur-sm rounded-xl border border-amber-100 text-xs text-amber-900 leading-relaxed space-y-1.5">
+                                <p><strong>Mengapa ke Admin?</strong> Sistem kami tidak otomatis menolak aduan. Laporan dialihkan ke Admin Dinas Perhubungan untuk memastikan tidak ada kerusakan tersembunyi yang luput dari kamera.</p>
+                                <p class="text-[11px] text-slate-500 pt-0.5">Bila Anda tidak sengaja mengunggah foto yang keliru, Anda dapat membuat aduan baru dengan foto kerusakan fasilitas yang lebih jelas.</p>
                             </div>
-                        </div>
-                        <div class="p-3 bg-white/80 backdrop-blur-sm rounded-xl border border-amber-100 text-xs text-amber-900 leading-relaxed">
-                            Aduan Anda tetap tersimpan dengan aman dan akan diverifikasi langsung oleh Admin Dinas Perhubungan Surabaya. Anda dapat memantau perkembangannya melalui menu Riwayat Laporan.
-                        </div>
-                    `;
+                        `;
+                    } else if (isSpam) {
+                        vCard.className = 'bg-gradient-to-br from-rose-50 to-orange-50 border border-rose-200 rounded-2xl p-4 shadow-sm space-y-2';
+                        vCard.innerHTML = `
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-2xl bg-rose-500 text-white flex items-center justify-center text-lg shadow-sm shrink-0">
+                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-extrabold text-rose-950">Terindikasi Bukan Fasilitas Trotoar (${conf}%)</h3>
+                                    <p class="text-[11px] text-rose-800">AI menandai foto sebagai konten non-infrastruktur publik</p>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-white/80 backdrop-blur-sm rounded-xl border border-rose-100 text-xs text-rose-900 leading-relaxed">
+                                Foto laporan ini dialihkan ke antrean Admin Dinas Perhubungan untuk verifikasi keabsahan foto atau penolakan laporan.
+                            </div>
+                        `;
+                    } else {
+                        vCard.className = 'bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 shadow-sm space-y-2';
+                        vCard.innerHTML = `
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-lg shadow-sm shrink-0">
+                                    <i class="fa-solid fa-clipboard-question"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-extrabold text-amber-950">Diteruskan ke Verifikasi Petugas</h3>
+                                    <p class="text-[11px] text-amber-800">Skor keyakinan AI (${conf}%) di bawah batas auto-validasi (80%)</p>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-white/80 backdrop-blur-sm rounded-xl border border-amber-100 text-xs text-amber-900 leading-relaxed">
+                                Petugas Dinas Perhubungan akan memeriksa secara langsung untuk memastikan validitas kerusakan sebelum dimasukkan ke antrean perbaikan.
+                            </div>
+                        `;
+                    }
                 } else if (data.status === 'DITOLAK') {
                     headerBadge.className = 'text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-200';
                     headerBadge.innerHTML = '<i class="fa-solid fa-xmark mr-1"></i> Ditolak';

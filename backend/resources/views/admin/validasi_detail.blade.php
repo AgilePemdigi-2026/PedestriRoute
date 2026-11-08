@@ -213,6 +213,18 @@
         alasanPenolakanInput.focus();
     });
 
+    window.quickRejectNormal = function() {
+        cardTidakValid.click();
+        alasanPenolakanInput.value = 'Berdasarkan foto yang dilampirkan, fasilitas dalam kondisi baik / tidak ditemukan indikasi kerusakan.';
+        cardTidakValid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
+    window.quickRejectSpam = function() {
+        cardTidakValid.click();
+        alasanPenolakanInput.value = 'Foto yang diunggah tidak memuat fasilitas pejalan kaki publik (terdeteksi spam / non-infrastruktur).';
+        cardTidakValid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
     // Lightbox handlers
     const btnZoomPhoto = document.getElementById('btnZoomPhoto');
     const photoLightbox = document.getElementById('photoLightbox');
@@ -374,15 +386,33 @@
                         badge.className = 'text-[10px] font-bold text-rose-800 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full';
                     }
                     if (note) {
-                        note.innerHTML = `<span class="text-rose-700 font-bold">Peringatan:</span> AI menandai foto ini sebagai konten non-infrastruktur / tidak relevan (${percent}%). Disarankan ditolak.`;
+                        note.innerHTML = `
+                            <div class="space-y-1.5">
+                                <p><span class="text-rose-700 font-bold">Peringatan AI:</span> Konten non-infrastruktur / tidak relevan (${percent}%). Disarankan ditolak.</p>
+                                ${report.status === 'MENUNGGU_VALIDASI_ADMIN' ? `
+                                    <button type="button" onclick="quickRejectSpam()" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] rounded-lg shadow-sm transition inline-flex items-center gap-1.5 cursor-pointer">
+                                        <i class="fa-solid fa-ban"></i> Tolak Cepat (Foto SPAM)
+                                    </button>
+                                ` : ''}
+                            </div>
+                        `;
                     }
                 } else if (label === 'BAIK') {
                     if (badge) {
                         badge.innerText = 'ℹ️ Terdeteksi Normal';
-                        badge.className = 'text-[10px] font-bold text-blue-800 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full';
+                        badge.className = 'text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full';
                     }
                     if (note) {
-                        note.innerHTML = `<span class="text-blue-700 font-bold">Catatan:</span> AI mendeteksi fasilitas pejalan kaki dalam kondisi baik/tidak rusak (${percent}%).`;
+                        note.innerHTML = `
+                            <div class="space-y-1.5">
+                                <p><span class="text-amber-800 font-bold">Catatan AI:</span> Fasilitas pejalan kaki terdeteksi dalam kondisi baik/tidak rusak (${percent}%). Kemungkinan laporan keliru.</p>
+                                ${report.status === 'MENUNGGU_VALIDASI_ADMIN' ? `
+                                    <button type="button" onclick="quickRejectNormal()" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] rounded-lg shadow-sm transition inline-flex items-center gap-1.5 cursor-pointer">
+                                        <i class="fa-solid fa-ban"></i> Tolak Cepat (Kondisi Normal)
+                                    </button>
+                                ` : ''}
+                            </div>
+                        `;
                     }
                 } else {
                     if (badge) {

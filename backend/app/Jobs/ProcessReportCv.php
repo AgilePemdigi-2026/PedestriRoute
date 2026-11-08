@@ -94,6 +94,16 @@ class ProcessReportCv implements ShouldQueue
 
             // FR-F4-03: label == RUSAK and confidence >= threshold -> Auto-Validated
             if ($label === 'RUSAK' && $confidence >= $threshold) {
+                $categoryAdjustedNote = "";
+                if ($detectedCategory && $locked->kategori && $detectedCategory !== $locked->kategori->nama_kategori) {
+                    $newCat = \App\Models\KategoriMasalah::where('nama_kategori', $detectedCategory)->first();
+                    if ($newCat) {
+                        $oldName = $locked->kategori->nama_kategori;
+                        $locked->kategori_id = $newCat->kategori_id;
+                        $categoryAdjustedNote = " (Kategori disesuaikan dari '{$oldName}')";
+                    }
+                }
+
                 $locked->status = 'TERVALIDASI';
                 $locked->cv_label = $label;
                 $locked->confidence_score = $confidence;
@@ -106,7 +116,7 @@ class ProcessReportCv implements ShouldQueue
                     'jenis' => 'VALIDASI',
                     'status' => 'TERVALIDASI',
                     'admin_id' => null,
-                    'catatan' => "Tervalidasi otomatis oleh Computer Vision: {$detectedCategory} (Confidence: {$confPct}%)",
+                    'catatan' => "Tervalidasi otomatis oleh Computer Vision: {$detectedCategory} (Confidence: {$confPct}%){$categoryAdjustedNote}",
                     'waktu' => now(),
                 ]);
 
@@ -124,13 +134,21 @@ class ProcessReportCv implements ShouldQueue
                 $locked->confidence_score = $confidence;
                 $locked->save();
 
-                $detDesc = $detectedCategory ? " - {$detectedCategory}" : "";
+                $detDesc = "";
+                if ($label === 'BAIK') {
+                    $detDesc = " - Fasilitas terindikasi kondisi normal/baik ({$confPct}%), diteruskan ke verifikasi Admin";
+                } elseif ($label === 'SPAM') {
+                    $detDesc = " - Terindikasi bukan fasilitas pejalan kaki ({$confPct}%), diteruskan ke verifikasi Admin";
+                } else {
+                    $detDesc = ($detectedCategory ? " - {$detectedCategory}" : "") . " ({$confPct}%), diteruskan ke verifikasi Admin";
+                }
+
                 DB::table('riwayat_status_laporan')->insert([
                     'laporan_id' => $locked->laporan_id,
                     'jenis' => 'VALIDASI',
                     'status' => 'MENUNGGU_VALIDASI_ADMIN',
                     'admin_id' => null,
-                    'catatan' => "Hasil CV: {$label}{$detDesc} ({$confPct}%), diteruskan ke verifikasi Admin",
+                    'catatan' => "Hasil CV: {$label}{$detDesc}",
                     'waktu' => now(),
                 ]);
 

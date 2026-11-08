@@ -106,6 +106,34 @@ class CvValidationFeatureTest extends TestCase
         ]);
     }
 
+    public function test_cv_job_auto_adjusts_category_when_defect_category_differs(): void
+    {
+        // Citizen reported kategori 1: "Trotoar Rusak"
+        $laporanId = $this->createReportWithPhoto('DIPROSES', 1);
+
+        $mockCv = Mockery::mock(CvService::class);
+        $mockCv->shouldReceive('isCategorySupported')->andReturn(true);
+        $mockCv->shouldReceive('getThreshold')->andReturn(0.80);
+        $mockCv->shouldReceive('analyze')->once()->andReturn([
+            'label' => 'RUSAK',
+            'confidence' => 0.95,
+            'detected_category' => 'Masalah Drainase',
+        ]);
+        $this->app->instance(CvService::class, $mockCv);
+
+        ProcessReportCv::dispatchSync($laporanId);
+
+        $laporan = Laporan::with('kategori')->find($laporanId);
+        $this->assertEquals('TERVALIDASI', $laporan->status);
+        $this->assertEquals('Masalah Drainase', $laporan->kategori->nama_kategori);
+        $this->assertEquals(2, $laporan->kategori_id);
+
+        $this->assertDatabaseHas('riwayat_status_laporan', [
+            'laporan_id' => $laporanId,
+            'status' => 'TERVALIDASI',
+        ]);
+    }
+
     public function test_cv_job_routes_to_admin_when_confidence_below_threshold(): void
     {
         $laporanId = $this->createReportWithPhoto('DIPROSES', 1);

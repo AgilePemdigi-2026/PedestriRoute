@@ -81,6 +81,31 @@ def evaluate_image_heuristics(img: Image.Image):
     
     return None
 
+DEFECT_CLASSES = {
+    "1_trotoar_rusak",
+    "2_drainase_rusak",
+    "3_guiding_block_rusak",
+    "4_penyebrangan_rusak",
+    "5_parkir_liar",
+}
+
+
+def run_onnx_inference(pil_img: Image.Image) -> np.ndarray:
+    """Preprocess PIL image to 224x224 RGB tensor and run ONNX forward pass."""
+    img_resized = pil_img.resize((224, 224), Image.Resampling.BILINEAR)
+    arr = np.array(img_resized, dtype=np.float32) / 255.0  # (224, 224, 3)
+    arr = np.transpose(arr, (2, 0, 1))  # (3, 224, 224)
+    input_tensor = np.expand_dims(arr, axis=0)  # (1, 3, 224, 224)
+    
+    input_name = ort_session.get_inputs()[0].name
+    outputs = ort_session.run(None, {input_name: input_tensor})
+    raw_out = outputs[0][0]  # shape (num_classes,)
+    
+    if np.isclose(np.sum(raw_out), 1.0, atol=1e-2):
+        return raw_out
+    return softmax(raw_out)
+
+
 @app.post("/analyze")
 async def analyze_image(file: UploadFile = File(...)):
     filename = file.filename or "image.jpg"
@@ -138,24 +163,44 @@ async def analyze_image(file: UploadFile = File(...)):
     if guard:
         return guard
 
-    # Stage 1: ONNX Tensor Preparation (224x224 RGB, scaled to [0, 1] per YOLOv8-cls)
-    img_resized = img.resize((224, 224), Image.Resampling.BILINEAR)
-    arr = np.array(img_resized, dtype=np.float32) / 255.0  # (224, 224, 3)
-    
-    # HWC to NCHW
-    arr = np.transpose(arr, (2, 0, 1))  # (3, 224, 224)
-    input_tensor = np.expand_dims(arr, axis=0)  # (1, 3, 224, 224)
+    # Stage 1: Multi-Crop Spatial Pooling & Defect Priority
+    # Pedestrian defects (cracks, potholes, broken drain covers, missing tiles)
+    # always reside on the ground/lower plane (45°-70° downward smartphone angle),
+    # while wide-angle photos often have 50-70% background (sky, trees, street).
+    w, h = img.size
+    full_probs = run_onnx_inference(img)
 
-    # Run inference
-    input_name = ort_session.get_inputs()[0].name
-    outputs = ort_session.run(None, {input_name: input_tensor})
-    raw_out = outputs[0][0]  # shape (num_classes,)
-    
-    # Ultralytics ONNX classification model exports with Softmax included
-    if np.isclose(np.sum(raw_out), 1.0, atol=1e-2):
-        probs = raw_out
+    tiles = []
+    if h >= 150 and w >= 150:
+        # Ground plane (bottom half)
+        tiles.append(('bottom_half', img.crop((0, int(h * 0.45), w, h))))
+        # Ground plane corner & center tiles
+        gw = int(w * 0.5)
+        gh = int(h * 0.5)
+        tiles.append(('lower_left', img.crop((0, h - gh, gw, h))))
+        tiles.append(('lower_center', img.crop((int(w * 0.25), h - gh, int(w * 0.75), h))))
+        tiles.append(('lower_right', img.crop((w - gw, h - gh, w, h))))
+        # Mid-level center & right (perspective angle)
+        tiles.append(('mid_right', img.crop((int(w * 0.5), int(h * 0.25), w, int(h * 0.75)))))
+        tiles.append(('mid_center', img.crop((int(w * 0.25), int(h * 0.25), int(w * 0.75), int(h * 0.75)))))
+
+    tile_defects = []
+    for name, tile in tiles:
+        t_probs = run_onnx_inference(tile)
+        t_top_idx = int(np.argmax(t_probs))
+        t_top_class = CLASS_NAMES[t_top_idx] if t_top_idx < len(CLASS_NAMES) else "0_normal_baik"
+        t_top_conf = float(t_probs[t_top_idx])
+        if t_top_class in DEFECT_CLASSES and t_top_conf >= 0.70:
+            tile_defects.append((name, t_top_class, t_top_conf, t_probs))
+
+    if tile_defects:
+        tile_defects.sort(key=lambda x: x[2], reverse=True)
+        winner_name, raw_top_class, top_confidence, probs = tile_defects[0]
     else:
-        probs = softmax(raw_out)
+        top_idx = int(np.argmax(full_probs))
+        raw_top_class = CLASS_NAMES[top_idx] if top_idx < len(CLASS_NAMES) else "0_normal_baik"
+        top_confidence = float(round(full_probs[top_idx], 4))
+        probs = full_probs
 
     prob_dict = {}
     for idx, name in enumerate(CLASS_NAMES):
@@ -163,10 +208,7 @@ async def analyze_image(file: UploadFile = File(...)):
             clean_name = re.sub(r'^\d+_', '', name)
             prob_dict[clean_name] = float(round(probs[idx], 4))
 
-    top_idx = int(np.argmax(probs))
-    raw_top_class = CLASS_NAMES[top_idx] if top_idx < len(CLASS_NAMES) else "0_normal_baik"
     top_class = re.sub(r'^\d+_', '', raw_top_class)
-    top_confidence = float(round(probs[top_idx], 4))
 
     # Decision mapping
     if top_class == "spam_non_infrastructure":
