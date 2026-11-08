@@ -3,22 +3,8 @@
 @section('title', 'Status Laporan & Perbaikan - PedestriRoute Admin')
 
 @section('content')
-<div class="px-5 pt-6 pb-20 flex flex-col flex-1">
-    <!-- Top Header -->
-    <div class="flex items-center justify-between mb-4">
-        <div>
-            <h1 class="text-base font-extrabold text-slate-900 tracking-tight">Status Perbaikan</h1>
-            <p id="queueSubtitle" class="text-xs text-slate-500 font-medium">Memuat laporan...</p>
-        </div>
-        <div class="flex items-center gap-2">
-            <span id="queueBadge" class="px-2.5 py-1 bg-teal-50 text-brand-700 text-xs font-extrabold rounded-full border border-teal-100">
-                0
-            </span>
-            <button id="logoutBtn" class="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-100 hover:bg-rose-100 transition">
-                Keluar
-            </button>
-        </div>
-    </div>
+<div class="px-5 pt-6 pb-24 flex flex-col flex-1">
+    @include('partials.admin-header', ['title' => 'Status Perbaikan', 'subtitle' => 'Memuat laporan...', 'subtitleId' => 'queueSubtitle', 'badgeId' => 'queueBadge'])
 
     <!-- Status Filters -->
     <div class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-3 scrollbar-none">
@@ -74,16 +60,33 @@
     let currentFilter = 'ALL';
     let allReports = [];
 
-    function setFilter(filter) {
-        currentFilter = filter;
+    const CHIP_BASE = 'filter-chip px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition';
+    const CHIP_IDLE = CHIP_BASE + ' bg-slate-100 text-slate-600 hover:bg-slate-200';
+    const CHIP_ACTIVE = CHIP_BASE + ' bg-brand-600 text-white shadow-sm';
+
+    // Sorot chip yang aktif (tanpa render ulang daftar)
+    function updateChips(filter) {
         document.querySelectorAll('.filter-chip').forEach(btn => {
-            btn.className = 'filter-chip px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200 transition';
+            btn.className = CHIP_IDLE;
         });
         const activeBtn = document.getElementById('filter-' + filter);
         if (activeBtn) {
-            activeBtn.className = 'filter-chip px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-brand-600 text-white shadow-sm transition';
+            activeBtn.className = CHIP_ACTIVE;
         }
+    }
+
+    function setFilter(filter) {
+        currentFilter = filter;
+        updateChips(filter);
         renderReports();
+    }
+
+    // Filter awal dari URL, mis. /admin/status-laporan?filter=BELUM
+    const VALID_FILTERS = ['ALL', 'BELUM', 'SEDANG_DIPERBAIKI', 'SUDAH_DIPERBAIKI'];
+    const initialFilter = new URLSearchParams(window.location.search).get('filter');
+    if (VALID_FILTERS.includes(initialFilter)) {
+        currentFilter = initialFilter;
+        updateChips(initialFilter);
     }
 
     function formatTime(isoStr) {

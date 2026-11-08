@@ -80,7 +80,7 @@ class AdminValidationController extends Controller
         ], 200);
     }
 
-    /**
+        /**
      * Get aggregated statistics for admin dashboard.
      */
     public function statistics(Request $request): JsonResponse
@@ -89,6 +89,11 @@ class AdminValidationController extends Controller
         $menungguValidasi = Laporan::where('status', 'MENUNGGU_VALIDASI_ADMIN')->count();
         $tervalidasi = Laporan::where('status', 'TERVALIDASI')->count();
         $ditolak = Laporan::where('status', 'DITOLAK')->count();
+
+        // Status perbaikan hanya relevan untuk laporan yang sudah tervalidasi
+        $belumDitangani = Laporan::where('status', 'TERVALIDASI')->whereNull('status_perbaikan')->count();
+        $sedangDiperbaiki = Laporan::where('status', 'TERVALIDASI')->where('status_perbaikan', 'SEDANG_DIPERBAIKI')->count();
+        $sudahDiperbaiki = Laporan::where('status', 'TERVALIDASI')->where('status_perbaikan', 'SUDAH_DIPERBAIKI')->count();
 
         $categories = DB::table('kategori_masalah')
             ->leftJoin('laporan', 'kategori_masalah.kategori_id', '=', 'laporan.kategori_id')
@@ -118,6 +123,9 @@ class AdminValidationController extends Controller
                     'menunggu_validasi' => $menungguValidasi,
                     'tervalidasi' => $tervalidasi,
                     'ditolak' => $ditolak,
+                    'belum_ditangani' => $belumDitangani,
+                    'sedang_diperbaiki' => $sedangDiperbaiki,
+                    'sudah_diperbaiki' => $sudahDiperbaiki,
                     'persentase_valid' => $totalLaporan > 0 ? round(($tervalidasi / $totalLaporan) * 100, 1) : 0,
                     'rata_rata_skor_jalan' => round((float) $avgSkor, 1),
                     'total_warga' => $totalWarga,
