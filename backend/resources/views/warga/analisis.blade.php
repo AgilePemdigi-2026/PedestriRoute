@@ -41,7 +41,6 @@
         .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #00625730; border-top-color: var(--teal); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         h2, #statusTitle { font-size: 14px; line-height: 1.35; margin: 4px 0 0; overflow-wrap: anywhere; font-weight: 700; color: #0f172a; }
-        #statusDescription { margin: 4px 0 0; color: #64748b; font-size: 12px; line-height: 1.5; }
         .fade-in { animation: appear .25s ease-out; }
         @keyframes appear { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
         .result { border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px; min-width: 0; background: #ffffff; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03); }
@@ -99,12 +98,6 @@
             color: #0f172a;
             line-height: 1.4;
         }
-        .condition-desc {
-            margin: 4px 0 0;
-            font-size: 12px;
-            line-height: 1.5;
-            color: #64748b;
-        }
 
         .label { display: block; color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
         .value { font-size: 14px; font-weight: 700; overflow-wrap: anywhere; color: #0f172a; }
@@ -161,7 +154,6 @@
                 <span id="processingIcon" class="spinner" aria-hidden="true"></span>
             </div>
             <h2 id="statusTitle">Memproses Analisis ML</h2>
-            <p id="statusDescription">Mohon tunggu, foto laporanmu sedang dianalisis oleh model Machine Learning.</p>
         </section>
 
         <section id="resultCard" class="result" aria-label="Ringkasan hasil analisis ML" hidden>
@@ -172,7 +164,6 @@
                     <span id="conditionBadge" class="condition-badge">RUSAK</span>
                 </div>
                 <div id="conditionTitle" class="condition-title">Kondisi: Terdeteksi Rusak</div>
-                <p id="conditionDesc" class="condition-desc">Model Machine Learning mengklasifikasikan fasilitas dalam kondisi mengalami kerusakan fisik.</p>
             </div>
 
             <!-- Kategori Informasi -->
@@ -337,7 +328,7 @@
         statusCard.dataset.tone = tone;
         statusCard.setAttribute('aria-busy', processing ? 'true' : 'false');
         el('statusTitle').textContent = title;
-        el('statusDescription').textContent = description;
+        if (el('statusDescription')) el('statusDescription').textContent = description;
         el('processingIcon').hidden = !processing;
         el('resultIcon').hidden = processing;
         el('resultIcon').textContent = icon;
@@ -356,14 +347,14 @@
             conditionCard.dataset.condition = cfg.tone;
             el('conditionBadge').textContent = cfg.badge;
             el('conditionTitle').textContent = cfg.title;
-            el('conditionDesc').textContent = cfg.desc;
+            if (el('conditionDesc')) el('conditionDesc').textContent = cfg.desc;
             el('confidenceHint').textContent = cfg.hint;
         } else if (data.status === 'TERVALIDASI') {
             conditionCard.hidden = false;
             conditionCard.dataset.condition = 'RUSAK';
             el('conditionBadge').textContent = 'RUSAK';
             el('conditionTitle').textContent = 'Kondisi: Terverifikasi Rusak';
-            el('conditionDesc').textContent = 'Fasilitas terkonfirmasi mengalami kerusakan dan telah divalidasi sistem.';
+            if (el('conditionDesc')) el('conditionDesc').textContent = 'Fasilitas terkonfirmasi mengalami kerusakan dan telah divalidasi sistem.';
             el('confidenceHint').textContent = 'Laporan terverifikasi valid dan diteruskan ke dinas terkait.';
         } else {
             conditionCard.hidden = true;
@@ -441,8 +432,8 @@
             if (response.status === 401) { stopPolling(); window.location.href = '/login'; return; }
             if (response.status === 403 || response.status === 404) {
                 stopPolling();
-                el('statusTitle').textContent = 'Laporan tidak tersedia';
-                el('statusDescription').textContent = response.status === 403 ? 'Kamu tidak memiliki akses ke laporan ini.' : 'Laporan yang diminta tidak ditemukan.';
+                el('statusTitle').textContent = response.status === 403 ? 'Akses Ditolak' : 'Laporan Tidak Ditemukan';
+                if (el('statusDescription')) el('statusDescription').textContent = response.status === 403 ? 'Kamu tidak memiliki akses ke laporan ini.' : 'Laporan yang diminta tidak ditemukan.';
                 el('processingIcon').hidden = true;
                 el('resultIcon').hidden = false;
                 el('statusCard').setAttribute('aria-busy', 'false');
@@ -460,7 +451,7 @@
             showNotice('Status belum dapat diperbarui. Periksa koneksi atau tekan Periksa lagi.');
             if (!latestReport) {
                 el('statusTitle').textContent = 'Hasil belum dapat dimuat';
-                el('statusDescription').textContent = 'Kamu tetap bisa memeriksa laporan melalui halaman Riwayat.';
+                if (el('statusDescription')) el('statusDescription').textContent = 'Kamu tetap bisa memeriksa laporan melalui halaman Riwayat.';
                 el('processingIcon').hidden = true;
                 el('resultIcon').hidden = false;
                 el('statusCard').setAttribute('aria-busy', 'false');
