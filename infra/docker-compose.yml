@@ -63,5 +63,28 @@ services:
     volumes:
       - ../cv-service:/app
 
+  queue:
+    build:
+      context: ../
+      dockerfile: infra/docker/php/Dockerfile
+    container_name: pedestriroute_queue
+    restart: unless-stopped
+    working_dir: /var/www/backend
+    command: php artisan queue:work --sleep=1 --tries=3 --timeout=30
+    volumes:
+      - ../backend:/var/www/backend
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: pedestriroute
+      DB_USERNAME: pedestriroute
+      DB_PASSWORD: secretpassword
+    depends_on:
+      db:
+        condition: service_healthy
+      cv-service:
+        condition: service_started
+
 volumes:
   pedestriroute_pgdata:

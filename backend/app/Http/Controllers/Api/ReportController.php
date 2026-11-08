@@ -395,6 +395,16 @@ class ReportController extends Controller
             ], 403);
         }
 
+        // Auto-heal / fallback if queue worker is delayed or not running in development:
+        if ($laporan->status === 'DIPROSES' && config('services.cv.enabled')) {
+            try {
+                \App\Jobs\ProcessReportCv::dispatchSync($laporan->laporan_id);
+                $laporan = Laporan::with(['lokasi.segmen', 'kategori', 'foto', 'riwayat.admin'])->find($id);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("ReportController: show() auto-process CV exception: " . $e->getMessage());
+            }
+        }
+
         // Use the segment already assigned during submission, never re-snap to a new one.
         $segmentMap = null;
         if ($isAdmin && $laporan->lokasi?->segmen_id) {

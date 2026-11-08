@@ -124,38 +124,61 @@
                     </span>
                 </div>
 
+                <!-- Live Evaluation Progress Bar -->
+                <div class="space-y-2 p-3 bg-slate-950/70 rounded-xl border border-slate-700/80 shadow-inner">
+                    <div class="flex items-center justify-between text-xs">
+                        <span id="evalStatusLabel" class="text-[11px] font-semibold text-emerald-300 flex items-center gap-1.5 truncate max-w-[75%]">
+                            <i class="fa-solid fa-gear fa-spin text-[10px] text-emerald-400"></i>
+                            <span>Memeriksa resolusi & pencahayaan citra...</span>
+                        </span>
+                        <span id="evalProgressPercent" class="text-xs font-black text-white font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-700">12%</span>
+                    </div>
+
+                    <!-- Animated Progress Track -->
+                    <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden p-0.5 border border-slate-700 relative">
+                        <div id="evalProgressBar" class="bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 h-full rounded-full transition-all duration-300 shadow-sm" style="width: 12%"></div>
+                    </div>
+
+                    <div class="flex items-center justify-between text-[10px] text-slate-400 font-medium">
+                        <span id="evalElapsedText" class="flex items-center gap-1">
+                            <i class="fa-solid fa-stopwatch text-slate-500"></i> <span id="elapsedSeconds">0.5s</span>
+                        </span>
+                        <span>Estimasi: &le; 3 detik</span>
+                    </div>
+                </div>
+
                 <!-- Live Pipeline Stepper -->
                 <div class="space-y-2 pt-1 border-t border-slate-700/60 text-xs">
-                    <div class="flex items-center justify-between text-slate-300 text-[11px]">
+                    <div id="stepItem1" class="flex items-center justify-between text-slate-300 text-[11px]">
                         <span class="flex items-center gap-2">
-                            <span class="w-4 h-4 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-[9px] font-black">✓</span>
+                            <span id="stepIcon1" class="w-4 h-4 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-[9px] font-black">✓</span>
                             <span>Pra-pemrosesan citra (224x224 RGB)</span>
                         </span>
-                        <span class="text-emerald-400 font-semibold text-[10px]">Selesai</span>
+                        <span id="stepStatus1" class="text-emerald-400 font-semibold text-[10px]">Selesai</span>
                     </div>
 
-                    <div class="flex items-center justify-between text-slate-300 text-[11px]">
+                    <div id="stepItem2" class="flex items-center justify-between text-slate-300 text-[11px]">
                         <span class="flex items-center gap-2">
-                            <span class="w-4 h-4 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-[9px] font-black">✓</span>
+                            <span id="stepIcon2" class="w-4 h-4 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-[9px] font-black">✓</span>
                             <span>Filter Heuristik & Anti-Spam (Stage 0)</span>
                         </span>
-                        <span class="text-emerald-400 font-semibold text-[10px]">Lolos</span>
+                        <span id="stepStatus2" class="text-emerald-400 font-semibold text-[10px]">Lolos</span>
                     </div>
 
-                    <div class="flex items-center justify-between text-slate-200 text-[11px]">
+                    <div id="stepItem3" class="flex items-center justify-between text-slate-200 text-[11px]">
                         <span class="flex items-center gap-2">
-                            <span class="w-4 h-4 rounded-full bg-brand-500 text-slate-950 flex items-center justify-center text-[9px] font-black animate-pulse">3</span>
+                            <span id="stepIcon3" class="w-4 h-4 rounded-full bg-brand-500 text-slate-950 flex items-center justify-center text-[9px] font-black animate-pulse">3</span>
                             <span class="font-bold text-white">Klasifikasi Cacat YOLOv8</span>
                         </span>
-                        <span class="text-brand-400 font-bold text-[10px] animate-pulse">Berjalan...</span>
+                        <span id="stepStatus3" class="text-brand-400 font-bold text-[10px] animate-pulse">Berjalan...</span>
                     </div>
 
-                    <div class="flex items-center justify-between text-slate-400 text-[11px]">
+                    <div id="stepItem4" class="flex items-center justify-between text-slate-400 text-[11px]">
                         <span class="flex items-center gap-2">
-                            <span class="w-4 h-4 rounded-full bg-slate-700 text-slate-400 flex items-center justify-center text-[9px] font-bold">4</span>
+                            <span id="stepIcon4" class="w-4 h-4 rounded-full bg-slate-700 text-slate-400 flex items-center justify-center text-[9px] font-bold">4</span>
                             <span>Rekalkulasi Indeks Kelayakan WSM</span>
                         </span>
-                        <span class="text-slate-500 text-[10px]">Menunggu</span>
+                        <span id="stepStatus4" class="text-slate-500 text-[10px]">Menunggu</span>
                     </div>
                 </div>
 
@@ -283,6 +306,99 @@
         let pollCount = 0;
         const maxPolls = 20; // 20 x 3s = 60s max polling (FR-F4-07)
 
+        // Evaluation Progress Bar State
+        let evalPercent = 15;
+        let evalTimer = null;
+        let evalStartTime = Date.now();
+        let isCompleted = false;
+
+        const evalSteps = [
+            { at: 15, text: "Memeriksa resolusi & kualitas citra..." },
+            { at: 35, text: "Menjalankan filter kualitas & anti-spam (Stage 0)..." },
+            { at: 60, text: "Klasifikasi fitur cacat model YOLOv8 (7 kelas)..." },
+            { at: 82, text: "Mengevaluasi tingkat keyakinan (threshold 80%)..." },
+            { at: 90, text: "Sinkronisasi validasi & pembaruan indeks WSM..." },
+        ];
+
+        function startEvaluationProgressBar() {
+            evalStartTime = Date.now();
+            evalTimer = setInterval(() => {
+                const elapsedSec = ((Date.now() - evalStartTime) / 1000).toFixed(1);
+                const elapsedEl = document.getElementById('elapsedSeconds');
+                if (elapsedEl) elapsedEl.innerText = `${elapsedSec}s`;
+
+                if (evalPercent < 90) {
+                    evalPercent += Math.floor(Math.random() * 4) + 2;
+                    if (evalPercent > 90) evalPercent = 90;
+                    updateEvalProgress(evalPercent);
+                }
+            }, 250);
+        }
+
+        function updateEvalProgress(pct) {
+            const bar = document.getElementById('evalProgressBar');
+            const percentLabel = document.getElementById('evalProgressPercent');
+            const statusLabel = document.getElementById('evalStatusLabel');
+            if (bar) bar.style.width = `${pct}%`;
+            if (percentLabel) percentLabel.innerText = `${pct}%`;
+
+            if (statusLabel) {
+                for (let i = evalSteps.length - 1; i >= 0; i--) {
+                    if (pct >= evalSteps[i].at) {
+                        statusLabel.innerHTML = `<i class="fa-solid fa-gear fa-spin text-[10px] text-emerald-400"></i> <span>${evalSteps[i].text}</span>`;
+                        break;
+                    }
+                }
+            }
+
+            // Update stepper icons dynamically
+            const sIcon3 = document.getElementById('stepIcon3');
+            const sStatus3 = document.getElementById('stepStatus3');
+            const sIcon4 = document.getElementById('stepIcon4');
+            const sStatus4 = document.getElementById('stepStatus4');
+
+            if (pct >= 60 && sIcon3) {
+                sIcon3.className = 'w-4 h-4 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-[9px] font-black';
+                sIcon3.innerText = '✓';
+                if (sStatus3) { sStatus3.className = 'text-emerald-400 font-semibold text-[10px]'; sStatus3.innerText = 'Aktif'; }
+            }
+            if (pct >= 85 && sIcon4) {
+                sIcon4.className = 'w-4 h-4 rounded-full bg-brand-500 text-slate-950 flex items-center justify-center text-[9px] font-black animate-pulse';
+                if (sStatus4) { sStatus4.className = 'text-brand-400 font-bold text-[10px] animate-pulse'; sStatus4.innerText = 'Menyesuaikan...'; }
+            }
+        }
+
+        function finishEvaluationProgress(callback) {
+            if (isCompleted) {
+                if (typeof callback === 'function') callback();
+                return;
+            }
+            isCompleted = true;
+            if (evalTimer) {
+                clearInterval(evalTimer);
+                evalTimer = null;
+            }
+
+            updateEvalProgress(100);
+            const statusLabel = document.getElementById('evalStatusLabel');
+            if (statusLabel) statusLabel.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> <span>Analisis Selesai! (100%)</span>`;
+
+            const sIcon4 = document.getElementById('stepIcon4');
+            const sStatus4 = document.getElementById('stepStatus4');
+            if (sIcon4) {
+                sIcon4.className = 'w-4 h-4 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-[9px] font-black';
+                sIcon4.innerText = '✓';
+            }
+            if (sStatus4) {
+                sStatus4.className = 'text-emerald-400 font-semibold text-[10px]';
+                sStatus4.innerText = 'Selesai';
+            }
+
+            setTimeout(() => {
+                if (typeof callback === 'function') callback();
+            }, 450);
+        }
+
         async function fetchReportData() {
             try {
                 const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
@@ -300,7 +416,6 @@
 
                 const json = await res.json();
                 const data = json.data;
-                renderReport(data);
 
                 // Stop polling if status is no longer DIPROSES
                 if (data.status !== 'DIPROSES') {
@@ -308,6 +423,9 @@
                         clearInterval(pollInterval);
                         pollInterval = null;
                     }
+                    finishEvaluationProgress(() => renderReport(data));
+                } else {
+                    renderReport(data);
                 }
             } catch (err) {
                 console.error("Error polling report:", err);
@@ -457,7 +575,8 @@
             }
         }
 
-        // Start polling (FR-F4-07: Poll every 3 seconds)
+        // Start progress bar & polling (FR-F4-07: Poll every 3 seconds)
+        startEvaluationProgressBar();
         fetchReportData();
         pollInterval = setInterval(() => {
             pollCount++;
