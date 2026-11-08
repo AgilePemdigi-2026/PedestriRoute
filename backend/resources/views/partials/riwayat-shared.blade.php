@@ -247,14 +247,14 @@
                 ${d.status === 'DIPROSES' ? `
                     <a href="/laporan/${d.laporan_id}/analisis" class="w-full mb-3 py-2.5 px-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-center text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm animate-pulse">
                         <i class="fa-solid fa-radar"></i>
-                        <span>Lihat Analisis AI Langsung</span>
+                        <span>Lihat Analisis ML Langsung</span>
                     </a>
                 ` : ''}
                 ${(d.confidence_score !== null && d.confidence_score !== undefined) ? `
                     <div class="mb-3 p-3 rounded-2xl ${d.status === 'TERVALIDASI' ? 'bg-emerald-50 border border-emerald-200 text-emerald-950' : (d.cv_label === 'SPAM' ? 'bg-rose-50 border border-rose-200 text-rose-950' : 'bg-amber-50 border border-amber-200 text-amber-950')} space-y-1">
                         <div class="flex items-center justify-between">
                             <span class="text-[10px] font-extrabold uppercase tracking-wide flex items-center gap-1.5">
-                                <i class="fa-solid fa-robot text-brand-600"></i> Verifikasi AI (YOLOv8)
+                                <i class="fa-solid fa-robot text-brand-600"></i> Verifikasi ML (YOLOv8)
                             </span>
                             <span class="text-[11px] font-extrabold px-2 py-0.5 rounded-full ${d.status === 'TERVALIDASI' ? 'bg-emerald-100 text-emerald-800' : (d.cv_label === 'SPAM' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800')}">
                                 ${Math.round(d.confidence_score * 100)}% Keyakinan

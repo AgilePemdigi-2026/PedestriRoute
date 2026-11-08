@@ -166,11 +166,11 @@
                         <span class="text-slate-400">${fmtDate(lap.tanggal_lapor)}</span>
                         ${lap.status === 'DIPROSES' ? `
                             <span class="text-sky-600 font-bold flex items-center gap-1 animate-pulse bg-sky-50 px-2 py-0.5 rounded-full border border-sky-100">
-                                <i class="fa-solid fa-spinner fa-spin text-[9px]"></i> Analisis AI
+                                <i class="fa-solid fa-spinner fa-spin text-[9px]"></i> Analisis ML
                             </span>
                         ` : (lap.status === 'TERVALIDASI' && lap.confidence_score ? `
                             <span class="text-emerald-700 font-bold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                                <i class="fa-solid fa-check text-[9px]"></i> AI Valid (${Math.round(lap.confidence_score * 100)}%)
+                                <i class="fa-solid fa-check text-[9px]"></i> ML Valid (${Math.round(lap.confidence_score * 100)}%)
                             </span>
                         ` : '')}
                     </div>

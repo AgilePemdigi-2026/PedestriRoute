@@ -3,10 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hasil Analisis Laporan - PedestriRoute</title>
+    <title>Hasil Analisis ML - PedestriRoute</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { color-scheme: light; --teal: #006257; --teal-dark: #004f46; }
+        :root {
+            color-scheme: light;
+            --teal: #006257;
+            --teal-dark: #004f46;
+            --brand-600: #008775;
+            --rose-bg: #fff1f2;
+            --rose-border: #fecdd3;
+            --rose-text: #9f1239;
+            --emerald-bg: #ecfdf5;
+            --emerald-border: #a7f3d0;
+            --emerald-text: #065f46;
+            --amber-bg: #fffbeb;
+            --amber-border: #fde68a;
+            --amber-text: #92400e;
+        }
         * { box-sizing: border-box; }
         body { margin: 0; background: #f4f7fb; color: #0f172a; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; line-height: 1.6; }
         [hidden] { display: none !important; }
@@ -14,9 +28,9 @@
         button { font: inherit; cursor: pointer; }
         .app { width: 100%; max-width: 448px; min-height: 100vh; margin: 0 auto; background: #fff; box-shadow: 0 4px 32px #0f172a08; }
         header { display: flex; gap: 12px; align-items: center; padding: 20px; border-bottom: 1px solid #f1f5f9; }
-        .back { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; border-radius: 12px; background: #f1f5f9; color: #475569; }
+        .back { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; border-radius: 12px; background: #f1f5f9; color: #475569; font-weight: bold; }
         header div { min-width: 0; }
-        h1 { margin: 0; font-size: 16px; line-height: 1.4; }
+        h1 { margin: 0; font-size: 16px; font-weight: 800; line-height: 1.4; }
         .subtitle { color: #64748b; font-size: 12px; margin: 3px 0 0; overflow-wrap: anywhere; }
         main { display: grid; gap: 16px; padding: 20px 20px max(28px, env(safe-area-inset-bottom)); }
         .state { border: 1px solid #ccebe7; border-radius: 20px; padding: 20px; background: #f0faf8; }
@@ -29,20 +43,105 @@
         .state[data-tone="rejected"] .state-icon { color: #be123c; background: #ffe4e6; }
         .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid #00625730; border-top-color: var(--teal); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        h2 { font-size: 20px; line-height: 1.4; margin: 0; overflow-wrap: anywhere; }
+        h2 { font-size: 20px; line-height: 1.4; margin: 0; overflow-wrap: anywhere; font-weight: 800; }
         .state p:last-child { margin: 8px 0 0; color: #475569; font-size: 13px; }
         .fade-in { animation: appear .25s ease-out; }
         @keyframes appear { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-        .result { border: 1px solid #e2e8f0; border-radius: 18px; padding: 16px; min-width: 0; }
-        .label { display: block; color: #64748b; font-size: 12px; margin-bottom: 4px; }
-        .value { font-size: 14px; font-weight: 800; overflow-wrap: anywhere; }
+        .result { border: 1px solid #e2e8f0; border-radius: 18px; padding: 18px; min-width: 0; background: #ffffff; }
+
+        /* Prominent Condition Card (Rusak / Baik / Terhalang) */
+        .condition-card {
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+        .condition-card[data-condition="RUSAK"] {
+            background: var(--rose-bg);
+            border-color: var(--rose-border);
+            color: var(--rose-text);
+        }
+        .condition-card[data-condition="BAIK"] {
+            background: var(--emerald-bg);
+            border-color: var(--emerald-border);
+            color: var(--emerald-text);
+        }
+        .condition-card[data-condition="TERHALANG"] {
+            background: var(--amber-bg);
+            border-color: var(--amber-border);
+            color: var(--amber-text);
+        }
+        .condition-card[data-condition="SPAM"] {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+            color: #334155;
+        }
+        .condition-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .condition-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+        .condition-card[data-condition="RUSAK"] .condition-badge {
+            background: #ffe4e6;
+            color: #be123c;
+            border: 1px solid #fecdd3;
+        }
+        .condition-card[data-condition="BAIK"] .condition-badge {
+            background: #d1fae5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+        }
+        .condition-card[data-condition="TERHALANG"] .condition-badge {
+            background: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fde68a;
+        }
+        .condition-card[data-condition="SPAM"] .condition-badge {
+            background: #e2e8f0;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+        }
+        .condition-title {
+            margin: 0;
+            font-size: 17px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .condition-desc {
+            margin: 6px 0 0;
+            font-size: 12px;
+            line-height: 1.5;
+            opacity: 0.95;
+        }
+
+        .label { display: block; color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
+        .value { font-size: 14px; font-weight: 800; overflow-wrap: anywhere; color: #0f172a; }
         .metric { margin-top: 16px; padding-top: 16px; border-top: 1px solid #f1f5f9; }
         .metric-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
         .badge { display: inline-block; color: var(--teal); background: #e6f5f3; border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 700; }
+        .badge[data-level="high"] { background: #d1fae5; color: #047857; border: 1px solid #a7f3d0; }
+        .badge[data-level="mid"] { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+        .badge[data-level="low"] { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
         .percent { font-size: 22px; font-weight: 800; color: var(--teal); }
-        .track { height: 6px; border-radius: 99px; background: #edf2f7; overflow: hidden; margin-top: 10px; }
+        .track { height: 8px; border-radius: 99px; background: #edf2f7; overflow: hidden; margin-top: 10px; }
         .fill { width: 0; height: 100%; background: #008775; border-radius: inherit; transition: width .3s ease; }
-        .hint { margin: 8px 0 0; color: #64748b; font-size: 11px; }
+        .hint { margin: 8px 0 0; color: #64748b; font-size: 11px; line-height: 1.4; }
         .actions { display: grid; gap: 10px; }
         .button { display: flex; min-height: 46px; align-items: center; justify-content: center; padding: 11px 14px; border: 1px solid var(--teal); border-radius: 12px; background: var(--teal); color: white; text-align: center; font-size: 12px; font-weight: 800; }
         .button:hover { background: var(--teal-dark); }
@@ -69,26 +168,50 @@
 <div class="app">
     <header>
         <a class="back" href="/riwayat-laporan" aria-label="Kembali ke riwayat laporan">←</a>
-        <div><h1>Hasil Analisis Laporan</h1><p id="reportSubtitle" class="subtitle">Laporan #LAP-{{ $id }}</p></div>
+        <div>
+            <h1>Hasil Analisis ML</h1>
+            <p id="reportSubtitle" class="subtitle">Hasil Analisis Otomatis &bull; Laporan #LAP-{{ $id }}</p>
+        </div>
     </header>
     <main>
         <section id="statusCard" class="state" data-tone="neutral" aria-labelledby="statusTitle" aria-live="polite" aria-busy="true">
-            <p class="eyebrow">Status laporan</p>
+            <p class="eyebrow">Status Laporan</p>
             <div id="processingIcon" class="state-icon" aria-hidden="true"><span class="spinner"></span></div>
             <div id="resultIcon" class="state-icon" aria-hidden="true" hidden>✓</div>
-            <h2 id="statusTitle">Memuat hasil analisis</h2>
-            <p id="statusDescription">Mohon tunggu, kami sedang memeriksa status laporanmu.</p>
+            <h2 id="statusTitle">Memproses Analisis ML</h2>
+            <p id="statusDescription">Mohon tunggu, foto laporanmu sedang dianalisis oleh model Machine Learning.</p>
         </section>
 
-        <section id="resultCard" class="result" aria-label="Ringkasan hasil analisis" hidden>
-            <span id="categoryLabel" class="label">Kategori laporan</span>
-            <div id="categoryValue" class="value">Belum tersedia</div>
-            <p id="predictionNote" class="hint" hidden></p>
+        <section id="resultCard" class="result" aria-label="Ringkasan hasil analisis ML" hidden>
+            <!-- Prominent Condition Box: RUSAK vs BAIK vs TERHALANG vs SPAM -->
+            <div id="conditionCard" class="condition-card" data-condition="RUSAK">
+                <div class="condition-header">
+                    <span class="label" style="margin: 0;">Hasil Deteksi Kondisi</span>
+                    <span id="conditionBadge" class="condition-badge">RUSAK</span>
+                </div>
+                <div id="conditionTitle" class="condition-title">Kondisi: Terdeteksi Rusak</div>
+                <p id="conditionDesc" class="condition-desc">Model Machine Learning mengklasifikasikan fasilitas dalam kondisi mengalami kerusakan fisik.</p>
+            </div>
+
+            <!-- Kategori Informasi -->
+            <div>
+                <span id="categoryLabel" class="label">Kategori Fasilitas</span>
+                <div id="categoryValue" class="value">Belum tersedia</div>
+            </div>
+
+            <!-- ML Confidence Metric -->
             <div class="metric">
-                <span class="label">Tingkat keyakinan AI</span>
-                <div class="metric-row"><span id="confidenceBadge" class="badge">Belum tersedia</span><span id="confidencePercent" class="percent">—</span></div>
-                <div id="confidenceTrack" class="track" role="progressbar" aria-label="Tingkat keyakinan AI" aria-valuemin="0" aria-valuemax="100" hidden><div id="confidenceBar" class="fill"></div></div>
-                <p class="hint">Keyakinan AI terhadap hasil deteksi. Keputusan laporan mengikuti status di atas.</p>
+                <div class="metric-row">
+                    <div>
+                        <span class="label">Tingkat Keyakinan ML (YOLOv8)</span>
+                        <span id="confidenceBadge" class="badge">Belum tersedia</span>
+                    </div>
+                    <span id="confidencePercent" class="percent">—</span>
+                </div>
+                <div id="confidenceTrack" class="track" role="progressbar" aria-label="Tingkat keyakinan ML" aria-valuemin="0" aria-valuemax="100" hidden>
+                    <div id="confidenceBar" class="fill"></div>
+                </div>
+                <p id="confidenceHint" class="hint">Keyakinan model Machine Learning terhadap hasil klasifikasi kondisi.</p>
             </div>
         </section>
 
@@ -129,14 +252,44 @@
     let leavingPage = false;
     const el = id => document.getElementById(id);
     const statusLabels = {
-        DIPROSES: 'Sedang dianalisis',
+        DIPROSES: 'Sedang dianalisis ML',
         MENUNGGU_VALIDASI_ADMIN: 'Menunggu verifikasi petugas',
         TERVALIDASI: 'Laporan tervalidasi',
         DITOLAK: 'Laporan ditolak',
         SEDANG_DIPERBAIKI: 'Sedang diperbaiki',
         SUDAH_DIPERBAIKI: 'Sudah diperbaiki'
     };
-    const predictionLabels = {RUSAK: 'Kerusakan fasilitas', TERHALANG: 'Fasilitas terhalang', BAIK: 'Kondisi terlihat baik', SPAM: 'Foto perlu diperiksa petugas'};
+
+    const conditionConfig = {
+        RUSAK: {
+            badge: 'RUSAK',
+            title: 'Kondisi: Terdeteksi Rusak',
+            desc: 'Model Machine Learning mendeteksi adanya kerusakan fisik pada fasilitas pejalan kaki ini.',
+            tone: 'RUSAK',
+            hint: 'Tingkat keyakinan model terhadap indikasi kerusakan fisik fasilitas.'
+        },
+        BAIK: {
+            badge: 'BAIK',
+            title: 'Kondisi: Terdeteksi Baik (Normal)',
+            desc: 'Model Machine Learning mengklasifikasikan fasilitas dalam kondisi baik atau tidak ditemukan kerusakan yang signifikan.',
+            tone: 'BAIK',
+            hint: 'Fasilitas terindikasi dalam kondisi normal. Laporan diteruskan ke petugas untuk verifikasi.'
+        },
+        TERHALANG: {
+            badge: 'TERHALANG',
+            title: 'Kondisi: Terdeteksi Terhalang',
+            desc: 'Model Machine Learning mendeteksi fasilitas terhalang oleh parkir liar, PKL, atau hambatan lainnya.',
+            tone: 'TERHALANG',
+            hint: 'Tingkat keyakinan model terhadap indikasi halangan pada jalur pejalan kaki.'
+        },
+        SPAM: {
+            badge: 'TIDAK RELEVAN',
+            title: 'Kondisi: Bukan Fasilitas / Tidak Relevan',
+            desc: 'Model Machine Learning mengindikasikan foto bukan merupakan fasilitas pejalan kaki yang valid.',
+            tone: 'SPAM',
+            hint: 'Foto perlu diperiksa lebih lanjut secara manual oleh petugas dinas.'
+        }
+    };
 
     function stopPolling() {
         if (pollInterval !== null) clearInterval(pollInterval);
@@ -165,31 +318,37 @@
         const score = hasScore ? Number(data.confidence_score) : null;
         const percent = hasScore ? Math.round(score * 100) : null;
         const history = Array.isArray(data.riwayat) ? data.riwayat : [];
-        // Prefer the latest validation entry; a manual decision must not be labelled AI.
         const validation = [...history].reverse().find(item => ['TERVALIDASI', 'DITOLAK'].includes(item.status));
         const autoValidated = data.status === 'TERVALIDASI' && validation?.status === 'TERVALIDASI' &&
             /tervalidasi otomatis oleh computer vision/i.test(validation.catatan || '');
+
         let title = statusLabels[data.status] || 'Status sedang diperbarui';
         let description = 'Lihat perkembangan laporan melalui halaman Riwayat Laporan.';
         let tone = 'neutral';
         let icon = 'i';
+
         if (processing) {
-            description = 'Foto sedang dianalisis. Status diperiksa otomatis setiap 3 detik.';
+            description = 'Foto sedang dianalisis oleh model Machine Learning. Status diperiksa otomatis setiap 3 detik.';
         } else if (data.status === 'TERVALIDASI') {
-            title = autoValidated ? 'Tervalidasi otomatis oleh AI' : 'Laporan tervalidasi';
-            description = 'Laporan dinyatakan valid. Pantau perkembangan penanganannya di Riwayat Laporan.';
+            title = autoValidated ? 'Tervalidasi Otomatis oleh ML' : 'Laporan Tervalidasi';
+            description = autoValidated
+                ? `Kondisi terdeteksi ${label || 'RUSAK'} dengan keyakinan ${percent}% (≥80%). Laporan langsung disetujui sistem.`
+                : 'Laporan telah diverifikasi valid oleh petugas dinas dan masuk ke antrean perbaikan.';
             tone = 'valid'; icon = '✓';
         } else if (data.status === 'MENUNGGU_VALIDASI_ADMIN') {
             description = label === 'BAIK'
-                ? 'Foto tampak dalam kondisi baik. Petugas akan memeriksa kembali laporanmu.'
+                ? 'Model ML mengklasifikasikan kondisi Baik/Normal. Petugas dinas akan memeriksa kembali laporanmu.'
                 : label === 'SPAM'
-                    ? 'Foto perlu diperiksa lebih lanjut. Petugas akan menentukan hasil verifikasi.'
-                    : 'Laporan sudah diterima. Petugas akan memeriksa hasil analisis sebelum menentukan keputusan.';
+                    ? 'Foto terindikasi tidak relevan. Petugas dinas akan memverifikasi secara langsung.'
+                    : (hasScore && score < 0.8)
+                        ? `Model ML mendeteksi kondisi ${label || 'Rusak'}, namun keyakinan (${percent}%) di bawah 80%. Petugas akan memverifikasi terlebih dahulu.`
+                        : 'Laporan sudah diterima. Petugas dinas akan memeriksa hasil analisis sebelum menentukan keputusan.';
             tone = 'pending'; icon = '…';
         } else if (data.status === 'DITOLAK') {
-            description = data.alasan_penolakan || 'Lihat alasan dan riwayat verifikasi pada detail laporan.';
+            description = data.alasan_penolakan || 'Laporan tidak disetujui petugas. Lihat alasan pada riwayat status.';
             tone = 'rejected'; icon = '×';
         }
+
         const statusCard = el('statusCard');
         const changed = statusCard.dataset.status !== data.status;
         statusCard.dataset.status = data.status;
@@ -201,26 +360,67 @@
         el('resultIcon').hidden = processing;
         el('resultIcon').textContent = icon;
         el('resultCard').hidden = processing;
+
         if (changed && !processing) {
             statusCard.classList.remove('fade-in');
             requestAnimationFrame(() => statusCard.classList.add('fade-in'));
         }
-        el('categoryLabel').textContent = data.status === 'TERVALIDASI' ? 'Kategori terverifikasi' : 'Kategori laporan';
+
+        // Prominent Condition Box (Rusak vs Baik vs Terhalang)
+        const conditionCard = el('conditionCard');
+        if (label && conditionConfig[label]) {
+            const cfg = conditionConfig[label];
+            conditionCard.hidden = false;
+            conditionCard.dataset.condition = cfg.tone;
+            el('conditionBadge').textContent = cfg.badge;
+            el('conditionTitle').textContent = cfg.title;
+            el('conditionDesc').textContent = cfg.desc;
+            el('confidenceHint').textContent = cfg.hint;
+        } else if (data.status === 'TERVALIDASI') {
+            conditionCard.hidden = false;
+            conditionCard.dataset.condition = 'RUSAK';
+            el('conditionBadge').textContent = 'RUSAK';
+            el('conditionTitle').textContent = 'Kondisi: Terverifikasi Rusak';
+            el('conditionDesc').textContent = 'Fasilitas terkonfirmasi mengalami kerusakan dan telah divalidasi sistem.';
+            el('confidenceHint').textContent = 'Laporan terverifikasi valid dan diteruskan ke dinas terkait.';
+        } else {
+            conditionCard.hidden = true;
+        }
+
+        el('categoryLabel').textContent = data.status === 'TERVALIDASI' ? 'Kategori Terverifikasi' : 'Kategori Fasilitas';
         el('categoryValue').textContent = category;
-        el('predictionNote').hidden = !label;
-        el('predictionNote').textContent = label ? `Hasil deteksi AI: ${predictionLabels[label] || label}` : '';
-        // Presentation labels only; these do not change server validation rules.
-        el('confidenceBadge').textContent = !hasScore ? 'Belum tersedia' : score >= 0.8 ? 'Sangat yakin' : score >= 0.6 ? 'Cukup yakin' : 'Keyakinan rendah';
-        el('confidencePercent').textContent = hasScore ? `${percent}%` : '—';
-        el('confidenceTrack').hidden = !hasScore;
-        el('confidenceTrack').setAttribute('aria-valuenow', hasScore ? String(percent) : '0');
-        el('confidenceBar').style.width = hasScore ? `${percent}%` : '0%';
-        el('reportSubtitle').textContent = `Laporan #LAP-${String(data.laporan_id ?? reportId).padStart(4, '0')}`;
+
+        // Confidence Metrics
+        if (hasScore) {
+            let badgeText = 'Keyakinan Rendah';
+            let badgeLevel = 'low';
+            if (score >= 0.8) {
+                badgeText = 'Sangat Yakin (≥80%)';
+                badgeLevel = 'high';
+            } else if (score >= 0.6) {
+                badgeText = 'Cukup Yakin (60%-79%)';
+                badgeLevel = 'mid';
+            }
+            el('confidenceBadge').textContent = badgeText;
+            el('confidenceBadge').dataset.level = badgeLevel;
+            el('confidencePercent').textContent = `${percent}%`;
+            el('confidenceTrack').hidden = false;
+            el('confidenceTrack').setAttribute('aria-valuenow', String(percent));
+            el('confidenceBar').style.width = `${percent}%`;
+        } else {
+            el('confidenceBadge').textContent = 'Belum tersedia';
+            el('confidenceBadge').removeAttribute('data-level');
+            el('confidencePercent').textContent = '—';
+            el('confidenceTrack').hidden = true;
+        }
+
+        el('reportSubtitle').textContent = `Hasil Analisis Otomatis \u2022 Laporan #LAP-${String(data.laporan_id ?? reportId).padStart(4, '0')}`;
         el('detailAddress').textContent = data.lokasi?.alamat || data.lokasi?.nama_jalan || 'Lokasi tidak tersedia';
         el('detailCategory').textContent = category;
         el('detailDate').textContent = formatDate(data.tanggal_lapor);
         el('detailDescription').textContent = data.deskripsi || 'Tidak ada deskripsi.';
         el('reportDetails').hidden = false;
+
         const photo = el('reportPhoto');
         if (data.foto_url) {
             photo.onload = () => { photo.hidden = false; el('photoMessage').hidden = true; };
@@ -229,6 +429,7 @@
         } else {
             photo.removeAttribute('src'); photo.hidden = true; el('photoMessage').hidden = false;
         }
+
         const list = el('timelineList');
         list.replaceChildren();
         if (!history.length) {
@@ -257,7 +458,8 @@
             const response = await fetch(`/api/v1/reports/${reportId}`, {headers, signal: request.signal});
             if (response.status === 401) { stopPolling(); window.location.href = '/login'; return; }
             if (response.status === 403 || response.status === 404) {
-                stopPolling(); el('statusTitle').textContent = 'Laporan tidak tersedia';
+                stopPolling();
+                el('statusTitle').textContent = 'Laporan tidak tersedia';
                 el('statusDescription').textContent = response.status === 403 ? 'Kamu tidak memiliki akses ke laporan ini.' : 'Laporan yang diminta tidak ditemukan.';
                 el('processingIcon').hidden = true;
                 el('resultIcon').hidden = false;
@@ -293,7 +495,6 @@
         if (inFlight) return;
         stopPolling();
         pollCount = 0;
-        // Create the interval before the first request so a fast result can stop it.
         pollInterval = setInterval(() => {
             pollCount++;
             if (pollCount >= MAX_POLLS) {
@@ -305,6 +506,7 @@
         }, POLL_MS);
         fetchReportData();
     }
+
     el('retryButton').addEventListener('click', startPolling);
     window.addEventListener('pagehide', () => {
         leavingPage = true;

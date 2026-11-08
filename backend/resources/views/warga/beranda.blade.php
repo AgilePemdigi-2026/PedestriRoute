@@ -266,7 +266,7 @@
                 <i class="fa-solid fa-radar"></i>
             </span>
             <div>
-                <p class="text-xs font-bold text-sky-950">Analisis AI Berjalan</p>
+                <p class="text-xs font-bold text-sky-950">Analisis ML Berjalan</p>
                 <p id="aiAnalysisCountText" class="text-[11px] text-sky-700">Aduan sedang diproses Computer Vision</p>
             </div>
         </div>

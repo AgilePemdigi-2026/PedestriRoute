@@ -236,6 +236,7 @@ class CvValidationFeatureTest extends TestCase
             ->get("/laporan/{$laporanId}/analisis");
 
         $response->assertStatus(200);
+        $response->assertSee('Hasil Analisis ML');
         $response->assertSee('Hasil Analisis Otomatis');
         $response->assertSee((string) $laporanId);
     }
