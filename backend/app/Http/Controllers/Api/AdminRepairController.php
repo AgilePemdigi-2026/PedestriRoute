@@ -169,7 +169,12 @@ class AdminRepairController extends Controller
                     ]
                 ], 409);
             }
-            throw $e;
+            return response()->json([
+                'error' => [
+                    'code' => 'REPAIR_SAVE_FAILED',
+                    'message' => MessageCatalog::REPAIR_SAVE_FAILED,
+                ]
+            ], 500);
         } catch (Throwable $e) {
             return response()->json([
                 'error' => [

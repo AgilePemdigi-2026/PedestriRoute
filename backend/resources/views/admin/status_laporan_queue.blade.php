@@ -7,30 +7,17 @@
     <!-- Top Header -->
     <div class="flex items-center justify-between mb-4">
         <div>
-            <h1 class="text-base font-extrabold text-slate-900 leading-tight">PedestriRoute</h1>
-            <p class="text-[10px] text-teal-800 font-semibold tracking-wider">ADMIN PORTAL</p>
+            <h1 class="text-base font-extrabold text-slate-900 tracking-tight">Status Perbaikan</h1>
+            <p id="queueSubtitle" class="text-xs text-slate-500 font-medium">Memuat laporan...</p>
         </div>
-        <button id="logoutBtn" class="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-100 hover:bg-rose-100 transition">
-            Keluar
-        </button>
-    </div>
-
-    <!-- Status Perbaikan Banner -->
-    <div class="bg-gradient-to-r from-teal-800 to-brand-600 rounded-2xl p-4 text-white shadow-md mb-4 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-            </div>
-            <div>
-                <h2 class="text-sm font-bold">Status Perbaikan Laporan</h2>
-                <p id="queueSubtitle" class="text-xs text-teal-100">Memuat laporan tervalidasi...</p>
-            </div>
+        <div class="flex items-center gap-2">
+            <span id="queueBadge" class="px-2.5 py-1 bg-teal-50 text-brand-700 text-xs font-extrabold rounded-full border border-teal-100">
+                0
+            </span>
+            <button id="logoutBtn" class="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-100 hover:bg-rose-100 transition">
+                Keluar
+            </button>
         </div>
-        <span id="queueBadge" class="px-2.5 py-1 bg-white text-brand-800 text-xs font-extrabold rounded-full shadow-sm">
-            0
-        </span>
     </div>
 
     <!-- Status Filters -->
@@ -128,41 +115,42 @@
         }
 
         document.getElementById('queueBadge').innerText = filtered.length;
-        document.getElementById('queueSubtitle').innerText = `${filtered.length} Laporan Tervalidasi`;
+        document.getElementById('queueSubtitle').innerText = `${filtered.length} laporan tervalidasi`;
 
         if (filtered.length === 0) {
             container.innerHTML = `
-                <div class="text-center py-12 bg-white rounded-2xl border border-slate-100 p-6">
+                <div class="text-center py-12 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
                     <span class="text-3xl mb-2 block">✨</span>
                     <h3 class="text-sm font-bold text-slate-800">Tidak Ada Laporan</h3>
-                    <p class="text-xs text-slate-500 mt-1">Tidak ada laporan tervalidasi yang sesuai dengan filter ini.</p>
+                    <p class="text-xs text-slate-500 mt-1">Tidak ada laporan dengan status ini.</p>
                 </div>
             `;
             return;
         }
 
         container.innerHTML = filtered.map(r => `
-            <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition">
-                <div class="flex items-center justify-between mb-2">
-                    <div class="flex items-center gap-2">
-                        <span class="font-extrabold text-xs text-slate-800">${r.kode_laporan}</span>
-                        <span class="px-2 py-0.5 bg-teal-50 text-brand-700 rounded-md text-[10px] font-bold">${r.kategori}</span>
+            <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:border-brand-500/40 transition flex flex-col gap-2.5">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-1.5">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold text-brand-700 bg-brand-50 border border-brand-200/60 tracking-tight tabular-nums">${r.kode_laporan}</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium text-slate-600 bg-slate-100">${r.kategori}</span>
                     </div>
                     ${getRepairBadge(r.status_perbaikan)}
                 </div>
 
-                <p class="text-xs font-bold text-slate-700 truncate mb-1">${r.alamat || 'Surabaya'}</p>
-                <p class="text-[11px] text-slate-500 line-clamp-2 mb-3 leading-relaxed">${r.deskripsi}</p>
-
-                <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-[10px] text-slate-400">
-                    <span>Pelapor: <strong class="text-slate-600">${r.pelapor_nama}</strong></span>
-                    <span>Valid: ${formatTime(r.tanggal_validasi)}</span>
+                <div>
+                    <p class="text-xs font-bold text-slate-800 truncate mb-1">${r.alamat || 'Surabaya'}</p>
+                    <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed">${r.deskripsi}</p>
                 </div>
 
-                <div class="mt-3">
+                <div class="flex items-center justify-between pt-2 border-t border-slate-50">
+                    <span class="text-[11px] text-slate-400">Oleh <strong class="text-slate-600 font-medium">${r.pelapor_nama}</strong></span>
                     <a href="/admin/status-laporan/${r.laporan_id}" 
-                       class="w-full block text-center py-2 bg-slate-50 hover:bg-brand-50 hover:text-brand-700 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition">
-                        Kelola Status Perbaikan →
+                       class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm">
+                        <span>Kelola</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
                     </a>
                 </div>
             </div>

@@ -17,7 +17,11 @@ class LoginTest extends TestCase
     {
         parent::setUp();
         // Clean test users
-        Warga::where('email', 'ahmad.fauzi@gmail.com')->delete();
+        $wargaAhmad = Warga::where('email', 'ahmad.fauzi@gmail.com')->first();
+        if ($wargaAhmad) {
+            \Illuminate\Support\Facades\DB::table('laporan')->where('warga_id', $wargaAhmad->warga_id)->delete();
+            $wargaAhmad->delete();
+        }
         Warga::where('email', 'phone.test@gmail.com')->delete();
         Warga::where('no_hp', '6281234567890')->delete();
     }

@@ -31,16 +31,67 @@ CATEGORY_DISPLAY_NAMES = {
     "parkir_liar": "Parkir Liar"
 }
 
-# ONNX Runtime Session
+# ONNX Runtime Sessions
 ort_session = None
+SPECIALIST_SESSIONS = {}
+SPECIALIST_CLASSES = ["BAIK", "RUSAK", "SPAM"]
+
+CATEGORY_SLUG_MAP = {
+    "trotoar rusak": "trotoar",
+    "trotoar": "trotoar",
+    "masalah drainase": "drainase",
+    "drainase": "drainase",
+    "drainase rusak": "drainase",
+    "guiding block rusak": "guiding_block",
+    "guiding block": "guiding_block",
+    "guiding_block": "guiding_block",
+    "parkir liar": "parkir_liar",
+    "parkir liar di trotoar": "parkir_liar",
+    "parkir": "parkir_liar",
+    "penyebrangan rusak": "penyebrangan",
+    "penyebrangan": "penyebrangan",
+    "penyeberangan rusak": "penyebrangan",
+    "penyeberangan": "penyebrangan",
+}
+
+def resolve_category_slug(cat_str: Optional[str]) -> str:
+    if not cat_str:
+        return "trotoar"
+    norm = cat_str.strip().lower()
+    if norm in CATEGORY_SLUG_MAP:
+        return CATEGORY_SLUG_MAP[norm]
+    if "parkir" in norm:
+        return "parkir_liar"
+    if "guiding" in norm or "tunanetra" in norm or "braille" in norm:
+        return "guiding_block"
+    if "drainase" in norm or "saluran" in norm or "got" in norm:
+        return "drainase"
+    if "penyebrang" in norm or "penyeberang" in norm or "zebra" in norm:
+        return "penyebrangan"
+    return "trotoar"
 
 def load_model():
-    global ort_session
-    if not CV_MOCK and os.path.exists(MODEL_PATH):
+    global ort_session, SPECIALIST_SESSIONS
+    SPECIALIST_SESSIONS = {}
+    if not CV_MOCK:
         try:
             import onnxruntime as ort
-            ort_session = ort.InferenceSession(MODEL_PATH, providers=["CPUExecutionProvider"])
-            print(f"Loaded ONNX model from {MODEL_PATH}")
+            models_dir = os.path.dirname(MODEL_PATH)
+            
+            # 1. Load per-category specialist models (384x384)
+            for cat_key in ["trotoar", "drainase", "guiding_block", "parkir_liar", "penyebrangan"]:
+                cat_path = os.path.join(models_dir, f"{cat_key}_classifier.onnx")
+                if os.path.exists(cat_path):
+                    try:
+                        SPECIALIST_SESSIONS[cat_key] = ort.InferenceSession(cat_path, providers=["CPUExecutionProvider"])
+                        print(f"Loaded specialist ONNX model: {cat_key} from {cat_path}")
+                    except Exception as ex:
+                        print(f"Warning: Failed loading specialist {cat_path}: {ex}")
+            
+            # 2. Legacy / fallback monolithic model (if present)
+            if os.path.exists(MODEL_PATH):
+                ort_session = ort.InferenceSession(MODEL_PATH, providers=["CPUExecutionProvider"])
+                print(f"Loaded fallback ONNX model from {MODEL_PATH}")
         except Exception as e:
             print(f"Warning: Failed to load ONNX model ({e}). Will fallback to mock.")
             ort_session = None
@@ -55,7 +106,8 @@ def startup_event():
 def health_check():
     return {
         "status": "ok",
-        "model_ready": ort_session is not None or CV_MOCK,
+        "model_ready": len(SPECIALIST_SESSIONS) > 0 or ort_session is not None or CV_MOCK,
+        "specialists_loaded": list(SPECIALIST_SESSIONS.keys()),
         "mock_mode": CV_MOCK,
         "model_path": MODEL_PATH
     }
@@ -66,14 +118,11 @@ def softmax(x):
 
 def evaluate_image_heuristics(img: Image.Image):
     """Stage 0 Heuristic Spam & Quality Guardrail."""
-    # Convert to grayscale numpy
     gray = np.array(img.convert("L"), dtype=np.float32)
-    # Brightness check
     mean_val = np.mean(gray)
     if mean_val < 25.0:  # Pitch black / underexposed
         return {"label": "SPAM", "confidence": 0.90, "detected_category": None}
     
-    # Simple Laplacian blur check
     gy, gx = np.gradient(gray)
     gnorm = np.sqrt(gx**2 + gy**2)
     var_laplacian = np.var(gnorm)
@@ -91,17 +140,29 @@ DEFECT_CLASSES = {
 }
 
 
+def run_specialist_inference(session, pil_img: Image.Image, imgsz: int = 384) -> np.ndarray:
+    """Preprocess PIL image to 384x384 RGB tensor and run ONNX forward pass."""
+    img_resized = pil_img.resize((imgsz, imgsz), Image.Resampling.BILINEAR)
+    arr = np.array(img_resized, dtype=np.float32) / 255.0
+    arr = np.transpose(arr, (2, 0, 1))
+    input_tensor = np.expand_dims(arr, axis=0)
+    input_name = session.get_inputs()[0].name
+    outputs = session.run(None, {input_name: input_tensor})
+    raw_out = outputs[0][0]
+    if np.isclose(np.sum(raw_out), 1.0, atol=1e-2):
+        return raw_out
+    return softmax(raw_out)
+
+
 def run_onnx_inference(pil_img: Image.Image) -> np.ndarray:
-    """Preprocess PIL image to 224x224 RGB tensor and run ONNX forward pass."""
+    """Preprocess PIL image to 224x224 RGB tensor and run legacy forward pass."""
     img_resized = pil_img.resize((224, 224), Image.Resampling.BILINEAR)
-    arr = np.array(img_resized, dtype=np.float32) / 255.0  # (224, 224, 3)
-    arr = np.transpose(arr, (2, 0, 1))  # (3, 224, 224)
-    input_tensor = np.expand_dims(arr, axis=0)  # (1, 3, 224, 224)
-    
+    arr = np.array(img_resized, dtype=np.float32) / 255.0
+    arr = np.transpose(arr, (2, 0, 1))
+    input_tensor = np.expand_dims(arr, axis=0)
     input_name = ort_session.get_inputs()[0].name
     outputs = ort_session.run(None, {input_name: input_tensor})
-    raw_out = outputs[0][0]  # shape (num_classes,)
-    
+    raw_out = outputs[0][0]
     if np.isclose(np.sum(raw_out), 1.0, atol=1e-2):
         return raw_out
     return softmax(raw_out)
@@ -116,10 +177,8 @@ async def analyze_image(
     contents = await file.read()
     
     # 1. Mock Mode (for CI/CD and testing)
-    if CV_MOCK or ort_session is None:
+    if CV_MOCK or (ort_session is None and len(SPECIALIST_SESSIONS) == 0):
         fn_lower = filename.lower()
-        
-        # Check if confidence encoded in filename (e.g. rusak_095.jpg -> 0.95)
         conf_match = re.search(r'_(\d{2,3})', fn_lower)
         conf = float(conf_match.group(1)) / 100.0 if conf_match else 0.88
         
@@ -128,35 +187,30 @@ async def analyze_image(
                 "label": "SPAM",
                 "confidence": conf if conf_match else 0.95,
                 "detected_category": None,
-                "probabilities": {"spam_non_infrastructure": conf}
+                "probabilities": {"spam": conf}
             }
         elif "baik" in fn_lower or "clean" in fn_lower:
             return {
                 "label": "BAIK",
                 "confidence": conf if conf_match else 0.85,
                 "detected_category": None,
-                "probabilities": {"normal_baik": conf}
+                "probabilities": {"baik": conf}
             }
         else:
-            # Default to RUSAK
-            cat = "Trotoar Rusak"
-            if "drainase" in fn_lower or "manhole" in fn_lower:
-                cat = "Masalah Drainase"
-            elif "guiding" in fn_lower or "tactile" in fn_lower:
-                cat = "Guiding Block Rusak"
-            elif "crosswalk" in fn_lower or "penyebrangan" in fn_lower:
-                cat = "Penyebrangan Rusak"
-            elif "parkir" in fn_lower or "parking" in fn_lower:
-                cat = "Parkir Liar"
-                
+            cat = category or "Trotoar Rusak"
+            slug = resolve_category_slug(cat)
+            lbl = "TERHALANG" if slug == "parkir_liar" else "RUSAK"
             return {
-                "label": "RUSAK",
+                "label": lbl,
                 "confidence": conf,
                 "detected_category": cat,
-                "probabilities": {"trotoar_rusak": conf}
+                "probabilities": {
+                    "rusak": conf,
+                    ("terhalang" if slug == "parkir_liar" else "rusak"): conf
+                }
             }
 
-    # 2. Production ONNX Inference Mode
+    # 2. Production Inference Mode
     try:
         img = Image.open(io.BytesIO(contents)).convert("RGB")
     except Exception as e:
@@ -167,70 +221,101 @@ async def analyze_image(
     if guard:
         return guard
 
-    # Stage 1: Multi-Crop Spatial Pooling & Defect Priority
-    # Pedestrian defects (cracks, potholes, broken drain covers, missing tiles)
-    # always reside on the ground/lower plane (45°-70° downward smartphone angle),
-    # while wide-angle photos often have 50-70% background (sky, trees, street).
-    w, h = img.size
-    full_probs = run_onnx_inference(img)
+    # Check if a specialized model is available for this category
+    target_slug = resolve_category_slug(category)
+    specialist = SPECIALIST_SESSIONS.get(target_slug)
 
-    tiles = []
-    if h >= 150 and w >= 150:
-        # Ground plane (bottom half)
-        tiles.append(('bottom_half', img.crop((0, int(h * 0.45), w, h))))
-        # Ground plane corner & center tiles
-        gw = int(w * 0.5)
-        gh = int(h * 0.5)
-        tiles.append(('lower_left', img.crop((0, h - gh, gw, h))))
-        tiles.append(('lower_center', img.crop((int(w * 0.25), h - gh, int(w * 0.75), h))))
-        tiles.append(('lower_right', img.crop((w - gw, h - gh, w, h))))
-        # Mid-level center & right (perspective angle)
-        tiles.append(('mid_right', img.crop((int(w * 0.5), int(h * 0.25), w, int(h * 0.75)))))
-        tiles.append(('mid_center', img.crop((int(w * 0.25), int(h * 0.25), int(w * 0.75), int(h * 0.75)))))
+    if specialist is not None:
+        # High-Resolution Specialist Inference (384x384)
+        w, h = img.size
+        full_probs = run_specialist_inference(specialist, img, imgsz=384)
 
-    tile_defects = []
-    for name, tile in tiles:
-        t_probs = run_onnx_inference(tile)
-        t_top_idx = int(np.argmax(t_probs))
-        t_top_class = CLASS_NAMES[t_top_idx] if t_top_idx < len(CLASS_NAMES) else "0_normal_baik"
-        t_top_conf = float(t_probs[t_top_idx])
-        if t_top_class in DEFECT_CLASSES and t_top_conf >= 0.70:
-            tile_defects.append((name, t_top_class, t_top_conf, t_probs))
+        tiles = []
+        # Spatial Sub-tiling rules:
+        # - trotoar & drainase: micro-scale surface defects (cracks, missing grates) -> full tiles
+        # - guiding_block: linear feature down path centerline -> bottom_half & lower_center only (margins excluded)
+        # - parkir_liar: macro-scale relational condition (vehicles ON walkway vs road).
+        #   Corner crops isolate cars on the road from the sidewalk, destroying spatial relationship.
+        #   Therefore, parkir_liar operates on full-scene perspective.
+        if target_slug not in ("parkir_liar",):
+            if h >= 180 and w >= 180:
+                tiles.append(('bottom_half', img.crop((0, int(h * 0.45), w, h))))
+                gw = int(w * 0.5)
+                gh = int(h * 0.5)
+                if target_slug not in ("guiding_block", "penyebrangan", "drainase"):
+                    tiles.append(('lower_left', img.crop((0, h - gh, gw, h))))
+                    tiles.append(('lower_right', img.crop((w - gw, h - gh, w, h))))
+                tiles.append(('lower_center', img.crop((int(w * 0.25), h - gh, int(w * 0.75), h))))
 
-    if tile_defects:
-        tile_defects.sort(key=lambda x: x[2], reverse=True)
-        winner_name, raw_top_class, top_confidence, probs = tile_defects[0]
-    else:
+        # Classes: ['BAIK', 'RUSAK', 'SPAM']
+        rusak_idx = SPECIALIST_CLASSES.index("RUSAK")
+        baik_idx = SPECIALIST_CLASSES.index("BAIK")
+        best_rusak_conf = float(full_probs[rusak_idx])
+        winning_probs = full_probs
+
+        # When the overall scene perspective is clearly intact (BAIK >= 0.85),
+        # require a strong defect confirmation (>= 0.88) to prevent localized corner shadows
+        # or side-curb grime from falsely overriding an intact facility.
+        override_threshold = 0.88 if float(full_probs[baik_idx]) >= 0.85 else 0.70
+
+        for name, tile in tiles:
+            t_probs = run_specialist_inference(specialist, tile, imgsz=384)
+            t_rusak_conf = float(t_probs[rusak_idx])
+            if t_rusak_conf > best_rusak_conf and t_rusak_conf >= override_threshold:
+                best_rusak_conf = t_rusak_conf
+                winning_probs = t_probs
+
+        top_idx = int(np.argmax(winning_probs))
+        top_label = SPECIALIST_CLASSES[top_idx]
+        top_conf = float(round(winning_probs[top_idx], 4))
+
+        prob_dict = {
+            c.lower(): float(round(winning_probs[i], 4))
+            for i, c in enumerate(SPECIALIST_CLASSES)
+        }
+
+        # For Parkir Liar, translate defect label 'RUSAK' to 'TERHALANG'
+        # to accurately denote an obstructed path rather than physical damage
+        if target_slug == "parkir_liar":
+            prob_dict["terhalang"] = prob_dict.get("rusak", 0.0)
+            if top_label == "RUSAK":
+                top_label = "TERHALANG"
+
+        detected_category = (category or "Trotoar Rusak") if top_label in ("RUSAK", "TERHALANG") else None
+
+        return {
+            "label": top_label,
+            "confidence": top_conf,
+            "detected_category": detected_category,
+            "probabilities": prob_dict
+        }
+
+    # Fallback to Legacy Monolithic Model if specialist not yet loaded
+    if ort_session is not None:
+        w, h = img.size
+        full_probs = run_onnx_inference(img)
         top_idx = int(np.argmax(full_probs))
         raw_top_class = CLASS_NAMES[top_idx] if top_idx < len(CLASS_NAMES) else "0_normal_baik"
         top_confidence = float(round(full_probs[top_idx], 4))
-        probs = full_probs
+        top_class = re.sub(r'^\d+_', '', raw_top_class)
 
-    prob_dict = {}
-    for idx, name in enumerate(CLASS_NAMES):
-        if idx < len(probs):
-            clean_name = re.sub(r'^\d+_', '', name)
-            prob_dict[clean_name] = float(round(probs[idx], 4))
-
-    top_class = re.sub(r'^\d+_', '', raw_top_class)
-
-    # Decision mapping
-    if top_class == "spam_non_infrastructure":
-        label = "SPAM"
-        detected_category = None
-    elif top_class == "normal_baik":
-        label = "BAIK"
-        detected_category = None
-    else:
-        label = "RUSAK"
-        if category and category.strip():
-            detected_category = category.strip()
+        if top_class == "spam_non_infrastructure":
+            label = "SPAM"
+            detected_category = None
+        elif top_class == "normal_baik":
+            label = "BAIK"
+            detected_category = None
         else:
-            detected_category = CATEGORY_DISPLAY_NAMES.get(top_class, "Trotoar Rusak")
+            label = "RUSAK"
+            detected_category = category or "Trotoar Rusak"
 
-    return {
-        "label": label,
-        "confidence": top_confidence,
-        "detected_category": detected_category,
-        "probabilities": prob_dict
-    }
+        prob_dict = {re.sub(r'^\d+_', '', name): float(round(full_probs[i], 4)) for i, name in enumerate(CLASS_NAMES) if i < len(full_probs)}
+
+        return {
+            "label": label,
+            "confidence": top_confidence,
+            "detected_category": detected_category,
+            "probabilities": prob_dict
+        }
+
+    raise HTTPException(status_code=503, detail="No active CV model loaded")

@@ -95,7 +95,7 @@
                 <!-- Top HUD Badge -->
                 <div class="absolute top-3 left-3 z-20 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10 text-white text-[10px] font-bold">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                    <span id="hudModelText">YOLOv8n-cls · 7 Classes</span>
+                    <span id="hudModelText">YOLOv8s-cls · Spesialis {{ $laporan->kategori->nama_kategori ?? 'Infrastruktur' }} (384x384)</span>
                 </div>
 
                 <!-- Bottom Photo Overlay Status -->
@@ -315,7 +315,7 @@
         const evalSteps = [
             { at: 15, text: "Memeriksa resolusi & kualitas citra..." },
             { at: 35, text: "Menjalankan filter kualitas & anti-spam (Stage 0)..." },
-            { at: 60, text: "Klasifikasi fitur cacat model YOLOv8 (7 kelas)..." },
+            { at: 60, text: "Klasifikasi fitur cacat model spesialis (384x384)..." },
             { at: 82, text: "Mengevaluasi tingkat keyakinan (threshold 80%)..." },
             { at: 90, text: "Sinkronisasi validasi & pembaruan indeks WSM..." },
         ];
@@ -528,8 +528,8 @@
                             </div>
                         ` : ''}
                         <div class="p-3 bg-white/80 backdrop-blur-sm rounded-xl border border-emerald-100 text-xs text-emerald-900 leading-relaxed space-y-1">
-                            <p><strong>Dampak Langsung:</strong> Kerusakan fasilitas pada segmen ini telah dikonfirmasi dan <em>Indeks Kelayakan Jalur (WSM)</em> telah otomatis diperbarui pada Heatmap Kota.</p>
-                            <p class="text-[11px] text-emerald-700 pt-0.5">Petugas Dinas Perhubungan menerima laporan ini dalam antrean pengerjaan perbaikan.</p>
+                            <p><strong>Dampak Langsung:</strong> ${label === 'TERHALANG' ? 'Jalur pejalan kaki terkonfirmasi terhalang kendaraan' : 'Kerusakan fasilitas pada segmen ini telah dikonfirmasi'} dan <em>Indeks Kelayakan Jalur (WSM)</em> telah otomatis diperbarui pada Heatmap Kota.</p>
+                            <p class="text-[11px] text-emerald-700 pt-0.5">Petugas Dinas Perhubungan menerima laporan ini dalam antrean penertiban/perbaikan.</p>
                         </div>
                     `;
                 } else if (data.status === 'MENUNGGU_VALIDASI_ADMIN') {

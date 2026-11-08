@@ -22,7 +22,7 @@ def step_report_exists_tervalidasi_no_repair(context):
         'latitude' => -7.2660,
         'longitude' => 112.7950,
         'geom' => Illuminate\\Support\\Facades\\DB::raw("ST_SetSRID(ST_Point(112.7950, -7.2660), 4326)"),
-        'alamat' => 'Jl. Rusak ' . $unique,
+        'alamat' => 'Jl. Rusak 1',
         'segmen_id' => $segId,
     ], 'lokasi_id');
 
@@ -155,3 +155,50 @@ def step_try_set_repair_status(context):
     headers = {"Authorization": f"Bearer {context.admin_token}"}
     payload = {"status_perbaikan": "SEDANG_DIPERBAIKI"}
     context.response = requests.patch(url, json=payload, headers=headers, timeout=10)
+
+
+@then('the Warga should have a notification "{message}"')
+def step_warga_notification_literal(context, message):
+    warga_id = context.current_report_warga_id
+    php = f"""
+    $notif = App\\Models\\Notifikasi::where('penerima_id', {warga_id})
+        ->where('penerima_tipe', 'WARGA')
+        ->latest('tanggal_kirim')
+        ->first();
+    echo $notif ? $notif->pesan : 'NO_NOTIF';
+    """
+    msg = context.run_tinker(php).strip()
+    assert msg != 'NO_NOTIF', f"No notification found in database for warga {warga_id}"
+    assert message in msg, f"Expected '{message}' in notification '{msg}'"
+
+
+@given('the database write fails')
+def step_database_write_fails(context):
+    php = """
+    DB::unprepared("
+        CREATE OR REPLACE FUNCTION trigger_fail_write() RETURNS trigger AS '
+        BEGIN
+            RAISE EXCEPTION ''Simulated DB failure'';
+        END;
+        ' LANGUAGE plpgsql;
+        CREATE OR REPLACE TRIGGER fail_riwayat_write BEFORE INSERT ON riwayat_status_laporan
+        FOR EACH ROW EXECUTE FUNCTION trigger_fail_write();
+    ");
+    """
+    context.run_tinker(php)
+    context.db_trigger_installed = True
+
+
+@when('I press "Simpan" with a valid status')
+def step_press_save_with_valid_status(context):
+    try:
+        url = f"{context.api_url}/admin/reports/{context.f9_report_id}/repair-status"
+        headers = {"Authorization": f"Bearer {context.admin_token}"}
+        payload = {"status_perbaikan": "SEDANG_DIPERBAIKI"}
+        context.response = requests.patch(url, json=payload, headers=headers, timeout=10)
+    finally:
+        if getattr(context, 'db_trigger_installed', False):
+            php = "DB::unprepared('DROP TRIGGER IF EXISTS fail_riwayat_write ON riwayat_status_laporan; DROP FUNCTION IF EXISTS trigger_fail_write();');"
+            context.run_tinker(php)
+            context.db_trigger_installed = False
+

@@ -33,7 +33,7 @@ Feature: Melihat Peta Heatmap Kelayakan
     Then the heatmap should be shown again
 
   Scenario: Zoom rendah hanya menampilkan segmen bermasalah
-    Given the viewport contains segments and some have a score below 100
+    Given the viewport contains 20000 segments and 12 of them have a score below 100
     When the client requests the heatmap with a zoom below CFG_HEATMAP_MIN_ZOOM
-    Then the response should contain only segments with score below 100
+    Then the response should contain only those 12 segments
     And "meta.counts" should still count all segments in the viewport

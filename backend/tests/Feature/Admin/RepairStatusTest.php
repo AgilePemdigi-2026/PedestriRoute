@@ -10,8 +10,10 @@ use App\Models\SegmenJalur;
 use App\Models\Warga;
 use App\Support\MessageCatalog;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class RepairStatusTest extends TestCase
@@ -260,5 +262,66 @@ class RepairStatusTest extends TestCase
         foreach ($data as $item) {
             $this->assertEquals('SEDANG_DIPERBAIKI', $item['status_perbaikan']);
         }
+    }
+
+    public function test_admin_can_upload_repair_photo_when_marking_sedang_diperbaiki(): void
+    {
+        Storage::fake('public');
+
+        $fakePhoto = UploadedFile::fake()->image('pengerjaan_lapangan.jpg', 640, 480);
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->adminToken)
+            ->post("/api/v1/admin/reports/{$this->laporanId}/repair-status", [
+                'status_perbaikan' => 'SEDANG_DIPERBAIKI',
+                'catatan' => 'Petugas satgas sedang memasang barikade dan membongkar paving rusak',
+                'foto_perbaikan' => $fakePhoto,
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'message' => MessageCatalog::REPAIR_STATUS_SAVED,
+                'data' => [
+                    'laporan_id' => $this->laporanId,
+                    'status_perbaikan' => 'SEDANG_DIPERBAIKI',
+                    'catatan_perbaikan' => 'Petugas satgas sedang memasang barikade dan membongkar paving rusak',
+                ],
+            ]);
+
+        $data = $response->json('data');
+        $this->assertNotEmpty($data['foto_perbaikan_url']);
+
+        // Check report in database has foto_perbaikan stored
+        $report = Laporan::find($this->laporanId);
+        $this->assertNotNull($report->foto_perbaikan);
+        Storage::disk('public')->assertExists($report->foto_perbaikan);
+
+        // Verify signed URL allows fetching the repair photo
+        $photoStreamResponse = $this->get($data['foto_perbaikan_url']);
+        $photoStreamResponse->assertStatus(200);
+    }
+
+    public function test_heatmap_points_include_foto_perbaikan_url_for_sedang_diperbaiki(): void
+    {
+        Storage::fake('public');
+
+        $filePath = 'reports/test_progress_' . uniqid() . '.jpg';
+        Storage::disk('public')->put($filePath, 'fake image content');
+
+        DB::table('laporan')->where('laporan_id', $this->laporanId)->update([
+            'status_perbaikan' => 'SEDANG_DIPERBAIKI',
+            'catatan_perbaikan' => 'Penanganan fisik sedang berlangsung',
+            'foto_perbaikan' => $filePath,
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->wargaToken)
+            ->getJson('/api/v1/heatmap?min_lon=112.75&min_lat=-7.30&max_lon=112.85&max_lat=-7.24&zoom=15');
+
+        $response->assertStatus(200);
+        $reports = $response->json('reports');
+        $matched = collect($reports)->firstWhere('laporan_id', $this->laporanId);
+
+        $this->assertNotNull($matched);
+        $this->assertEquals('SEDANG_DIPERBAIKI', $matched['status_perbaikan']);
+        $this->assertNotEmpty($matched['foto_perbaikan_url']);
     }
 }

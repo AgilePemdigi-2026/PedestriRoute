@@ -94,8 +94,8 @@ class ProcessReportCv implements ShouldQueue
                 return;
             }
 
-            // FR-F4-03: label == RUSAK and confidence >= threshold -> Auto-Validated
-            if ($label === 'RUSAK' && $confidence >= $threshold) {
+            // FR-F4-03: defect detected (RUSAK or TERHALANG) and confidence >= threshold -> Auto-Validated
+            if (in_array($label, ['RUSAK', 'TERHALANG'], true) && $confidence >= $threshold) {
                 $locked->status = 'TERVALIDASI';
                 $locked->cv_label = $label;
                 $locked->confidence_score = $confidence;
@@ -108,7 +108,7 @@ class ProcessReportCv implements ShouldQueue
                     'jenis' => 'VALIDASI',
                     'status' => 'TERVALIDASI',
                     'admin_id' => null,
-                    'catatan' => "Tervalidasi otomatis oleh Computer Vision: {$reportedCategory} (Confidence: {$confPct}%)",
+                    'catatan' => "Tervalidasi otomatis oleh Computer Vision: {$reportedCategory} [{$label}] (Confidence: {$confPct}%)",
                     'waktu' => now(),
                 ]);
 

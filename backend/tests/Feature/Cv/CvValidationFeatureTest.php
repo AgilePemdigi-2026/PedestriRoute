@@ -206,6 +206,28 @@ class CvValidationFeatureTest extends TestCase
         $this->assertEquals('TERVALIDASI', $laporan->status);
     }
 
+    public function test_cv_job_auto_validates_terhalang_report_for_parkir_liar(): void
+    {
+        $laporanId = $this->createReportWithPhoto('DIPROSES', 5);
+
+        $mockCv = Mockery::mock(CvService::class);
+        $mockCv->shouldReceive('isCategorySupported')->andReturn(true);
+        $mockCv->shouldReceive('getThreshold')->andReturn(0.80);
+        $mockCv->shouldReceive('analyze')->once()->andReturn([
+            'label' => 'TERHALANG',
+            'confidence' => 0.94,
+            'detected_category' => 'Parkir Liar',
+        ]);
+        $this->app->instance(CvService::class, $mockCv);
+
+        ProcessReportCv::dispatchSync($laporanId);
+
+        $laporan = Laporan::find($laporanId);
+        $this->assertEquals('TERVALIDASI', $laporan->status);
+        $this->assertEquals('TERHALANG', $laporan->cv_label);
+        $this->assertEquals(0.94, (float) $laporan->confidence_score);
+    }
+
     public function test_citizen_can_view_analysis_page(): void
     {
         $laporanId = $this->createReportWithPhoto('DIPROSES', 1);

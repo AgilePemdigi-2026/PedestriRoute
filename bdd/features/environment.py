@@ -114,7 +114,13 @@ def before_scenario(context, scenario):
 
 
 def after_scenario(context, scenario):
-    pass
+    if getattr(context, 'db_trigger_installed', False):
+        try:
+            php = "DB::unprepared('DROP TRIGGER IF EXISTS fail_riwayat_write ON riwayat_status_laporan; DROP FUNCTION IF EXISTS trigger_fail_write();');"
+            context.run_tinker(php)
+            context.db_trigger_installed = False
+        except Exception:
+            pass
 
 
 def after_all(context):

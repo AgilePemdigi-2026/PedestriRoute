@@ -7,32 +7,19 @@
     <!-- Top Header -->
     <div class="flex items-center justify-between mb-4">
         <div>
-            <h1 class="text-base font-extrabold text-slate-900 leading-tight">PedestriRoute</h1>
-            <p class="text-[10px] text-teal-800 font-semibold tracking-wider">ADMIN PORTAL</p>
+            <h1 class="text-base font-extrabold text-slate-900 tracking-tight">Ringkasan Statistik</h1>
+            <p class="text-xs text-slate-500 font-medium">Kecamatan Mulyorejo, Surabaya</p>
         </div>
-        <button id="logoutBtn" class="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-100 hover:bg-rose-100 transition">
-            Keluar
-        </button>
-    </div>
-
-    <!-- Statistik Banner -->
-    <div class="bg-gradient-to-r from-teal-800 to-brand-600 rounded-2xl p-4 text-white shadow-md mb-4 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        <div class="flex items-center gap-2">
+            <button type="button" id="btnRefresh" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl transition text-slate-600" title="Segarkan Data">
+                <svg id="refreshIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-            </div>
-            <div>
-                <h2 class="text-sm font-bold">Ringkasan Statistik</h2>
-                <p class="text-[11px] text-teal-100">Kecamatan Mulyorejo, Surabaya</p>
-            </div>
+            </button>
+            <button id="logoutBtn" class="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-100 hover:bg-rose-100 transition">
+                Keluar
+            </button>
         </div>
-        <button type="button" id="btnRefresh" class="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition text-white" title="Segarkan Data">
-            <svg id="refreshIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-        </button>
     </div>
 
     <!-- Loading Skeleton -->
@@ -119,8 +106,8 @@
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-xs font-bold text-slate-900">Distribusi Kategori Masalah</h3>
-                        <p class="text-[10px] text-slate-400">Klasifikasi aduan pejalan kaki</p>
+                        <h3 class="text-xs font-bold text-slate-900">Distribusi Kategori</h3>
+                        <p class="text-[10px] text-slate-400">Kategori aduan masuk</p>
                     </div>
                 </div>
             </div>
@@ -140,8 +127,8 @@
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-xs font-bold text-slate-900">Segmen Jalur Pejalan Kaki</h3>
-                        <p class="text-[10px] text-slate-400">Skor Kelayakan Weighted Sum Model (WSM)</p>
+                        <h3 class="text-xs font-bold text-slate-900">Kondisi Segmen Jalur</h3>
+                        <p class="text-[10px] text-slate-400">Skor kelayakan fasilitas trotoar</p>
                     </div>
                 </div>
                 <div class="text-right">

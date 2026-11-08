@@ -92,7 +92,7 @@
                             </span>
                         </div>
                         <p class="text-xs font-semibold">
-                            Hasil Prediksi: <span class="font-bold">${esc(d.cv_label === 'BAIK' ? 'BAIK (Kondisi Normal)' : (d.cv_label === 'SPAM' ? 'SPAM (Non-Fasilitas)' : 'RUSAK (Cacat Fisik)'))}</span>
+                            Hasil Prediksi: <span class="font-bold">${esc(d.cv_label === 'BAIK' ? 'BAIK (Kondisi Normal)' : (d.cv_label === 'SPAM' ? 'SPAM (Non-Fasilitas)' : (d.cv_label === 'TERHALANG' ? 'TERHALANG (Parkir Liar)' : 'RUSAK (Cacat Fisik)')))}</span>
                         </p>
                         ${d.cv_label === 'BAIK' ? `
                             <p class="text-[11px] text-amber-800 pt-0.5">ℹ️ Fasilitas terdeteksi dalam kondisi baik/tidak rusak. Menunggu tinjauan kepastian admin.</p>

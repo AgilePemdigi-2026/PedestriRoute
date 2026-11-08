@@ -21,8 +21,12 @@ __pycache__/
 graphify-out/
 computer vision planning/
 Datasets/
+datasets_per_category/
 pedestriroute_classification_data/
 runs/
 *.pt
+*.cache
 /pedestriroute_classifier.onnx
+.agents/
+skills-lock.json
 

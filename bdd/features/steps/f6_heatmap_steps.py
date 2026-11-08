@@ -242,6 +242,7 @@ def step_heatmap_shown_again(context):
     assert len(context.heatmap_data.get('features', [])) > 0
 
 
+@given('the viewport contains 20000 segments and 12 of them have a score below 100')
 @given('the viewport contains segments and some have a score below 100')
 def step_viewport_contains_segments_some_below_100(context):
     # Ensure there is at least one segment with score < 100
@@ -283,6 +284,7 @@ def step_request_heatmap_low_zoom(context):
     context.low_zoom_data = context.response.json()
 
 
+@then('the response should contain only those 12 segments')
 @then('the response should contain only segments with score below 100')
 def step_response_contains_only_score_below_100(context):
     features = context.low_zoom_data.get('features', [])
