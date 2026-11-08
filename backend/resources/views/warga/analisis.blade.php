@@ -27,117 +27,94 @@
         a { color: inherit; text-decoration: none; }
         button { font: inherit; cursor: pointer; }
         .app { width: 100%; max-width: 448px; min-height: 100vh; margin: 0 auto; background: #fff; box-shadow: 0 4px 32px #0f172a08; }
-        header { display: flex; gap: 12px; align-items: center; padding: 20px; border-bottom: 1px solid #f1f5f9; }
-        .back { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; border-radius: 12px; background: #f1f5f9; color: #475569; font-weight: bold; }
+        header { display: flex; gap: 12px; align-items: center; padding: 18px 20px; border-bottom: 1px solid #f1f5f9; }
+        .back { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; flex-shrink: 0; border-radius: 8px; background: transparent; color: #334155; transition: color 0.15s ease, background-color 0.15s ease; text-decoration: none; }
+        .back:hover { color: #0f172a; background: #f1f5f9; }
         header div { min-width: 0; }
-        h1 { margin: 0; font-size: 16px; font-weight: 800; line-height: 1.4; }
-        .subtitle { color: #64748b; font-size: 12px; margin: 3px 0 0; overflow-wrap: anywhere; }
+        h1 { margin: 0; font-size: 16px; font-weight: 800; line-height: 1.4; color: #0f172a; }
+        .subtitle { color: #64748b; font-size: 12px; margin: 2px 0 0; overflow-wrap: anywhere; }
         main { display: grid; gap: 16px; padding: 20px 20px max(28px, env(safe-area-inset-bottom)); }
-        .state { border: 1px solid #ccebe7; border-radius: 14px; padding: 12px 16px; background: #f0faf8; }
-        .state[data-tone="pending"] { background: #fffbeb; border-color: #fde68a; }
-        .state[data-tone="rejected"] { background: #fff1f2; border-color: #fecdd3; }
-        .state[data-tone="neutral"] { background: #f8fafc; border-color: #e2e8f0; }
-        .eyebrow { color: #64748b; text-transform: uppercase; letter-spacing: .08em; font-size: 9px; font-weight: 800; margin: 0; }
+        
+        /* Status Card - Uniform & Clean */
+        .state { border: 1px solid #e2e8f0; border-radius: 16px; padding: 14px 18px; background: #ffffff; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03); }
+        .eyebrow { color: #64748b; text-transform: uppercase; letter-spacing: .06em; font-size: 10px; font-weight: 700; margin: 0; }
         .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #00625730; border-top-color: var(--teal); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        h2, #statusTitle { font-size: 13.5px; line-height: 1.35; margin: 4px 0 0; overflow-wrap: anywhere; font-weight: 700; color: #0f172a; }
-        .state[data-tone="pending"] #statusTitle { color: #92400e; }
-        .state[data-tone="rejected"] #statusTitle { color: #be123c; }
-        #statusDescription { margin: 4px 0 0; color: #475569; font-size: 11.5px; line-height: 1.4; }
+        h2, #statusTitle { font-size: 14px; line-height: 1.35; margin: 4px 0 0; overflow-wrap: anywhere; font-weight: 700; color: #0f172a; }
+        #statusDescription { margin: 4px 0 0; color: #64748b; font-size: 12px; line-height: 1.5; }
         .fade-in { animation: appear .25s ease-out; }
         @keyframes appear { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-        .result { border: 1px solid #e2e8f0; border-radius: 18px; padding: 18px; min-width: 0; background: #ffffff; }
+        .result { border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px; min-width: 0; background: #ffffff; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03); }
 
-        /* Prominent Condition Card (Rusak / Baik / Terhalang) */
+        /* Condition Card - Clean & Uniform with Subtle Badges */
         .condition-card {
-            border-radius: 16px;
-            padding: 16px;
+            border-radius: 14px;
+            padding: 14px 16px;
             margin-bottom: 16px;
             border: 1px solid #e2e8f0;
             background: #f8fafc;
-        }
-        .condition-card[data-condition="RUSAK"] {
-            background: var(--rose-bg);
-            border-color: var(--rose-border);
-            color: var(--rose-text);
-        }
-        .condition-card[data-condition="BAIK"] {
-            background: var(--emerald-bg);
-            border-color: var(--emerald-border);
-            color: var(--emerald-text);
-        }
-        .condition-card[data-condition="TERHALANG"] {
-            background: var(--amber-bg);
-            border-color: var(--amber-border);
-            color: var(--amber-text);
-        }
-        .condition-card[data-condition="SPAM"] {
-            background: #f1f5f9;
-            border-color: #cbd5e1;
-            color: #334155;
+            color: #0f172a;
         }
         .condition-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 8px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         .condition-badge {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
+            padding: 3px 9px;
             border-radius: 999px;
-            font-size: 11px;
-            font-weight: 800;
+            font-size: 10.5px;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: .05em;
+            letter-spacing: .04em;
         }
         .condition-card[data-condition="RUSAK"] .condition-badge {
-            background: #ffe4e6;
-            color: #be123c;
-            border: 1px solid #fecdd3;
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
         }
         .condition-card[data-condition="BAIK"] .condition-badge {
-            background: #d1fae5;
-            color: #047857;
-            border: 1px solid #a7f3d0;
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #bbf7d0;
         }
         .condition-card[data-condition="TERHALANG"] .condition-badge {
-            background: #fef3c7;
-            color: #b45309;
-            border: 1px solid #fde68a;
+            background: #fffbeb;
+            color: #92400e;
+            border: 1px solid #fef08a;
         }
         .condition-card[data-condition="SPAM"] .condition-badge {
-            background: #e2e8f0;
+            background: #f1f5f9;
             color: #475569;
-            border: 1px solid #cbd5e1;
+            border: 1px solid #e2e8f0;
         }
         .condition-title {
             margin: 0;
-            font-size: 17px;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.4;
         }
         .condition-desc {
-            margin: 6px 0 0;
+            margin: 4px 0 0;
             font-size: 12px;
             line-height: 1.5;
-            opacity: 0.95;
+            color: #64748b;
         }
 
-        .label { display: block; color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
-        .value { font-size: 14px; font-weight: 800; overflow-wrap: anywhere; color: #0f172a; }
+        .label { display: block; color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+        .value { font-size: 14px; font-weight: 700; overflow-wrap: anywhere; color: #0f172a; }
         .metric { margin-top: 16px; padding-top: 16px; border-top: 1px solid #f1f5f9; }
         .metric-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-        .badge { display: inline-block; color: var(--teal); background: #e6f5f3; border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 700; }
-        .badge[data-level="high"] { background: #d1fae5; color: #047857; border: 1px solid #a7f3d0; }
-        .badge[data-level="mid"] { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
-        .badge[data-level="low"] { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
-        .percent { font-size: 22px; font-weight: 800; color: var(--teal); }
+        .badge { display: inline-block; color: #475569; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 999px; padding: 3px 9px; font-size: 11px; font-weight: 700; }
+        .badge[data-level="high"] { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .badge[data-level="mid"] { background: #fffbeb; color: #92400e; border: 1px solid #fef08a; }
+        .badge[data-level="low"] { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+        .percent { font-size: 20px; font-weight: 800; color: #0f172a; }
         .track { height: 8px; border-radius: 99px; background: #edf2f7; overflow: hidden; margin-top: 10px; }
         .fill { width: 0; height: 100%; background: #008775; border-radius: inherit; transition: width .3s ease; }
         .hint { margin: 8px 0 0; color: #64748b; font-size: 11px; line-height: 1.4; }
@@ -166,7 +143,11 @@
 <body>
 <div class="app">
     <header>
-        <a class="back" href="/riwayat-laporan" aria-label="Kembali ke riwayat laporan">←</a>
+        <a class="back" href="/riwayat-laporan" aria-label="Kembali ke riwayat laporan">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
         <div>
             <h1>Hasil Analisis ML</h1>
             <p id="reportSubtitle" class="subtitle">Hasil Analisis Otomatis &bull; Laporan #LAP-{{ $id }}</p>
