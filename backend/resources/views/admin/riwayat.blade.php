@@ -71,7 +71,13 @@
     });
 
     let allReports = [];
-    let activeFilter = 'TERVALIDASI,DITOLAK';
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialStatusParam = urlParams.get('status');
+    let activeFilter = initialStatusParam ? initialStatusParam.toUpperCase() : 'TERVALIDASI,DITOLAK';
+    const selectStatusFilter = document.getElementById('selectStatusFilter');
+    if (selectStatusFilter && initialStatusParam) {
+        selectStatusFilter.value = activeFilter;
+    }
 
     function clearSearchText() {
         const input = document.getElementById('searchInput');
@@ -179,6 +185,12 @@
                     <p class="text-xs font-bold text-slate-800 truncate mb-0.5">${esc(lap.alamat || 'Alamat tidak tersedia')}</p>
                     <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed">${esc(lap.deskripsi || '-')}</p>
                 </div>
+                ${lap.status === 'DITOLAK' && lap.alasan_penolakan ? `
+                    <div class="p-2.5 bg-rose-50/80 border border-rose-100 rounded-xl text-xs">
+                        <span class="text-[10px] font-bold text-rose-700 uppercase tracking-wider block mb-0.5">Alasan Penolakan:</span>
+                        <p class="text-rose-900 leading-relaxed font-medium line-clamp-2">${esc(lap.alasan_penolakan)}</p>
+                    </div>
+                ` : ''}
                 <div class="flex items-center justify-between pt-2 border-t border-slate-50 text-[11px] text-slate-400">
                     <span>Pelapor: <strong class="text-slate-600 font-medium">${esc(lap.pelapor_nama)}</strong></span>
                     <span>${fmtDate(lap.tanggal_validasi || lap.tanggal_lapor)}</span>

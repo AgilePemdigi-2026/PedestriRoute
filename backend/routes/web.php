@@ -54,6 +54,10 @@ Route::get('/admin/status-laporan/{id}', function ($id) {
     return view('admin.status_laporan_detail', ['id' => $id]);
 })->name('admin.status_laporan.detail');
 
+Route::get('/admin/ditolak', function () {
+    return view('admin.validasi_queue', ['initialTab' => 'ditolak']);
+})->name('admin.ditolak.queue');
+
 Route::get('/admin/riwayat', function () {
     return view('admin.riwayat');
 })->name('admin.riwayat');

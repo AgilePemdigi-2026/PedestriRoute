@@ -70,6 +70,7 @@ def cleanup_test_data(context):
         App\\Models\\Laporan::where('warga_id', $w->warga_id)->delete();
         App\\Models\\Notifikasi::where('penerima_id', $w->warga_id)->where('penerima_tipe', 'WARGA')->delete();
     }
+    Illuminate\\Support\\Facades\\DB::table('kategori_masalah')->where('kategori_id', '>', 5)->delete();
     """
     context.run_tinker(php)
 

@@ -173,4 +173,33 @@ class ValidateReportTest extends TestCase
         $response->assertStatus(403)
             ->assertJsonPath('error.code', 'FORBIDDEN');
     }
+
+    public function test_admin_dapat_melihat_laporan_ditolak_melalui_api(): void
+    {
+        $alasan = 'Foto blur dan bukan fasilitas publik';
+        $this->withHeader('Authorization', 'Bearer ' . $this->adminToken)
+            ->postJson("/api/v1/admin/reports/{$this->laporanId}/validation", [
+                'keputusan' => 'TIDAK_VALID',
+                'alasan_penolakan' => $alasan,
+            ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->adminToken)
+            ->getJson('/api/v1/admin/reports?status=DITOLAK');
+
+        $response->assertStatus(200)
+            ->assertJsonFragment([
+                'laporan_id' => $this->laporanId,
+                'status' => 'DITOLAK',
+                'alasan_penolakan' => $alasan,
+            ]);
+    }
+
+    public function test_halaman_blade_antrean_ditolak_admin_dapat_dimuat(): void
+    {
+        $response = $this->get('/admin/ditolak');
+
+        $response->assertStatus(200)
+            ->assertSee('Validasi & Perbaikan')
+            ->assertSee('Ditolak');
+    }
 }

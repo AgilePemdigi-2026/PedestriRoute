@@ -247,6 +247,8 @@ def step_cv_service_not_called(context):
     """
     res = context.run_tinker(php).strip()
     assert res == 'NOT_CALLED', "CV service was called unexpectedly"
+    # Clean up temporary unsupported category so it doesn't leak into subsequent test suites
+    context.run_tinker("Illuminate\\Support\\Facades\\DB::table('kategori_masalah')->where('kategori_id', '>', 5)->delete();")
 
 
 @then('nothing should change and no duplicate notification should exist')

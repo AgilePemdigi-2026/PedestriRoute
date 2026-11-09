@@ -175,12 +175,12 @@
         const lainnya = Math.max(total - valid - menunggu - ditolak, 0);
 
         const parts = [
-            { label: 'Valid',    n: valid,    bar: 'bg-emerald-500', dot: 'bg-emerald-500' },
-            { label: 'Menunggu', n: menunggu, bar: 'bg-amber-500',   dot: 'bg-amber-500' },
-            { label: 'Ditolak',  n: ditolak,  bar: 'bg-rose-500',    dot: 'bg-rose-500' },
+            { label: 'Valid',    n: valid,    bar: 'bg-emerald-500', dot: 'bg-emerald-500', href: '/admin/validasi?tab=perbaikan' },
+            { label: 'Menunggu', n: menunggu, bar: 'bg-amber-500',   dot: 'bg-amber-500', href: '/admin/validasi?tab=validasi' },
+            { label: 'Ditolak',  n: ditolak,  bar: 'bg-rose-500',    dot: 'bg-rose-500', href: '/admin/validasi?tab=ditolak' },
         ];
         if (lainnya > 0) {
-            parts.push({ label: 'Diproses', n: lainnya, bar: 'bg-slate-300', dot: 'bg-slate-300' });
+            parts.push({ label: 'Diproses', n: lainnya, bar: 'bg-slate-300', dot: 'bg-slate-300', href: '/admin/riwayat?status=DIPROSES' });
         }
 
         document.getElementById('ratioBar').innerHTML = total > 0
@@ -188,10 +188,10 @@
             : '';
 
         document.getElementById('ratioLegend').innerHTML = parts.map(p => `
-            <div class="flex items-center justify-between text-xs">
-                <span class="flex items-center gap-1.5 text-slate-600"><span class="w-2 h-2 rounded-full ${p.dot}"></span>${p.label}</span>
-                <span class="font-bold text-slate-900 tabular-nums">${p.n} <span class="text-[10px] text-slate-400 font-normal">(${pct(p.n, total)}%)</span></span>
-            </div>`).join('');
+            <a href="${p.href || 'javascript:void(0)'}" class="flex items-center justify-between text-xs p-1.5 rounded-lg hover:bg-slate-50 transition -mx-1.5 group">
+                <span class="flex items-center gap-1.5 text-slate-600 group-hover:text-slate-900"><span class="w-2 h-2 rounded-full ${p.dot}"></span>${p.label}</span>
+                <span class="font-bold text-slate-900 tabular-nums">${p.n} <span class="text-[10px] text-slate-400 font-normal">(${pct(p.n, total)}%) ↗</span></span>
+            </a>`).join('');
 
         document.getElementById('statPersenValid').innerText = `${summary.persentase_valid ?? pct(valid, total)}% valid`;
     }

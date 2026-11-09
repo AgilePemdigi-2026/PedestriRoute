@@ -6,17 +6,22 @@
 <div class="px-5 pt-6 pb-24 flex flex-col flex-1">
     @include('partials.admin-header', ['title' => 'Validasi & Perbaikan', 'subtitle' => 'Memuat data...', 'subtitleId' => 'queueSubtitle'])
 
-    <!-- Segmented Control: Tab Validasi vs Perbaikan -->
-    <div class="flex p-1 bg-slate-100 rounded-xl mb-3">
+    <!-- Segmented Control: Tab Validasi vs Perbaikan vs Ditolak -->
+    <div class="flex p-1 bg-slate-100 rounded-xl mb-3 gap-1">
         <button type="button" id="tabValidasiBtn" onclick="switchTab('validasi')"
             class="flex-1 py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm bg-white text-slate-800">
-            <span>Antrean Validasi</span>
+            <span>Antrean</span>
             <span id="tabValidasiCount" class="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-800 font-extrabold leading-none">0</span>
         </button>
         <button type="button" id="tabPerbaikanBtn" onclick="switchTab('perbaikan')"
             class="flex-1 py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-700">
-            <span>Status Perbaikan</span>
+            <span>Perbaikan</span>
             <span id="tabPerbaikanCount" class="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-700 font-extrabold leading-none">0</span>
+        </button>
+        <button type="button" id="tabDitolakBtn" onclick="switchTab('ditolak')"
+            class="flex-1 py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-700">
+            <span>Ditolak</span>
+            <span id="tabDitolakCount" class="px-1.5 py-0.5 rounded-full text-[10px] bg-rose-100 text-rose-800 font-extrabold leading-none">0</span>
         </button>
     </div>
 
@@ -118,6 +123,16 @@
         return `${Math.floor(diffMonth / 12)} tahun lalu`;
     }
 
+    function esc(v) {
+        return String(v ?? '').replace(/[&<>"']/g, c => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[c]));
+    }
+
     function getRepairBadge(statusPerbaikan) {
         if (statusPerbaikan === 'SUDAH_DIPERBAIKI') {
             return `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-bold">Sudah Diperbaiki</span>`;
@@ -128,32 +143,37 @@
         return `<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full text-[10px] font-bold">Belum Ditangani</span>`;
     }
 
-    // Active tab management: 'validasi' or 'perbaikan'
+    // Active tab management: 'validasi', 'perbaikan', or 'ditolak'
     const urlParams = new URLSearchParams(window.location.search);
     const initialTabParam = "{{ $initialTab ?? '' }}";
-    let currentTab = initialTabParam || urlParams.get('tab') || (window.location.pathname.includes('status-laporan') ? 'perbaikan' : 'validasi');
+    let currentTab = initialTabParam || urlParams.get('tab') || (window.location.pathname.includes('status-laporan') ? 'perbaikan' : (window.location.pathname.includes('ditolak') ? 'ditolak' : 'validasi'));
     let repairFilter = 'ALL';
 
     let validasiReports = [];
     let perbaikanReports = [];
+    let ditolakReports = [];
 
     function switchTab(tab) {
         currentTab = tab;
         const validasiBtn = document.getElementById('tabValidasiBtn');
         const perbaikanBtn = document.getElementById('tabPerbaikanBtn');
+        const ditolakBtn = document.getElementById('tabDitolakBtn');
         const repairDropdownWrapper = document.getElementById('repairDropdownWrapper');
         const dateFilterWrapper = document.getElementById('dateFilterWrapper');
 
-        if (tab === 'validasi') {
-            validasiBtn.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm bg-white text-slate-800';
-            perbaikanBtn.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-700';
-            repairDropdownWrapper.classList.add('hidden');
-            dateFilterWrapper.classList.add('col-span-2');
-        } else {
-            perbaikanBtn.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm bg-white text-slate-800';
-            validasiBtn.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-700';
+        const activeClass = 'flex-1 py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm bg-white text-slate-800';
+        const inactiveClass = 'flex-1 py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-700';
+
+        if (validasiBtn) validasiBtn.className = tab === 'validasi' ? activeClass : inactiveClass;
+        if (perbaikanBtn) perbaikanBtn.className = tab === 'perbaikan' ? activeClass : inactiveClass;
+        if (ditolakBtn) ditolakBtn.className = tab === 'ditolak' ? activeClass : inactiveClass;
+
+        if (tab === 'perbaikan') {
             repairDropdownWrapper.classList.remove('hidden');
             dateFilterWrapper.classList.remove('col-span-2');
+        } else {
+            repairDropdownWrapper.classList.add('hidden');
+            dateFilterWrapper.classList.add('col-span-2');
         }
 
         // Update URL query without full reload
@@ -195,11 +215,21 @@
         if (btnClearDate) btnClearDate.classList.toggle('hidden', !dateVal);
 
         const isVal = currentTab === 'validasi';
-        let source = isVal ? validasiReports : perbaikanReports;
+        const isDit = currentTab === 'ditolak';
+
+        let source;
+        if (isVal) {
+            source = validasiReports;
+        } else if (isDit) {
+            source = ditolakReports;
+        } else {
+            source = perbaikanReports;
+        }
+
         let filtered = source.slice();
 
         // Status perbaikan filter (if on perbaikan tab)
-        if (!isVal && repairFilter !== 'ALL') {
+        if (currentTab === 'perbaikan' && repairFilter !== 'ALL') {
             if (repairFilter === 'BELUM') {
                 filtered = filtered.filter(r => !r.status_perbaikan);
             } else if (repairFilter === 'SEDANG_DIPERBAIKI') {
@@ -228,35 +258,54 @@
                 const deskripsi = (r.deskripsi || '').toLowerCase();
                 const pelapor = (r.pelapor_nama || '').toLowerCase();
                 const kat = (r.kategori || '').toLowerCase();
+                const alasan = (r.alasan_penolakan || '').toLowerCase();
                 return kode.includes(searchVal) ||
                        idStr.includes(searchVal) ||
                        alamat.includes(searchVal) ||
                        deskripsi.includes(searchVal) ||
                        pelapor.includes(searchVal) ||
-                       kat.includes(searchVal);
+                       kat.includes(searchVal) ||
+                       alasan.includes(searchVal);
             });
         }
 
         // Subtitle
         const subtitleEl = document.getElementById('queueSubtitle');
         if (subtitleEl) {
-            const hasFilter = searchVal || dateVal || (!isVal && repairFilter !== 'ALL');
+            const hasFilter = searchVal || dateVal || (currentTab === 'perbaikan' && repairFilter !== 'ALL');
             if (hasFilter) {
                 subtitleEl.innerText = `${filtered.length} dari ${source.length} laporan cocok`;
             } else {
-                subtitleEl.innerText = isVal
-                    ? `${filtered.length} laporan menunggu ditinjau`
-                    : `${filtered.length} laporan tervalidasi`;
+                if (isVal) {
+                    subtitleEl.innerText = `${filtered.length} laporan menunggu ditinjau`;
+                } else if (isDit) {
+                    subtitleEl.innerText = `${filtered.length} laporan tidak valid / ditolak`;
+                } else {
+                    subtitleEl.innerText = `${filtered.length} laporan tervalidasi`;
+                }
             }
         }
 
         // Empty states
         if (source.length === 0) {
+            let icon = '🎉';
+            let title = 'Antrean Bersih';
+            let desc = 'Tidak ada laporan yang perlu divalidasi saat ini.';
+            if (currentTab === 'perbaikan') {
+                icon = '✨';
+                title = 'Tidak Ada Laporan';
+                desc = 'Belum ada laporan yang tervalidasi saat ini.';
+            } else if (isDit) {
+                icon = '🛡️';
+                title = 'Tidak Ada Laporan Ditolak';
+                desc = 'Belum ada laporan yang ditolak atau berstatus tidak valid.';
+            }
+
             container.innerHTML = `
                 <div class="text-center py-12 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
-                    <span class="text-3xl mb-2 block">${isVal ? '🎉' : '✨'}</span>
-                    <h3 class="text-sm font-bold text-slate-800">${isVal ? 'Antrean Bersih' : 'Tidak Ada Laporan'}</h3>
-                    <p class="text-xs text-slate-500 mt-1">${isVal ? 'Tidak ada laporan yang perlu divalidasi saat ini.' : 'Belum ada laporan yang tervalidasi saat ini.'}</p>
+                    <span class="text-3xl mb-2 block">${icon}</span>
+                    <h3 class="text-sm font-bold text-slate-800">${title}</h3>
+                    <p class="text-xs text-slate-500 mt-1">${desc}</p>
                 </div>
             `;
             return;
@@ -278,33 +327,50 @@
 
         // Render Cards
         container.innerHTML = filtered.map(r => `
-            <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex flex-col gap-2.5 hover:border-brand-500/40 transition">
+            <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex flex-col gap-2.5 ${isDit ? 'hover:border-rose-400/50' : 'hover:border-brand-500/40'} transition">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-1.5">
-                        <span class="text-xs font-bold text-slate-800 tracking-tight tabular-nums">${r.kode_laporan}</span>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium text-slate-600 bg-slate-100">${r.kategori}</span>
+                        <span class="text-xs font-bold text-slate-800 tracking-tight tabular-nums">${esc(r.kode_laporan)}</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium text-slate-600 bg-slate-100">${esc(r.kategori)}</span>
                     </div>
                     ${isVal
                         ? `<span class="text-[11px] text-slate-400 font-medium">${formatTimeAgo(r.tanggal_lapor)}</span>`
-                        : getRepairBadge(r.status_perbaikan)}
+                        : (isDit
+                            ? `<span class="px-2 py-0.5 rounded-full border text-[10px] font-bold bg-rose-50 text-rose-800 border-rose-200/80">✕ Tidak Valid</span>`
+                            : getRepairBadge(r.status_perbaikan))}
                 </div>
 
                 <div>
                     <p class="text-xs font-bold text-slate-800 truncate mb-1">
-                        ${r.alamat || 'Alamat tidak tersedia'}
+                        ${esc(r.alamat || 'Alamat tidak tersedia')}
                     </p>
                     <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                        ${r.deskripsi || '-'}
+                        ${esc(r.deskripsi || '-')}
                     </p>
                 </div>
 
-                <div class="flex items-center justify-between pt-2 border-t border-slate-50">
-                    <span class="text-[11px] text-slate-400">Pelapor: <strong class="text-slate-600 font-medium">${r.pelapor_nama || 'Warga'}</strong></span>
+                ${isDit && r.alasan_penolakan ? `
+                    <div class="p-2.5 bg-rose-50/80 border border-rose-100 rounded-xl">
+                        <span class="text-[10px] font-bold text-rose-700 uppercase tracking-wider block mb-0.5">Alasan Penolakan:</span>
+                        <p class="text-xs text-rose-900 leading-relaxed font-medium">${esc(r.alasan_penolakan)}</p>
+                    </div>
+                ` : ''}
+
+                <div class="flex items-center justify-between pt-2 border-t border-slate-50 text-[11px]">
+                    <span class="text-slate-400">Pelapor: <strong class="text-slate-600 font-medium">${esc(r.pelapor_nama || 'Warga')}</strong></span>
                     ${isVal ? `
                         <a href="/admin/validasi/${r.laporan_id}"
                            class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm">
                             <span>Periksa</span>
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </a>
+                    ` : (isDit ? `
+                        <a href="/admin/validasi/${r.laporan_id}"
+                           class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-xs">
+                            <span>Periksa</span>
+                            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                             </svg>
                         </a>
@@ -316,7 +382,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                             </svg>
                         </a>
-                    `}
+                    `)}
                 </div>
             </div>
         `).join('');
@@ -324,16 +390,19 @@
 
     async function loadAllData() {
         try {
-            const [resVal, resPer] = await Promise.all([
+            const [resVal, resPer, resDit] = await Promise.all([
                 fetch('/api/v1/admin/reports?status=MENUNGGU_VALIDASI_ADMIN', {
                     headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
                 }),
                 fetch('/api/v1/admin/reports?status=TERVALIDASI', {
                     headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
+                }),
+                fetch('/api/v1/admin/reports?status=DITOLAK', {
+                    headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
                 })
             ]);
 
-            if (resVal.status === 401 || resPer.status === 401) {
+            if (resVal.status === 401 || resPer.status === 401 || resDit.status === 401) {
                 window.location.href = '/login';
                 return;
             }
@@ -342,14 +411,24 @@
                 const jsonVal = await resVal.json();
                 validasiReports = (jsonVal.data || []).slice();
                 validasiReports.sort((a, b) => new Date(b.tanggal_lapor || 0) - new Date(a.tanggal_lapor || 0));
-                document.getElementById('tabValidasiCount').innerText = validasiReports.length;
+                const countVal = document.getElementById('tabValidasiCount');
+                if (countVal) countVal.innerText = validasiReports.length;
             }
 
             if (resPer.ok) {
                 const jsonPer = await resPer.json();
                 perbaikanReports = (jsonPer.data || []).slice();
                 perbaikanReports.sort((a, b) => new Date(b.tanggal_lapor || 0) - new Date(a.tanggal_lapor || 0));
-                document.getElementById('tabPerbaikanCount').innerText = perbaikanReports.length;
+                const countPer = document.getElementById('tabPerbaikanCount');
+                if (countPer) countPer.innerText = perbaikanReports.length;
+            }
+
+            if (resDit && resDit.ok) {
+                const jsonDit = await resDit.json();
+                ditolakReports = (jsonDit.data || []).slice();
+                ditolakReports.sort((a, b) => new Date(b.tanggal_validasi || b.tanggal_lapor || 0) - new Date(a.tanggal_validasi || a.tanggal_lapor || 0));
+                const countDit = document.getElementById('tabDitolakCount');
+                if (countDit) countDit.innerText = ditolakReports.length;
             }
 
             switchTab(currentTab);

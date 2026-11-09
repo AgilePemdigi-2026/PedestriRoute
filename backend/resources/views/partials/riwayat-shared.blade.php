@@ -78,7 +78,16 @@
         DIPROSES:                { label: 'Dianalisis AI', cls: 'bg-sky-50 text-sky-800 border-sky-200' },
         TERVALIDASI:             { label: 'Valid',    cls: 'bg-emerald-50 text-emerald-800 border-emerald-100' },
         DITOLAK:                 { label: 'Ditolak',  cls: 'bg-rose-50 text-rose-800 border-rose-100' },
+        SEDANG_DIPERBAIKI:       { label: 'Sedang Diperbaiki', cls: 'bg-sky-50 text-sky-800 border-sky-200' },
+        SUDAH_DIPERBAIKI:        { label: 'Sudah Diperbaiki', cls: 'bg-emerald-50 text-emerald-800 border-emerald-100' },
+        BELUM_DITANGANI:         { label: 'Belum Ditangani', cls: 'bg-amber-50 text-amber-800 border-amber-100' },
     };
+
+    function formatProgressLabel(status) {
+        if (!status) return '-';
+        if (STATUS_META[status]) return STATUS_META[status].label;
+        return String(status).toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
 
     function esc(v) {
         return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -229,7 +238,7 @@
                 <li class="flex gap-2">
                     <span class="mt-1 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>
                     <div>
-                        <p class="font-semibold text-slate-800">${esc(STATUS_META[r.status]?.label || r.status)} <span class="font-normal text-slate-400">· ${esc(r.admin_nama)}</span></p>
+                        <p class="font-semibold text-slate-800">${esc(formatProgressLabel(r.status))} <span class="font-normal text-slate-400">· ${esc(r.admin_nama)}</span></p>
                         <p class="text-slate-500">${esc(r.catatan)}</p>
                         <p class="text-[10px] text-slate-400">${fmtDate(r.waktu)}</p>
                     </div>

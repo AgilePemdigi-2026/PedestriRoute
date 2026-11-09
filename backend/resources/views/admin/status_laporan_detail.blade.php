@@ -56,13 +56,25 @@
                 </div>
             </div>
             <div>
-                <p class="text-xs font-bold text-slate-800" id="reportAddress">-</p>
-                <p class="text-xs text-slate-600 mt-1 leading-relaxed" id="reportDesc">-</p>
-                <div id="existingCatatanContainer" class="hidden mt-2.5 p-2.5 bg-emerald-50/70 border border-emerald-100 rounded-xl">
-                    <span class="text-[10px] font-bold text-emerald-800 block mb-0.5">Catatan Perbaikan:</span>
-                    <p class="text-xs text-slate-700 leading-relaxed" id="existingCatatanText">-</p>
+                <div class="flex items-start gap-1.5 mb-1.5">
+                    <svg class="w-4 h-4 text-brand-600 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                    <p class="text-xs font-bold text-slate-800 leading-snug" id="reportAddress">-</p>
                 </div>
-                <div id="aiValidationCard" class="hidden mt-2.5 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
+                <p class="text-xs text-slate-600 bg-slate-50 border border-slate-100 rounded-xl p-2.5 leading-relaxed" id="reportDesc">-</p>
+                
+                <div id="existingCatatanContainer" class="hidden mt-2.5 p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+                    <div class="flex items-center gap-1.5 mb-1 text-slate-500">
+                        <svg class="w-3.5 h-3.5 text-brand-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-600">Catatan Perbaikan Terakhir</span>
+                    </div>
+                    <p class="text-xs text-slate-700 leading-relaxed font-normal" id="existingCatatanText">-</p>
+                </div>
+
+                <div id="aiValidationCard" class="hidden mt-2.5 p-2.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl flex items-center justify-between text-xs">
                     <div class="flex items-center gap-2">
                         <span class="w-6 h-6 rounded-lg bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold">✓</span>
                         <div>
@@ -168,6 +180,16 @@
 
     let reportData = null;
 
+    function esc(v) {
+        return String(v ?? '').replace(/[&<>"']/g, c => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[c]));
+    }
+
     function formatTime(isoStr) {
         if (!isoStr) return '-';
         const d = new Date(isoStr);
@@ -175,6 +197,67 @@
             day: 'numeric', month: 'short', year: 'numeric',
             hour: '2-digit', minute: '2-digit'
         });
+    }
+
+    function formatStatusProgress(status) {
+        if (!status) return {
+            label: 'Status Tidak Diketahui',
+            badgeCls: 'bg-slate-50 text-slate-700 border-slate-200',
+            dotCls: 'bg-slate-400'
+        };
+
+        const map = {
+            'SEDANG_DIPERBAIKI': {
+                label: 'Sedang Diperbaiki',
+                badgeCls: 'bg-sky-50 text-sky-700 border-sky-200/80',
+                dotCls: 'bg-sky-500'
+            },
+            'SUDAH_DIPERBAIKI': {
+                label: 'Sudah Diperbaiki',
+                badgeCls: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+                dotCls: 'bg-emerald-500'
+            },
+            'BELUM_DITANGANI': {
+                label: 'Belum Ditangani',
+                badgeCls: 'bg-amber-50 text-amber-700 border-amber-200/80',
+                dotCls: 'bg-amber-500'
+            },
+            'TERVALIDASI': {
+                label: 'Tervalidasi',
+                badgeCls: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+                dotCls: 'bg-emerald-500'
+            },
+            'MENUNGGU_VALIDASI_ADMIN': {
+                label: 'Menunggu Validasi Admin',
+                badgeCls: 'bg-amber-50 text-amber-700 border-amber-200/80',
+                dotCls: 'bg-amber-500'
+            },
+            'DIPROSES': {
+                label: 'Dianalisis AI',
+                badgeCls: 'bg-sky-50 text-sky-700 border-sky-200/80',
+                dotCls: 'bg-sky-500'
+            },
+            'DITOLAK': {
+                label: 'Ditolak',
+                badgeCls: 'bg-rose-50 text-rose-700 border-rose-200/80',
+                dotCls: 'bg-rose-500'
+            }
+        };
+
+        if (map[status]) return map[status];
+
+        // Format any uppercase or snake_case status into Title Case
+        const formatted = String(status)
+            .toLowerCase()
+            .split('_')
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+
+        return {
+            label: formatted,
+            badgeCls: 'bg-slate-50 text-slate-700 border-slate-200',
+            dotCls: 'bg-slate-400'
+        };
     }
 
     async function loadReportDetail() {
@@ -328,23 +411,39 @@
             // Render Timeline
             const tlContainer = document.getElementById('timelineContainer');
             if (reportData.riwayat && reportData.riwayat.length > 0) {
-                tlContainer.innerHTML = reportData.riwayat.map((rw, idx) => `
-                    <div class="flex items-start gap-3 relative">
-                        <div class="w-7 h-7 rounded-full bg-teal-50 border border-brand-200 flex items-center justify-center text-brand-600 flex-shrink-0 z-10">
-                            <span class="text-xs font-bold">${idx + 1}</span>
+                const total = reportData.riwayat.length;
+                tlContainer.innerHTML = reportData.riwayat.map((rw, idx) => {
+                    const meta = formatStatusProgress(rw.status);
+                    const isLast = idx === total - 1;
+                    const jenisLabel = rw.jenis === 'PERBAIKAN' ? 'Perbaikan' : (rw.jenis === 'VALIDASI' ? 'Validasi' : 'Sistem');
+                    return `
+                    <div class="flex items-start gap-3 relative ${!isLast ? 'pb-4' : ''}">
+                        ${!isLast ? `<span class="absolute left-3.5 top-7 bottom-0 w-0.5 -ml-[1px] bg-slate-200"></span>` : ''}
+                        <div class="w-7 h-7 rounded-full bg-white border border-slate-200 shadow-xs flex items-center justify-center flex-shrink-0 z-10">
+                            <span class="w-2.5 h-2.5 rounded-full ${meta.dotCls}"></span>
                         </div>
-                        <div class="flex-1 pt-0.5">
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs font-bold text-slate-800">${rw.status}</span>
-                                <span class="text-[10px] text-slate-400">${formatTime(rw.waktu)}</span>
+                        <div class="flex-1 pt-0.5 min-w-0">
+                            <div class="flex items-center justify-between gap-2 flex-wrap mb-1">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="text-xs font-bold text-slate-800">${esc(meta.label)}</span>
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border ${meta.badgeCls}">
+                                        ${esc(jenisLabel)}
+                                    </span>
+                                </div>
+                                <span class="text-[10px] text-slate-400 shrink-0 font-medium">${formatTime(rw.waktu)}</span>
                             </div>
-                            <p class="text-[11px] text-slate-600 mt-0.5">${rw.catatan || '-'}</p>
-                            <span class="text-[10px] text-slate-400 mt-1 block">Oleh: ${rw.admin_nama || 'Sistem'}</span>
+                            ${rw.catatan ? `<p class="text-xs text-slate-600 bg-slate-50/80 border border-slate-100 rounded-xl p-2.5 leading-relaxed mb-1.5">${esc(rw.catatan)}</p>` : ''}
+                            <div class="flex items-center gap-1.5 text-[10px] text-slate-400">
+                                <svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                                <span>Oleh: <strong class="text-slate-600 font-semibold">${esc(rw.admin_nama || 'Sistem')}</strong></span>
+                            </div>
                         </div>
-                    </div>
-                `).join('');
+                    </div>`;
+                }).join('');
             } else {
-                tlContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-2">Belum ada catatan riwayat status.</p>`;
+                tlContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Belum ada catatan riwayat status.</p>`;
             }
 
             document.getElementById('loadingState').classList.add('hidden');
@@ -359,14 +458,29 @@
         const val = selected ? selected.value : '';
         const lbl = document.getElementById('labelFotoPerbaikan');
         const hlp = document.getElementById('helpFotoPerbaikan');
-        if (!lbl || !hlp) return;
+        if (lbl && hlp) {
+            if (val === 'SEDANG_DIPERBAIKI') {
+                lbl.innerText = 'Foto Bukti Pengerjaan (Opsional)';
+                hlp.innerText = 'Unggah foto aktivitas penanganan di lapangan.';
+            } else {
+                lbl.innerText = 'Foto Bukti Selesai (Opsional)';
+                hlp.innerText = 'Unggah foto fasilitas setelah perbaikan rampung.';
+            }
+        }
 
-        if (val === 'SEDANG_DIPERBAIKI') {
-            lbl.innerText = 'Foto Bukti Pengerjaan (Opsional)';
-            hlp.innerText = 'Unggah foto aktivitas penanganan di lapangan.';
-        } else {
-            lbl.innerText = 'Foto Bukti Selesai (Opsional)';
-            hlp.innerText = 'Unggah foto fasilitas setelah perbaikan rampung.';
+        const labelSedang = document.getElementById('labelSedang');
+        const labelSudah = document.getElementById('labelSudah');
+        if (labelSedang && labelSudah) {
+            if (val === 'SEDANG_DIPERBAIKI') {
+                labelSedang.className = 'block p-3 rounded-xl border-2 border-sky-500 bg-sky-50/20 cursor-pointer transition relative';
+                labelSudah.className = 'block p-3 rounded-xl border border-slate-200 cursor-pointer hover:border-brand-500 transition relative';
+            } else if (val === 'SUDAH_DIPERBAIKI') {
+                labelSedang.className = 'block p-3 rounded-xl border border-slate-200 cursor-pointer hover:border-brand-500 transition relative';
+                labelSudah.className = 'block p-3 rounded-xl border-2 border-emerald-500 bg-emerald-50/20 cursor-pointer transition relative';
+            } else {
+                labelSedang.className = 'block p-3 rounded-xl border border-slate-200 cursor-pointer hover:border-brand-500 transition relative';
+                labelSudah.className = 'block p-3 rounded-xl border border-slate-200 cursor-pointer hover:border-brand-500 transition relative';
+            }
         }
     }
 

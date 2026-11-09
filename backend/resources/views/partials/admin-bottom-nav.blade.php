@@ -1,6 +1,6 @@
 @php
     $adminTabs = [
-        ['href' => '/admin/validasi', 'label' => 'Validasi & Perbaikan', 'patterns' => ['admin', 'admin/validasi*', 'admin/status-laporan*'],
+        ['href' => '/admin/validasi', 'label' => 'Validasi & Perbaikan', 'patterns' => ['admin', 'admin/validasi*', 'admin/status-laporan*', 'admin/ditolak*'],
          'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
         ['href' => '/admin/riwayat', 'label' => 'Riwayat', 'patterns' => ['admin/riwayat*'],
          'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],

@@ -462,6 +462,11 @@
                 headerStatusBadge.innerText = '✕ Ditolak';
                 headerSubtitle.innerText = 'Laporan ditolak';
 
+                const backBtn = document.querySelector('a[href="/admin/validasi"]');
+                if (backBtn) {
+                    backBtn.href = '/admin/validasi?tab=ditolak';
+                }
+
                 selectedDecision = 'TIDAK_VALID';
                 cardTidakValid.className = 'decision-card p-3 rounded-xl border-2 border-rose-600 bg-rose-50 text-center flex items-center justify-center gap-2 shadow-sm pointer-events-none';
                 cardValid.className = 'decision-card p-3 rounded-xl border border-slate-200 bg-slate-50 opacity-40 text-center flex items-center justify-center gap-2 pointer-events-none';
