@@ -1,10 +1,70 @@
 @extends('layouts.app')
 
-@section('title', 'Antrean Validasi - PedestriRoute Admin')
+@section('title', 'Validasi & Perbaikan - PedestriRoute Admin')
 
 @section('content')
 <div class="px-5 pt-6 pb-24 flex flex-col flex-1">
-    @include('partials.admin-header', ['title' => 'Antrean Validasi', 'subtitle' => 'Memuat antrean...', 'subtitleId' => 'queueSubtitle', 'badgeId' => 'queueBadge'])
+    @include('partials.admin-header', ['title' => 'Validasi & Perbaikan', 'subtitle' => 'Memuat data...', 'subtitleId' => 'queueSubtitle'])
+
+    <!-- Segmented Control: Tab Validasi vs Perbaikan -->
+    <div class="flex p-1 bg-slate-100 rounded-xl mb-3">
+        <button type="button" id="tabValidasiBtn" onclick="switchTab('validasi')"
+            class="flex-1 py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm bg-white text-slate-800">
+            <span>Antrean Validasi</span>
+            <span id="tabValidasiCount" class="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-800 font-extrabold leading-none">0</span>
+        </button>
+        <button type="button" id="tabPerbaikanBtn" onclick="switchTab('perbaikan')"
+            class="flex-1 py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-700">
+            <span>Status Perbaikan</span>
+            <span id="tabPerbaikanCount" class="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-700 font-extrabold leading-none">0</span>
+        </button>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="space-y-2 mb-3">
+        <!-- Text Search -->
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </div>
+            <input type="text" id="searchInput" oninput="renderReports()"
+                placeholder="Cari kode laporan, nama jalan, pelapor..."
+                class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 transition shadow-sm font-medium" />
+            <button type="button" id="btnClearSearch" onclick="clearSearchText()" class="hidden absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Secondary Filter: Status Perbaikan Dropdown + Date Picker -->
+        <div class="grid grid-cols-2 gap-2" id="filterSecondaryRow">
+            <!-- Status Perbaikan Dropdown (only visible on Perbaikan tab) -->
+            <div id="repairDropdownWrapper" class="hidden relative">
+                <select id="selectRepairStatusFilter" onchange="onRepairStatusChange(this.value)"
+                    class="w-full pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm appearance-none cursor-pointer transition">
+                    <option value="ALL">Semua Status</option>
+                    <option value="BELUM">Belum Ditangani</option>
+                    <option value="SEDANG_DIPERBAIKI">Sedang Diperbaiki</option>
+                    <option value="SUDAH_DIPERBAIKI">Sudah Diperbaiki</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Date Picker (full width on Validasi tab, 1-col on Perbaikan tab) -->
+            <div id="dateFilterWrapper" class="col-span-2 relative flex items-center">
+                <input type="date" id="dateFilter" onchange="renderReports()"
+                    class="w-full px-2.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm transition font-medium" />
+                <button type="button" onclick="clearDateFilter()" id="btnClearDate" class="hidden absolute right-2 text-slate-400 hover:text-slate-600" title="Reset tanggal">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Report List Container -->
     <div id="reportsList" class="space-y-3">
@@ -58,101 +118,251 @@
         return `${Math.floor(diffMonth / 12)} tahun lalu`;
     }
 
-    async function loadQueue() {
+    function getRepairBadge(statusPerbaikan) {
+        if (statusPerbaikan === 'SUDAH_DIPERBAIKI') {
+            return `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-bold">Sudah Diperbaiki</span>`;
+        }
+        if (statusPerbaikan === 'SEDANG_DIPERBAIKI') {
+            return `<span class="px-2 py-0.5 bg-sky-100 text-sky-800 rounded-full text-[10px] font-bold">Sedang Diperbaiki</span>`;
+        }
+        return `<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full text-[10px] font-bold">Belum Ditangani</span>`;
+    }
+
+    // Active tab management: 'validasi' or 'perbaikan'
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialTabParam = "{{ $initialTab ?? '' }}";
+    let currentTab = initialTabParam || urlParams.get('tab') || (window.location.pathname.includes('status-laporan') ? 'perbaikan' : 'validasi');
+    let repairFilter = 'ALL';
+
+    let validasiReports = [];
+    let perbaikanReports = [];
+
+    function switchTab(tab) {
+        currentTab = tab;
+        const validasiBtn = document.getElementById('tabValidasiBtn');
+        const perbaikanBtn = document.getElementById('tabPerbaikanBtn');
+        const repairDropdownWrapper = document.getElementById('repairDropdownWrapper');
+        const dateFilterWrapper = document.getElementById('dateFilterWrapper');
+
+        if (tab === 'validasi') {
+            validasiBtn.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm bg-white text-slate-800';
+            perbaikanBtn.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-700';
+            repairDropdownWrapper.classList.add('hidden');
+            dateFilterWrapper.classList.add('col-span-2');
+        } else {
+            perbaikanBtn.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm bg-white text-slate-800';
+            validasiBtn.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-700';
+            repairDropdownWrapper.classList.remove('hidden');
+            dateFilterWrapper.classList.remove('col-span-2');
+        }
+
+        // Update URL query without full reload
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.set('tab', tab);
+        window.history.replaceState({}, '', newUrl);
+
+        renderReports();
+    }
+
+    function onRepairStatusChange(val) {
+        repairFilter = val;
+        renderReports();
+    }
+
+    function clearSearchText() {
+        const input = document.getElementById('searchInput');
+        if (input) input.value = '';
+        renderReports();
+    }
+
+    function clearDateFilter() {
+        const input = document.getElementById('dateFilter');
+        if (input) input.value = '';
+        renderReports();
+    }
+
+    function renderReports() {
+        const container = document.getElementById('reportsList');
+        const searchInput = document.getElementById('searchInput');
+        const dateInput = document.getElementById('dateFilter');
+        const btnClearSearch = document.getElementById('btnClearSearch');
+        const btnClearDate = document.getElementById('btnClearDate');
+
+        const searchVal = (searchInput?.value || '').trim().toLowerCase();
+        const dateVal = dateInput?.value || '';
+
+        if (btnClearSearch) btnClearSearch.classList.toggle('hidden', !searchVal);
+        if (btnClearDate) btnClearDate.classList.toggle('hidden', !dateVal);
+
+        const isVal = currentTab === 'validasi';
+        let source = isVal ? validasiReports : perbaikanReports;
+        let filtered = source.slice();
+
+        // Status perbaikan filter (if on perbaikan tab)
+        if (!isVal && repairFilter !== 'ALL') {
+            if (repairFilter === 'BELUM') {
+                filtered = filtered.filter(r => !r.status_perbaikan);
+            } else if (repairFilter === 'SEDANG_DIPERBAIKI') {
+                filtered = filtered.filter(r => r.status_perbaikan === 'SEDANG_DIPERBAIKI');
+            } else if (repairFilter === 'SUDAH_DIPERBAIKI') {
+                filtered = filtered.filter(r => r.status_perbaikan === 'SUDAH_DIPERBAIKI');
+            }
+        }
+
+        // Date Filter
+        if (dateVal) {
+            filtered = filtered.filter(r => {
+                const dLapor = r.tanggal_lapor ? r.tanggal_lapor.split('T')[0] : '';
+                const dVal = r.tanggal_validasi ? r.tanggal_validasi.split('T')[0] : '';
+                const dPerbaikan = r.tanggal_perbaikan ? r.tanggal_perbaikan.split('T')[0] : '';
+                return dLapor === dateVal || dVal === dateVal || dPerbaikan === dateVal;
+            });
+        }
+
+        // Text Search
+        if (searchVal) {
+            filtered = filtered.filter(r => {
+                const kode = (r.kode_laporan || '').toLowerCase();
+                const idStr = String(r.laporan_id || '');
+                const alamat = (r.alamat || '').toLowerCase();
+                const deskripsi = (r.deskripsi || '').toLowerCase();
+                const pelapor = (r.pelapor_nama || '').toLowerCase();
+                const kat = (r.kategori || '').toLowerCase();
+                return kode.includes(searchVal) ||
+                       idStr.includes(searchVal) ||
+                       alamat.includes(searchVal) ||
+                       deskripsi.includes(searchVal) ||
+                       pelapor.includes(searchVal) ||
+                       kat.includes(searchVal);
+            });
+        }
+
+        // Subtitle
+        const subtitleEl = document.getElementById('queueSubtitle');
+        if (subtitleEl) {
+            const hasFilter = searchVal || dateVal || (!isVal && repairFilter !== 'ALL');
+            if (hasFilter) {
+                subtitleEl.innerText = `${filtered.length} dari ${source.length} laporan cocok`;
+            } else {
+                subtitleEl.innerText = isVal
+                    ? `${filtered.length} laporan menunggu ditinjau`
+                    : `${filtered.length} laporan tervalidasi`;
+            }
+        }
+
+        // Empty states
+        if (source.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-12 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+                    <span class="text-3xl mb-2 block">${isVal ? '🎉' : '✨'}</span>
+                    <h3 class="text-sm font-bold text-slate-800">${isVal ? 'Antrean Bersih' : 'Tidak Ada Laporan'}</h3>
+                    <p class="text-xs text-slate-500 mt-1">${isVal ? 'Tidak ada laporan yang perlu divalidasi saat ini.' : 'Belum ada laporan yang tervalidasi saat ini.'}</p>
+                </div>
+            `;
+            return;
+        }
+
+        if (filtered.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-10 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+                    <span class="text-2xl mb-1.5 block">🔍</span>
+                    <h3 class="text-sm font-bold text-slate-800">Tidak Ada Hasil</h3>
+                    <p class="text-xs text-slate-500 mt-1">Tidak ada laporan yang cocok dengan kriteria filter.</p>
+                    <button type="button" onclick="clearSearchText(); clearDateFilter();" class="mt-3 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
+                        Reset Filter
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        // Render Cards
+        container.innerHTML = filtered.map(r => `
+            <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex flex-col gap-2.5 hover:border-brand-500/40 transition">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xs font-bold text-slate-800 tracking-tight tabular-nums">${r.kode_laporan}</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium text-slate-600 bg-slate-100">${r.kategori}</span>
+                    </div>
+                    ${isVal
+                        ? `<span class="text-[11px] text-slate-400 font-medium">${formatTimeAgo(r.tanggal_lapor)}</span>`
+                        : getRepairBadge(r.status_perbaikan)}
+                </div>
+
+                <div>
+                    <p class="text-xs font-bold text-slate-800 truncate mb-1">
+                        ${r.alamat || 'Alamat tidak tersedia'}
+                    </p>
+                    <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                        ${r.deskripsi || '-'}
+                    </p>
+                </div>
+
+                <div class="flex items-center justify-between pt-2 border-t border-slate-50">
+                    <span class="text-[11px] text-slate-400">Pelapor: <strong class="text-slate-600 font-medium">${r.pelapor_nama || 'Warga'}</strong></span>
+                    ${isVal ? `
+                        <a href="/admin/validasi/${r.laporan_id}"
+                           class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm">
+                            <span>Periksa</span>
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </a>
+                    ` : `
+                        <a href="/admin/status-laporan/${r.laporan_id}"
+                           class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm">
+                            <span>Kelola</span>
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </a>
+                    `}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function loadAllData() {
         try {
-            const res = await fetch('/api/v1/admin/reports?status=MENUNGGU_VALIDASI_ADMIN', {
-                headers: {
-                    'Authorization': 'Bearer ' + token,
-                    'Accept': 'application/json'
-                }
-            });
+            const [resVal, resPer] = await Promise.all([
+                fetch('/api/v1/admin/reports?status=MENUNGGU_VALIDASI_ADMIN', {
+                    headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
+                }),
+                fetch('/api/v1/admin/reports?status=TERVALIDASI', {
+                    headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
+                })
+            ]);
 
-            if (!res.ok) {
-                if (res.status === 401 || res.status === 403) {
-                    window.location.href = '/login';
-                    return;
-                }
-                showToast('Gagal memuat antrean laporan', 'error');
+            if (resVal.status === 401 || resPer.status === 401) {
+                window.location.href = '/login';
                 return;
             }
 
-            const json = await res.json();
-            const reports = json.data;
-
-            document.getElementById('queueBadge').innerText = reports.length;
-            document.getElementById('queueSubtitle').innerText = `${reports.length} laporan menunggu ditinjau`;
-
-            const container = document.getElementById('reportsList');
-
-            if (reports.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-12 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
-                        <span class="text-3xl mb-2 block">🎉</span>
-                        <h3 class="text-sm font-bold text-slate-800">Antrean Bersih</h3>
-                        <p class="text-xs text-slate-500 mt-1">Tidak ada laporan yang perlu divalidasi saat ini.</p>
-                    </div>
-                `;
-                return;
+            if (resVal.ok) {
+                const jsonVal = await resVal.json();
+                validasiReports = (jsonVal.data || []).slice();
+                validasiReports.sort((a, b) => new Date(b.tanggal_lapor || 0) - new Date(a.tanggal_lapor || 0));
+                document.getElementById('tabValidasiCount').innerText = validasiReports.length;
             }
 
-            let html = '';
-            reports.forEach((lap) => {
-                let aiBadge = '';
-                if (lap.status === 'DIPROSES') {
-                    aiBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold text-sky-700 bg-sky-50 border border-sky-200 animate-pulse"><i class="fa-solid fa-spinner fa-spin text-[9px]"></i> AI: Memproses</span>`;
-                } else if (lap.cv_label === 'SPAM') {
-                    const pct = lap.confidence_score ? Math.round(lap.confidence_score * 100) : '';
-                    aiBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200"><i class="fa-solid fa-triangle-exclamation text-[9px]"></i> AI: SPAM ${pct ? pct + '%' : ''}</span>`;
-                } else if (lap.cv_label === 'BAIK') {
-                    const pct = lap.confidence_score ? Math.round(lap.confidence_score * 100) : '';
-                    aiBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200"><i class="fa-solid fa-circle-info text-[9px]"></i> AI: Normal ${pct ? pct + '%' : ''}</span>`;
-                } else if (lap.confidence_score) {
-                    const pct = Math.round(lap.confidence_score * 100);
-                    aiBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200"><i class="fa-solid fa-robot text-[9px]"></i> AI: ${pct}%</span>`;
-                }
+            if (resPer.ok) {
+                const jsonPer = await resPer.json();
+                perbaikanReports = (jsonPer.data || []).slice();
+                perbaikanReports.sort((a, b) => new Date(b.tanggal_lapor || 0) - new Date(a.tanggal_lapor || 0));
+                document.getElementById('tabPerbaikanCount').innerText = perbaikanReports.length;
+            }
 
-                html += `
-                    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex flex-col gap-2.5 hover:border-brand-500/40 transition">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-1.5 flex-wrap">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold text-brand-700 bg-brand-50 border border-brand-200/60 tracking-tight tabular-nums">${lap.kode_laporan}</span>
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold text-slate-600 bg-slate-100">${lap.kategori}</span>
-                                ${aiBadge}
-                            </div>
-                            <span class="text-[11px] text-slate-400 font-medium">
-                                ${formatTimeAgo(lap.tanggal_lapor)}
-                            </span>
-                        </div>
-
-                        <div>
-                            <p class="text-xs font-bold text-slate-800 truncate mb-1">
-                                ${lap.alamat || 'Alamat tidak tersedia'}
-                            </p>
-                            <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                                ${lap.deskripsi}
-                            </p>
-                        </div>
-
-                        <div class="flex items-center justify-between pt-2 border-t border-slate-50">
-                            <span class="text-[11px] text-slate-400">Pelapor: <strong class="text-slate-600 font-medium">${lap.pelapor_nama}</strong></span>
-                            <a href="/admin/validasi/${lap.laporan_id}"
-                               class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm">
-                                <span>Periksa</span>
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                </svg>
-                            </a>
-                        </div>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = html;
+            switchTab(currentTab);
         } catch (e) {
-            showToast('Gagal terhubung ke server', 'error');
+            document.getElementById('reportsList').innerHTML = `
+                <div class="text-center py-10 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+                    <p class="text-xs text-rose-500 font-bold mb-2">Gagal memuat data dari server</p>
+                    <button type="button" onclick="loadAllData()" class="px-3 py-1.5 bg-brand-600 text-white rounded-xl text-xs font-bold shadow-sm">Coba Lagi</button>
+                </div>
+            `;
         }
     }
 
-    loadQueue();
+    loadAllData();
 </script>
 @endpush

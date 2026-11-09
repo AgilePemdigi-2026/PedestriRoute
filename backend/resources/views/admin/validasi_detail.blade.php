@@ -21,7 +21,7 @@
             </a>
             <div>
                 <div class="flex items-center gap-1.5">
-                    <span id="kodeLaporan" class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-extrabold text-brand-700 bg-brand-50 border border-brand-200/60 tracking-tight tabular-nums">
+                    <span id="kodeLaporan" class="text-sm font-extrabold text-slate-800 tracking-tight tabular-nums">
                         #LAP-{{ str_pad($id, 4, '0', STR_PAD_LEFT) }}
                     </span>
                 </div>

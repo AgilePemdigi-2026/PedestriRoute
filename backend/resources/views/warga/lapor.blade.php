@@ -351,25 +351,13 @@
                 <span id="previewFilename" class="hidden absolute bottom-1 left-2 right-2 text-[11px] text-white bg-black/60 px-2 py-0.5 rounded truncate"></span>
             </div>
 
-            <!-- AI Verification Guidance Pill -->
-            <div class="mt-2.5 p-2.5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-xl flex items-start gap-2 text-xs">
-                <span class="w-5 h-5 rounded-md bg-emerald-500/20 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5 font-bold">
-                    <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i>
-                </span>
-                <div class="text-[11px] leading-snug text-slate-600">
-                    <strong class="text-emerald-900 font-bold">Analisis Otomatis AI:</strong>
-                    Arahkan foto tegak lurus ke kerusakan trotoar/fasilitas dengan pencahayaan jelas untuk auto-validasi instan (&le; 10 detik).
-                </div>
-            </div>
-
             <p id="compressInfo" class="hidden mt-2 text-xs text-teal-700 font-medium"></p>
         </div>
 
         <!-- 3. Kategori Masalah Card -->
         <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
-            <div class="flex items-center justify-between mb-3">
+            <div class="mb-3">
                 <span class="text-xs font-bold text-slate-800">Kategori Masalah</span>
-                <span class="text-[10px] font-bold text-rose-500">*Wajib</span>
             </div>
 
             <!-- Categories Grid (5 Kategori) -->
@@ -812,7 +800,7 @@
                 const firstRep = cluster.reports[0];
                 const headerTitle = count > 1 
                     ? `<span class="text-rose-700 font-extrabold">Titik Rawan (${count} Aduan)</span>` 
-                    : `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold text-brand-700 bg-brand-50 border border-brand-200/60 tracking-tight tabular-nums">${firstRep.kode_laporan || '#Aduan'}</span>`;
+                    : `<span class="text-xs font-bold text-slate-800 tracking-tight tabular-nums">${firstRep.kode_laporan || '#Aduan'}</span>`;
                 const safeAddr = (firstRep.alamat || '').replace(/'/g, "\\'");
                 const statusBadge = firstRep.status_perbaikan === 'SEDANG_DIPERBAIKI'
                     ? `<span class="px-1.5 py-0.5 bg-sky-100 text-sky-800 text-[9px] font-bold rounded">Sedang Dikerjakan</span>`

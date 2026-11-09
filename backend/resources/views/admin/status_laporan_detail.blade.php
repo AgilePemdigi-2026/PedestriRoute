@@ -13,7 +13,7 @@
         </a>
         <div>
             <div class="flex items-center gap-1.5">
-                <span id="reportCode" class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-extrabold text-brand-700 bg-brand-50 border border-brand-200/60 tracking-tight tabular-nums">#LAP-....</span>
+                <span id="reportCode" class="text-sm font-extrabold text-slate-800 tracking-tight tabular-nums">#LAP-....</span>
             </div>
             <p class="text-[10px] text-slate-500 font-semibold tracking-wide mt-0.5">Status Perbaikan</p>
         </div>

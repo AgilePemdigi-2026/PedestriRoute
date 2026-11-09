@@ -373,14 +373,9 @@
         <div id="categoryChips" class="hidden"></div>
 
         <!-- Normal Map Service Area Info Banner (Only for Normal Mode) -->
-        <div id="normalMapBanner" class="hidden mb-2 rounded-xl border border-teal-200 bg-teal-50 px-3 py-2" role="note">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-bold text-teal-800">Wilayah Layanan Aktif: Kecamatan Mulyorejo, Surabaya</p>
-                    <p class="text-[11px] text-slate-500 mt-0.5">Batas administratif resmi dan jaringan rute pejalan kaki.</p>
-                </div>
-                <span class="px-2 py-0.5 bg-brand-600 text-white text-[10px] font-bold rounded-md">Aktif</span>
-            </div>
+        <div id="normalMapBanner" class="hidden mb-2 flex items-center gap-1.5 text-xs text-slate-500 px-0.5" role="note">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+            <span>Wilayah Layanan Aktif: <span class="font-medium text-slate-700">Kecamatan Mulyorejo, Surabaya</span></span>
         </div>
 
         <!-- Map Container with Relative Overlay -->
@@ -983,8 +978,9 @@
             legendContainer.classList.add('hidden');
             normalBanner.classList.remove('hidden');
 
-            mapTitle.innerText = 'Peta Wilayah Layanan (Surabaya)';
-            mapSubtitle.innerText = 'Batas administratif resmi dan jaringan rute pejalan kaki';
+            mapTitle.innerText = 'Peta Wilayah Layanan';
+            mapSubtitle.innerText = '';
+            mapSubtitle.classList.add('hidden');
 
             noticeEl.classList.add('hidden');
             emptyOverlay.classList.add('hidden');
@@ -1006,6 +1002,7 @@
 
             mapTitle.innerText = 'Peta Heatmap Kelayakan';
             mapSubtitle.innerText = 'Kondisi segmen jalur ramah pejalan kaki';
+            mapSubtitle.classList.remove('hidden');
 
             if (!map.hasLayer(heatmapLayerGroup)) {
                 map.addLayer(heatmapLayerGroup);
@@ -1181,7 +1178,7 @@
                         <svg class="w-3.5 h-3.5 text-brand-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
                     </span>
                     <div class="min-w-0 flex items-center gap-1.5">
-                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[11px] font-bold text-brand-700 bg-brand-50 border border-brand-200/60 tracking-tight tabular-nums">${single.kode_laporan || ('#LAP-' + String(single.laporan_id).padStart(4, '0'))}</span>
+                        <span class="text-xs font-bold text-slate-800 tracking-tight tabular-nums">${single.kode_laporan || ('#LAP-' + String(single.laporan_id).padStart(4, '0'))}</span>
                         <span class="text-[10px] text-slate-600 font-bold truncate">${single.kategori_nama}</span>
                     </div>
                 </div>
@@ -1310,7 +1307,7 @@
                 <div class="${idx > 0 ? 'pt-3.5 border-t border-slate-200 mt-3.5' : ''}">
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center gap-1.5">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold text-brand-700 bg-brand-50 border border-brand-200/60 tracking-tight tabular-nums">${rep.kode_laporan || ('#LAP-' + String(rep.laporan_id).padStart(4, '0'))}</span>
+                            <span class="text-xs font-bold text-slate-800 tracking-tight tabular-nums">${rep.kode_laporan || ('#LAP-' + String(rep.laporan_id).padStart(4, '0'))}</span>
                             <span class="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-semibold rounded-md flex items-center gap-1">${icon} <span>${rep.kategori_nama}</span></span>
                         </div>
                         ${getReparationBadge(rep.status_perbaikan)}

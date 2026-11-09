@@ -238,7 +238,7 @@
             body.innerHTML = `
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-1.5">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold text-brand-700 bg-brand-50 border border-brand-200/60 tracking-tight tabular-nums">${kodeLaporan(d.laporan_id)}</span>
+                        <span class="text-xs font-bold text-slate-800 tracking-tight tabular-nums">${kodeLaporan(d.laporan_id)}</span>
                         <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium text-slate-600 bg-slate-100">${esc(d.kategori?.nama || '-')}</span>
                     </div>
                     ${statusBadge(d.status)}

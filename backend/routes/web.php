@@ -39,7 +39,7 @@ Route::get('/admin', function () {
 });
 
 Route::get('/admin/validasi', function () {
-    return view('admin.validasi_queue');
+    return view('admin.validasi_queue', ['initialTab' => 'validasi']);
 })->name('admin.validasi.queue');
 
 Route::get('/admin/validasi/{id}', function ($id) {
@@ -47,7 +47,7 @@ Route::get('/admin/validasi/{id}', function ($id) {
 })->name('admin.validasi.detail');
 
 Route::get('/admin/status-laporan', function () {
-    return view('admin.status_laporan_queue');
+    return view('admin.validasi_queue', ['initialTab' => 'perbaikan']);
 })->name('admin.status_laporan.queue');
 
 Route::get('/admin/status-laporan/{id}', function ($id) {

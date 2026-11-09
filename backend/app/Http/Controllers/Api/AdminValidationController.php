@@ -45,10 +45,14 @@ class AdminValidationController extends Controller
             $reportsQuery->where('status_perbaikan', $repairFilter);
         }
 
+        $sort = strtolower(trim((string) $request->query('sort', 'asc')));
+
         $reports = $reportsQuery
             ->when(
                 $isQueue,
-                fn ($q) => $q->orderBy('tanggal_lapor', 'asc'),
+                fn ($q) => $sort === 'desc'
+                    ? $q->orderByDesc('tanggal_lapor')->orderByDesc('laporan_id')
+                    : $q->orderBy('tanggal_lapor', 'asc')->orderBy('laporan_id', 'asc'),
                 fn ($q) => $q->orderByDesc('tanggal_validasi')
             )
             ->get();

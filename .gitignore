@@ -29,4 +29,5 @@ runs/
 /pedestriroute_classifier.onnx
 .agents/
 skills-lock.json
+*.output
 
