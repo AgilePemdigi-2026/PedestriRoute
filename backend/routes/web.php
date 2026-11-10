@@ -25,6 +25,10 @@ Route::get('/lapor-kondisi', function () {
     return view('warga.lapor');
 })->name('warga.lapor');
 
+Route::get('/rute-pejalan-kaki', function () {
+    return view('warga.rute');
+})->name('warga.rute');
+
 Route::get('/riwayat-laporan', function () {
     return view('warga.riwayat');
 })->name('warga.riwayat');
