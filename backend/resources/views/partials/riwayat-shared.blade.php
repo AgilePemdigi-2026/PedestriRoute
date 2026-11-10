@@ -74,13 +74,13 @@
 
 <script>
     const STATUS_META = {
-        MENUNGGU_VALIDASI_ADMIN: { label: 'Menunggu', cls: 'bg-amber-50 text-amber-800 border-amber-100' },
-        DIPROSES:                { label: 'Dianalisis AI', cls: 'bg-sky-50 text-sky-800 border-sky-200' },
-        TERVALIDASI:             { label: 'Valid',    cls: 'bg-emerald-50 text-emerald-800 border-emerald-100' },
-        DITOLAK:                 { label: 'Ditolak',  cls: 'bg-rose-50 text-rose-800 border-rose-100' },
-        SEDANG_DIPERBAIKI:       { label: 'Sedang Diperbaiki', cls: 'bg-sky-50 text-sky-800 border-sky-200' },
-        SUDAH_DIPERBAIKI:        { label: 'Sudah Diperbaiki', cls: 'bg-emerald-50 text-emerald-800 border-emerald-100' },
-        BELUM_DITANGANI:         { label: 'Belum Ditangani', cls: 'bg-amber-50 text-amber-800 border-amber-100' },
+        MENUNGGU_VALIDASI_ADMIN: { label: 'Menunggu', cls: 'bg-amber-50 text-amber-700 border-amber-200/80', icon: '<svg class="w-2.5 h-2.5 text-amber-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' },
+        DIPROSES:                { label: 'Dianalisis ML', cls: 'bg-sky-50 text-sky-700 border-sky-200/80', icon: '<span class="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse shrink-0"></span>' },
+        TERVALIDASI:             { label: 'Valid', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200/80', icon: '<svg class="w-2.5 h-2.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' },
+        DITOLAK:                 { label: 'Ditolak', cls: 'bg-rose-50 text-rose-700 border-rose-200/80', icon: '<svg class="w-2.5 h-2.5 text-rose-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>' },
+        SEDANG_DIPERBAIKI:       { label: 'Sedang Diperbaiki', cls: 'bg-sky-50 text-sky-700 border-sky-200/80', icon: '<svg class="w-2.5 h-2.5 text-sky-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>' },
+        SUDAH_DIPERBAIKI:        { label: 'Sudah Diperbaiki', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200/80', icon: '<svg class="w-2.5 h-2.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' },
+        BELUM_DITANGANI:         { label: 'Belum Ditangani', cls: 'bg-amber-50 text-amber-700 border-amber-200/80', icon: '<svg class="w-2.5 h-2.5 text-amber-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' },
     };
 
     function formatProgressLabel(status) {
@@ -94,8 +94,8 @@
     }
 
     function statusBadge(status) {
-        const m = STATUS_META[status] || { label: status, cls: 'bg-slate-50 text-slate-700 border-slate-200' };
-        return `<span class="px-2 py-0.5 rounded-full border text-[10px] font-bold ${m.cls}">${esc(m.label)}</span>`;
+        const m = STATUS_META[status] || { label: status, cls: 'bg-slate-50 text-slate-700 border-slate-200/80', icon: '' };
+        return `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[10.5px] font-semibold whitespace-nowrap shrink-0 shadow-2xs ${m.cls}">${m.icon || ''}<span>${esc(m.label)}</span></span>`;
     }
 
     function fmtDate(iso) {
@@ -277,6 +277,12 @@
                         ` : ''}
                         ${d.cv_label === 'SPAM' ? `
                             <p class="text-[11px] text-rose-800 pt-0.5">⚠️ Foto terindikasi bukan trotoar/fasilitas publik. Menunggu verifikasi admin.</p>
+                        ` : ''}
+                        ${d.cv_label === 'TERHALANG' ? `
+                            <p class="text-[11px] text-amber-800 pt-0.5">ℹ️ Fasilitas terdeteksi terhalang oleh parkir liar atau hambatan pada jalur pejalan kaki.</p>
+                        ` : ''}
+                        ${d.cv_label === 'RUSAK' ? `
+                            <p class="text-[11px] text-rose-800 pt-0.5">⚠️ Terdeteksi kerusakan fisik pada infrastruktur pejalan kaki.</p>
                         ` : ''}
                     </div>
                 ` : ''}

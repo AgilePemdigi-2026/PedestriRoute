@@ -360,14 +360,14 @@
                 <span class="text-xs font-bold text-slate-800">Kategori Masalah</span>
             </div>
 
-            <!-- Categories Grid (5 Kategori) -->
+            <!-- Categories Grid (4 Kategori) -->
             <div id="categoriesGrid" class="grid grid-cols-2 gap-2">
                 <!-- 1: Trotoar Rusak -->
                 <button type="button" data-id="1" data-slug="trotoar_rusak"
                     class="cat-chip p-3 rounded-xl border-2 border-brand-500 bg-teal-50/70 text-brand-900 text-left transition flex items-center gap-2.5">
                     <div class="w-8 h-8 rounded-lg bg-teal-100 text-brand-700 flex items-center justify-center shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 21 8.5 3m11.5 18L15.5 3M5.5 15h13M7 9h10M12 21v-6m-2.5 0V9m5 6V9M12 9V3"/>
                         </svg>
                     </div>
                     <div class="min-w-0">
@@ -381,7 +381,9 @@
                     class="cat-chip p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-left transition flex items-center gap-2.5">
                     <div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                            <circle cx="12" cy="12" r="9"/>
+                            <circle cx="12" cy="12" r="5"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v4m0 10v4M3 12h4m10 0h4"/>
                         </svg>
                     </div>
                     <div class="min-w-0">
@@ -405,26 +407,9 @@
                     </div>
                 </button>
 
-                <!-- 4: Penyebrangan Rusak -->
-                <button type="button" data-id="4" data-slug="penyebrangan_rusak"
-                    class="cat-chip p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-left transition flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <rect width="10" height="18" x="7" y="3" rx="4"/>
-                            <circle cx="12" cy="7.5" r="1.5" fill="currentColor"/>
-                            <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
-                            <circle cx="12" cy="16.5" r="1.5" fill="currentColor"/>
-                        </svg>
-                    </div>
-                    <div class="min-w-0">
-                        <p class="font-bold text-xs text-slate-800 leading-tight">Penyeberangan</p>
-                        <p class="text-[11px] text-slate-400 truncate mt-0.5">Zebra cross / rambu</p>
-                    </div>
-                </button>
-
                 <!-- 5: Parkir Liar -->
                 <button type="button" data-id="5" data-slug="parkir_liar"
-                    class="cat-chip col-span-2 p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-left transition flex items-center gap-2.5">
+                    class="cat-chip p-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-left transition flex items-center gap-2.5">
                     <div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <circle cx="12" cy="12" r="10"/>

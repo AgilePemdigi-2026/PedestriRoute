@@ -52,7 +52,7 @@ return [
         'url' => env('CV_SERVICE_URL', 'http://cv-service:8000'),
         'threshold' => (float) env('CFG_CV_THRESHOLD', 0.80),
         'timeout' => (int) env('CFG_CV_TIMEOUT_SECONDS', 10),
-        'categories' => array_map('trim', explode(',', env('CFG_CV_CATEGORIES', 'Trotoar Rusak,Masalah Drainase,Guiding Block Rusak,Penyebrangan Rusak,Parkir Liar'))),
+        'categories' => array_map('trim', explode(',', env('CFG_CV_CATEGORIES', 'Trotoar Rusak,Masalah Drainase,Guiding Block Rusak,Parkir Liar'))),
         'mock' => env('CV_MOCK', false),
     ],
 

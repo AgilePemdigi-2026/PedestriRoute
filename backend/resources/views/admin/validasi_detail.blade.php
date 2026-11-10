@@ -89,35 +89,65 @@
         </div>
     </section>
 
-    <!-- Deteksi AI Section (Simplified & Clean) -->
-    <div class="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-sm mb-3">
-        <div class="flex items-center justify-between mb-2">
-            <div class="flex items-center gap-1.5">
-                <span class="text-sm">✨</span>
-                <span class="text-xs font-bold text-slate-800">Deteksi AI</span>
-            </div>
-            <span id="cvBadge" class="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
-                Tinjauan Manual
-            </span>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2 mb-2">
-            <div class="bg-slate-50 rounded-xl p-2.5">
-                <p class="text-[10px] text-slate-400 font-medium">Prediksi</p>
-                <p id="cvLabelText" class="text-xs font-bold text-slate-700 mt-0.5">Tinjau Langsung</p>
-            </div>
-            <div class="bg-slate-50 rounded-xl p-2.5">
-                <p class="text-[10px] text-slate-400 font-medium">Keyakinan AI</p>
-                <p id="cvScoreText" class="text-xs font-bold text-slate-700 mt-0.5">-</p>
-                <div class="w-full bg-slate-200 h-1 rounded-full mt-1.5 overflow-hidden">
-                    <div id="cvProgressBar" class="bg-brand-600 h-full rounded-full" style="width: 0%"></div>
+    <!-- Machine Learning Verification Section -->
+    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm mb-3">
+        <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-lg bg-teal-50 border border-teal-200 text-brand-600 flex items-center justify-center text-xs">
+                    <i class="fa-solid fa-robot"></i>
+                </span>
+                <div>
+                    <h3 class="text-xs font-extrabold text-slate-800">Verifikasi Machine Learning (YOLOv8)</h3>
+                    <p class="text-[10px] text-slate-400">Protokol Evaluasi & Klasifikasi Kerusakan</p>
                 </div>
             </div>
+            <div class="flex items-center gap-1.5">
+                <span id="cvBadge" class="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+                    Memuat...
+                </span>
+                <button type="button" id="btnTriggerMl" onclick="triggerMlAnalysis()" title="Jalankan / Ulangi analisis Machine Learning"
+                    class="px-2 py-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-brand-600 text-[10px] font-bold rounded-lg transition inline-flex items-center gap-1 shadow-2xs cursor-pointer">
+                    <i class="fa-solid fa-arrows-rotate text-[10px]" id="iconTriggerMl"></i>
+                    <span id="textTriggerMl">Jalankan ML</span>
+                </button>
+            </div>
         </div>
 
-        <p id="cvNoteText" class="text-[11px] text-slate-500 leading-snug">
-            Analisis otomatis tidak tersedia. Silakan validasi laporan secara manual.
-        </p>
+        <!-- Prominent Condition Card (Same format as user page: RUSAK / BAIK / TERHALANG / SPAM) -->
+        <div id="conditionCard" class="rounded-xl p-3 border mb-3 bg-slate-50 border-slate-200 text-slate-800 transition">
+            <div class="flex items-center justify-between gap-2 mb-1">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Hasil Deteksi Kondisi</span>
+                <span id="conditionBadge" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-extrabold uppercase tracking-wide bg-slate-200 text-slate-800 border border-slate-300">
+                    MEMUAT...
+                </span>
+            </div>
+            <h4 id="conditionTitle" class="text-xs font-bold text-slate-900 mb-1">Memeriksa kondisi foto...</h4>
+            <p id="conditionDesc" class="text-[11px] text-slate-600 leading-snug">Menghubungkan ke layanan Machine Learning...</p>
+        </div>
+
+        <!-- ML Confidence Metric -->
+        <div class="pt-2 border-t border-slate-100 space-y-1.5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Tingkat Keyakinan ML (YOLOv8)</span>
+                    <span id="confidenceBadge" class="inline-block mt-0.5 px-2 py-0.2 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                        Belum tersedia
+                    </span>
+                </div>
+                <span id="confidencePercent" class="text-lg font-extrabold text-slate-800 tabular-nums">—</span>
+            </div>
+            <div id="confidenceTrack" class="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200/60">
+                <div id="confidenceBar" class="bg-brand-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <p id="confidenceHint" class="text-[10.5px] text-slate-500 leading-relaxed">
+                Tingkat keyakinan model Machine Learning terhadap hasil klasifikasi kondisi.
+            </p>
+        </div>
+
+        <!-- Dynamic Quick Action Suggestion from ML -->
+        <div id="mlQuickActionContainer" class="hidden mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap items-center gap-2">
+            <!-- Injected via JavaScript -->
+        </div>
     </div>
 
     <!-- Admin Decision Box -->
@@ -225,6 +255,18 @@
         cardTidakValid.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
 
+    window.quickApproveRusak = function() {
+        cardValid.click();
+        cardValid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showToast('Keputusan Valid dipilih sesuai hasil deteksi kerusakan ML.', 'info');
+    };
+
+    window.quickApproveTerhalang = function() {
+        cardValid.click();
+        cardValid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showToast('Keputusan Valid dipilih sesuai hasil deteksi halangan ML.', 'info');
+    };
+
     // Lightbox handlers
     const btnZoomPhoto = document.getElementById('btnZoomPhoto');
     const photoLightbox = document.getElementById('photoLightbox');
@@ -330,6 +372,228 @@
         }
     }
 
+    const conditionConfig = {
+        RUSAK: {
+            badge: 'RUSAK',
+            badgeClass: 'bg-rose-50 text-rose-800 border border-rose-200',
+            cardClass: 'bg-rose-50/70 border-rose-200 text-rose-950',
+            title: 'Kondisi: Terdeteksi Rusak',
+            desc: 'Model Machine Learning mendeteksi adanya kerusakan fisik pada fasilitas pejalan kaki ini.',
+            hint: 'Tingkat keyakinan model terhadap indikasi kerusakan fisik fasilitas pejalan kaki.',
+        },
+        BAIK: {
+            badge: 'BAIK (NORMAL)',
+            badgeClass: 'bg-emerald-50 text-emerald-800 border border-emerald-200',
+            cardClass: 'bg-emerald-50/70 border-emerald-200 text-emerald-950',
+            title: 'Kondisi: Terdeteksi Baik (Normal)',
+            desc: 'Model Machine Learning mengklasifikasikan fasilitas dalam kondisi baik atau tidak ditemukan kerusakan yang signifikan.',
+            hint: 'Fasilitas terindikasi dalam kondisi normal. Petugas disarankan memeriksa kepastian laporan.',
+        },
+        TERHALANG: {
+            badge: 'TERHALANG',
+            badgeClass: 'bg-amber-50 text-amber-800 border border-amber-200',
+            cardClass: 'bg-amber-50/70 border-amber-200 text-amber-950',
+            title: 'Kondisi: Terdeteksi Terhalang',
+            desc: 'Model Machine Learning mendeteksi fasilitas terhalang oleh parkir liar, PKL, atau hambatan lainnya.',
+            hint: 'Tingkat keyakinan model terhadap indikasi halangan pada jalur pejalan kaki.',
+        },
+        SPAM: {
+            badge: 'TIDAK RELEVAN / SPAM',
+            badgeClass: 'bg-rose-100 text-rose-900 border border-rose-300',
+            cardClass: 'bg-rose-50/70 border-rose-200 text-rose-950',
+            title: 'Kondisi: Bukan Fasilitas / Tidak Relevan',
+            desc: 'Model Machine Learning mengindikasikan foto bukan merupakan fasilitas pejalan kaki yang valid.',
+            hint: 'Foto terindikasi tidak relevan. Petugas disarankan menolak laporan.',
+        }
+    };
+
+    let detailPollTimer = null;
+    let detailPollCount = 0;
+    function checkDetailPolling(status) {
+        if (status === 'DIPROSES') {
+            if (!detailPollTimer) {
+                detailPollCount = 0;
+                detailPollTimer = setInterval(async () => {
+                    detailPollCount++;
+                    if (detailPollCount >= 15) {
+                        clearInterval(detailPollTimer);
+                        detailPollTimer = null;
+                        return;
+                    }
+                    await loadReportDetail();
+                }, 3000);
+            }
+        } else {
+            if (detailPollTimer) {
+                clearInterval(detailPollTimer);
+                detailPollTimer = null;
+            }
+        }
+    }
+
+    async function triggerMlAnalysis() {
+        const btn = document.getElementById('btnTriggerMl');
+        const icon = document.getElementById('iconTriggerMl');
+        const text = document.getElementById('textTriggerMl');
+        if (btn) btn.disabled = true;
+        if (icon) icon.classList.add('fa-spin');
+        if (text) text.innerText = 'Memproses...';
+
+        try {
+            const res = await fetch(`/api/v1/admin/reports/${reportId}/analyze-cv`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                showToast(errData.error?.message || 'Gagal menjalankan analisis Machine Learning.', 'error');
+                return;
+            }
+
+            const json = await res.json();
+            showToast('Analisis Machine Learning berhasil dijalankan!', 'success');
+            await loadReportDetail();
+        } catch (e) {
+            showToast('Gagal terhubung ke microservice Machine Learning.', 'error');
+        } finally {
+            if (btn) btn.disabled = false;
+            if (icon) icon.classList.remove('fa-spin');
+            if (text) text.innerText = 'Analisis Ulang';
+        }
+    }
+
+    function renderMlSection(report) {
+        const condCard = document.getElementById('conditionCard');
+        const condBadge = document.getElementById('conditionBadge');
+        const condTitle = document.getElementById('conditionTitle');
+        const condDesc = document.getElementById('conditionDesc');
+        const cvBadge = document.getElementById('cvBadge');
+        const confBadge = document.getElementById('confidenceBadge');
+        const confPercent = document.getElementById('confidencePercent');
+        const confBar = document.getElementById('confidenceBar');
+        const confHint = document.getElementById('confidenceHint');
+        const quickContainer = document.getElementById('mlQuickActionContainer');
+        const textTrigger = document.getElementById('textTriggerMl');
+
+        const hasScore = report.confidence_score !== null && report.confidence_score !== undefined &&
+            report.confidence_score !== '' && Number.isFinite(Number(report.confidence_score));
+        const score = hasScore ? Number(report.confidence_score) : null;
+        const percent = hasScore ? Math.round(score * 100) : null;
+        const label = report.cv_label ? String(report.cv_label).toUpperCase() : null;
+        const isProcessing = report.status === 'DIPROSES';
+
+        if (textTrigger) {
+            textTrigger.innerText = hasScore ? 'Analisis Ulang' : 'Jalankan ML';
+        }
+
+        if (isProcessing) {
+            cvBadge.innerText = 'Sedang Dianalisis';
+            cvBadge.className = 'text-[10px] font-bold text-sky-700 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded-full animate-pulse';
+            condCard.className = 'rounded-xl p-3 border mb-3 bg-sky-50/70 border-sky-200 text-sky-950';
+            condBadge.innerText = 'PROSES ML';
+            condBadge.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-extrabold uppercase tracking-wide bg-sky-100 text-sky-800 border border-sky-200';
+            condTitle.innerText = 'Foto Sedang Dianalisis Model YOLOv8...';
+            condDesc.innerText = 'Evaluasi microservice Computer Vision sedang berjalan. Halaman akan memeriksa status secara berkala.';
+            confBadge.innerText = 'Sedang Berjalan';
+            confBadge.className = 'inline-block mt-0.5 px-2 py-0.2 rounded-full text-[10px] font-bold bg-sky-100 text-sky-700 border border-sky-200';
+            confPercent.innerText = '...';
+            confBar.style.width = '60%';
+            confBar.className = 'bg-sky-500 h-full rounded-full animate-pulse';
+            confHint.innerText = 'Mengevaluasi segmentasi dan probabilitas fitur visual pejalan kaki...';
+            if (quickContainer) quickContainer.classList.add('hidden');
+            return;
+        }
+
+        if (hasScore && label && conditionConfig[label]) {
+            const cfg = conditionConfig[label];
+            condCard.className = `rounded-xl p-3 border mb-3 ${cfg.cardClass}`;
+            condBadge.innerText = cfg.badge;
+            condBadge.className = `inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-extrabold uppercase tracking-wide ${cfg.badgeClass}`;
+            condTitle.innerText = cfg.title;
+            condDesc.innerText = cfg.desc;
+            confHint.innerText = cfg.hint;
+
+            let levelText = 'Keyakinan Rendah (<60%)';
+            let levelBadgeCls = 'bg-slate-100 text-slate-700 border border-slate-200';
+            let barColor = 'bg-slate-400';
+
+            if (score >= 0.80) {
+                levelText = 'Sangat Yakin (≥80%)';
+                levelBadgeCls = 'bg-emerald-50 text-emerald-800 border border-emerald-200';
+                barColor = 'bg-brand-600';
+            } else if (score >= 0.60) {
+                levelText = 'Cukup Yakin (60%-79%)';
+                levelBadgeCls = 'bg-amber-50 text-amber-800 border border-amber-200';
+                barColor = 'bg-amber-500';
+            }
+
+            cvBadge.innerText = percent >= 80 ? '✓ Terverifikasi ML' : 'Tinjauan ML';
+            cvBadge.className = `text-[10px] font-bold ${percent >= 80 ? 'text-emerald-800 bg-emerald-50 border border-emerald-200' : 'text-amber-800 bg-amber-50 border border-amber-200'} px-2 py-0.5 rounded-full`;
+
+            confBadge.innerText = levelText;
+            confBadge.className = `inline-block mt-0.5 px-2 py-0.2 rounded-full text-[10px] font-bold ${levelBadgeCls}`;
+            confPercent.innerText = `${percent}%`;
+            confBar.style.width = `${percent}%`;
+            confBar.className = `${barColor} h-full rounded-full transition-all duration-500`;
+
+            // Quick actions if pending review
+            if (quickContainer) {
+                if (report.status === 'MENUNGGU_VALIDASI_ADMIN') {
+                    quickContainer.classList.remove('hidden');
+                    let actionHtml = `<span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block w-full mb-1">Rekomendasi Keputusan Admin:</span>`;
+                    if (label === 'SPAM') {
+                        actionHtml += `
+                            <button type="button" onclick="quickRejectSpam()" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
+                                <i class="fa-solid fa-ban"></i> Tolak Cepat (Foto SPAM)
+                            </button>
+                        `;
+                    } else if (label === 'BAIK') {
+                        actionHtml += `
+                            <button type="button" onclick="quickRejectNormal()" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
+                                <i class="fa-solid fa-ban"></i> Tolak Cepat (Kondisi Normal)
+                            </button>
+                        `;
+                    } else if (label === 'TERHALANG') {
+                        actionHtml += `
+                            <button type="button" onclick="quickApproveTerhalang()" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
+                                <i class="fa-solid fa-check"></i> Setujui Laporan (Halangan Terverifikasi)
+                            </button>
+                        `;
+                    } else { // RUSAK
+                        actionHtml += `
+                            <button type="button" onclick="quickApproveRusak()" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
+                                <i class="fa-solid fa-check"></i> Setujui Laporan (Kerusakan Terverifikasi)
+                            </button>
+                        `;
+                    }
+                    quickContainer.innerHTML = actionHtml;
+                } else {
+                    quickContainer.classList.add('hidden');
+                }
+            }
+        } else {
+            // No ML analysis yet
+            cvBadge.innerText = 'Tinjauan Manual';
+            cvBadge.className = 'text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full';
+            condCard.className = 'rounded-xl p-3 border mb-3 bg-slate-50 border-slate-200 text-slate-700';
+            condBadge.innerText = 'BELUM DIANALISIS';
+            condBadge.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-extrabold uppercase tracking-wide bg-slate-200 text-slate-700 border border-slate-300';
+            condTitle.innerText = 'Analisis otomatis belum dijalankan';
+            condDesc.innerText = 'Analisis otomatis tidak tersedia. Silakan validasi laporan secara manual atau klik tombol "Jalankan ML" di atas.';
+            confBadge.innerText = 'Belum tersedia';
+            confBadge.className = 'inline-block mt-0.5 px-2 py-0.2 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200';
+            confPercent.innerText = '—';
+            confBar.style.width = '0%';
+            confHint.innerText = 'Analisis otomatis tidak tersedia. Silakan validasi laporan secara manual.';
+            if (quickContainer) quickContainer.classList.add('hidden');
+        }
+    }
+
     // Load Report Detail
     async function loadReportDetail() {
         try {
@@ -372,61 +636,8 @@
                 document.getElementById('photoSkeleton').innerText = 'Foto tidak tersedia.';
             }
 
-            if (report.confidence_score !== null && report.confidence_score !== undefined) {
-                const percent = Math.round(report.confidence_score * 100);
-                document.getElementById('cvScoreText').innerText = `${percent}%`;
-                document.getElementById('cvProgressBar').style.width = `${percent}%`;
-                const badge = document.getElementById('cvBadge');
-                const note = document.getElementById('cvNoteText');
-                const label = report.cv_label || 'RUSAK';
-
-                if (label === 'SPAM') {
-                    if (badge) {
-                        badge.innerText = '⚠️ Terdeteksi SPAM';
-                        badge.className = 'text-[10px] font-bold text-rose-800 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full';
-                    }
-                    if (note) {
-                        note.innerHTML = `
-                            <div class="space-y-1.5">
-                                <p><span class="text-rose-700 font-bold">Peringatan AI:</span> Konten non-infrastruktur / tidak relevan (${percent}%). Disarankan ditolak.</p>
-                                ${report.status === 'MENUNGGU_VALIDASI_ADMIN' ? `
-                                    <button type="button" onclick="quickRejectSpam()" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] rounded-lg shadow-sm transition inline-flex items-center gap-1.5 cursor-pointer">
-                                        <i class="fa-solid fa-ban"></i> Tolak Cepat (Foto SPAM)
-                                    </button>
-                                ` : ''}
-                            </div>
-                        `;
-                    }
-                } else if (label === 'BAIK') {
-                    if (badge) {
-                        badge.innerText = 'ℹ️ Terdeteksi Normal';
-                        badge.className = 'text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full';
-                    }
-                    if (note) {
-                        note.innerHTML = `
-                            <div class="space-y-1.5">
-                                <p><span class="text-amber-800 font-bold">Catatan AI:</span> Fasilitas pejalan kaki terdeteksi dalam kondisi baik/tidak rusak (${percent}%). Kemungkinan laporan keliru.</p>
-                                ${report.status === 'MENUNGGU_VALIDASI_ADMIN' ? `
-                                    <button type="button" onclick="quickRejectNormal()" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] rounded-lg shadow-sm transition inline-flex items-center gap-1.5 cursor-pointer">
-                                        <i class="fa-solid fa-ban"></i> Tolak Cepat (Kondisi Normal)
-                                    </button>
-                                ` : ''}
-                            </div>
-                        `;
-                    }
-                } else {
-                    if (badge) {
-                        badge.innerText = percent >= 80 ? '✓ Terverifikasi AI' : 'Tinjauan AI';
-                        badge.className = `text-[10px] font-bold ${percent >= 80 ? 'text-emerald-800 bg-emerald-50 border border-emerald-200' : 'text-amber-800 bg-amber-50 border border-amber-200'} px-2 py-0.5 rounded-full`;
-                    }
-                    if (note) {
-                        note.innerText = `AI mendeteksi kerusakan fasilitas dengan keyakinan ${percent}%.`;
-                    }
-                }
-            }
-            if (report.cv_label) {
-                document.getElementById('cvLabelText').innerText = report.cv_label;
-            }
+            renderMlSection(report);
+            checkDetailPolling(report.status);
 
             // Check if report has already been reviewed (read-only view)
             const headerSubtitle = document.getElementById('headerSubtitle');
@@ -488,6 +699,20 @@
                 btnDisabledDecision.className = 'w-full py-2.5 bg-rose-600 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 mb-2 cursor-not-allowed shadow-sm';
                 btnDisabledDecision.innerText = '✕ Status: DITOLAK';
                 btnDisabledDecision.classList.remove('hidden');
+            } else if (report.status === 'DIPROSES') {
+                headerStatusBadge.className = 'px-2.5 py-1 bg-sky-100 text-sky-800 text-[10px] font-extrabold rounded-full border border-sky-200 animate-pulse';
+                headerStatusBadge.innerText = '⚡ Proses ML';
+                headerSubtitle.innerText = 'Foto sedang dievaluasi oleh Machine Learning';
+                btnSubmitDecision.classList.remove('hidden');
+                btnDisabledDecision.classList.add('hidden');
+                statusHistoryBanner.classList.add('hidden');
+            } else {
+                headerStatusBadge.className = 'px-2.5 py-1 bg-amber-100 text-amber-800 text-[10px] font-extrabold rounded-full border border-amber-200';
+                headerStatusBadge.innerText = 'Menunggu Validasi';
+                headerSubtitle.innerText = 'Tinjau bukti foto dan keputusan Machine Learning';
+                btnSubmitDecision.classList.remove('hidden');
+                btnDisabledDecision.classList.add('hidden');
+                statusHistoryBanner.classList.add('hidden');
             }
         } catch (e) {
             showToast('Gagal memuat detail laporan', 'error');

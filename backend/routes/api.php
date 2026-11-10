@@ -59,6 +59,7 @@ Route::prefix('v1')->group(function () {
         Route::middleware('role:admin')->prefix('admin')->group(function () {
             Route::get('/reports', [AdminValidationController::class, 'index']);
             Route::post('/reports/{id}/validation', [AdminValidationController::class, 'validateReport']);
+            Route::post('/reports/{id}/analyze-cv', [AdminValidationController::class, 'analyzeCv']);
             Route::match(['patch', 'post'], '/reports/{id}/repair-status', [AdminRepairController::class, 'updateRepairStatus']);
             Route::get('/statistics', [AdminValidationController::class, 'statistics']);
         });

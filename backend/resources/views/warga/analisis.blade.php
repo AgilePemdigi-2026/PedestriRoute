@@ -36,7 +36,17 @@
         main { display: grid; gap: 16px; padding: 20px 20px max(28px, env(safe-area-inset-bottom)); }
         
         /* Status Card - Uniform & Clean */
-        .state { border: 1px solid #e2e8f0; border-radius: 16px; padding: 14px 18px; background: #ffffff; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03); }
+        .state { border: 1px solid #e2e8f0; border-radius: 16px; padding: 14px 18px; background: #ffffff; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03); transition: border-color .2s ease, background-color .2s ease; }
+        .state[data-tone="rejected"] { border-color: #fecaca; background: #fffafa; }
+        .state[data-tone="rejected"] #statusTitle { color: #b91c1c; }
+        .state[data-tone="valid"] { border-color: #bbf7d0; background: #f0fdf4; }
+        .state[data-tone="valid"] #statusTitle { color: #15803d; }
+        .state[data-tone="pending"] { border-color: #fde68a; background: #fffbeb; }
+        .state[data-tone="pending"] #statusTitle { color: #b45309; }
+        .status-pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+        .status-pill[data-tone="rejected"] { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .status-pill[data-tone="valid"] { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .status-pill[data-tone="pending"] { background: #fffbeb; color: #92400e; border: 1px solid #fef08a; }
         .eyebrow { color: #64748b; text-transform: uppercase; letter-spacing: .06em; font-size: 10px; font-weight: 700; margin: 0; }
         .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #00625730; border-top-color: var(--teal); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -151,9 +161,11 @@
             <span id="resultIcon" style="display: none !important;" aria-hidden="true"></span>
             <div style="display: flex; align-items: center; justify-content: space-between;">
                 <p class="eyebrow">Status Laporan</p>
+                <span id="statusBadge" class="status-pill" hidden></span>
                 <span id="processingIcon" class="spinner" aria-hidden="true"></span>
             </div>
             <h2 id="statusTitle">Memproses Analisis ML</h2>
+            <p id="statusDescription" class="hint" style="margin-top: 6px; font-size: 11.5px;"></p>
         </section>
 
         <section id="resultCard" class="result" aria-label="Ringkasan hasil analisis ML" hidden>
@@ -292,8 +304,12 @@
         const percent = hasScore ? Math.round(score * 100) : null;
         const history = Array.isArray(data.riwayat) ? data.riwayat : [];
         const validation = [...history].reverse().find(item => ['TERVALIDASI', 'DITOLAK'].includes(item.status));
+        const isAutoRejectLabel = ['BAIK', 'SPAM'].includes(label) && hasScore && score >= 0.8;
+        const isRejected = data.status === 'DITOLAK' || isAutoRejectLabel;
         const autoValidated = data.status === 'TERVALIDASI' && validation?.status === 'TERVALIDASI' &&
             /tervalidasi otomatis oleh computer vision/i.test(validation.catatan || '');
+        const autoRejected = (data.status === 'DITOLAK' && validation?.status === 'DITOLAK' &&
+            /ditolak otomatis oleh computer vision/i.test(validation.catatan || '')) || isAutoRejectLabel;
 
         let title = statusLabels[data.status] || 'Status sedang diperbarui';
         let description = 'Lihat perkembangan laporan melalui halaman Riwayat Laporan.';
@@ -302,6 +318,14 @@
 
         if (processing) {
             description = 'Foto sedang dianalisis oleh model Machine Learning. Status diperiksa otomatis setiap 3 detik.';
+        } else if (isRejected) {
+            title = autoRejected ? 'Ditolak Otomatis oleh ML' : 'Laporan Ditolak';
+            description = label === 'BAIK'
+                ? `Kondisi fasilitas terdeteksi Baik (Normal) dengan keyakinan ${percent}% (≥80%). Laporan ditolak otomatis oleh sistem karena fasilitas tidak mengalami kerusakan.`
+                : label === 'SPAM'
+                    ? `Foto terdeteksi bukan merupakan fasilitas pejalan kaki publik (${percent}% ≥80%). Laporan ditolak otomatis oleh sistem.`
+                    : (data.alasan_penolakan || 'Laporan tidak disetujui. Fasilitas tidak memenuhi kriteria pelaporan.');
+            tone = 'rejected'; icon = '×';
         } else if (data.status === 'TERVALIDASI') {
             title = autoValidated ? 'Tervalidasi Otomatis oleh ML' : 'Laporan Tervalidasi';
             description = autoValidated
@@ -309,15 +333,13 @@
                 : 'Laporan telah diverifikasi valid oleh petugas dinas dan masuk ke antrean perbaikan.';
             tone = 'valid'; icon = '✓';
         } else if (data.status === 'MENUNGGU_VALIDASI_ADMIN') {
-            description = label === 'BAIK'
-                ? 'Model ML mengklasifikasikan kondisi Baik/Normal. Petugas dinas akan memeriksa kembali laporanmu.'
-                : label === 'SPAM'
-                    ? 'Foto terindikasi tidak relevan. Petugas dinas akan memverifikasi secara langsung.'
-                    : (hasScore && score < 0.8)
-                        ? `Model ML mendeteksi kondisi ${label || 'Rusak'}, namun keyakinan (${percent}%) di bawah 80%. Petugas akan memverifikasi terlebih dahulu.`
-                        : 'Laporan sudah diterima. Petugas dinas akan memeriksa hasil analisis sebelum menentukan keputusan.';
+            title = 'Menunggu verifikasi petugas';
+            description = (hasScore && score < 0.8)
+                ? `Model ML mendeteksi kondisi ${label || 'Rusak'}, namun keyakinan (${percent}%) di bawah 80%. Petugas akan memverifikasi terlebih dahulu.`
+                : 'Laporan sudah diterima. Petugas dinas akan memeriksa hasil analisis sebelum menentukan keputusan.';
             tone = 'pending'; icon = '…';
         } else if (data.status === 'DITOLAK') {
+            title = autoRejected ? 'Ditolak Otomatis oleh ML' : 'Laporan Ditolak';
             description = data.alasan_penolakan || 'Laporan tidak disetujui petugas. Lihat alasan pada riwayat status.';
             tone = 'rejected'; icon = '×';
         }
@@ -334,6 +356,25 @@
         el('resultIcon').textContent = icon;
         el('resultCard').hidden = processing;
 
+        const statusBadge = el('statusBadge');
+        if (statusBadge) {
+            if (processing) {
+                statusBadge.hidden = true;
+            } else {
+                statusBadge.hidden = false;
+                statusBadge.dataset.tone = tone;
+                if (isRejected) {
+                    statusBadge.textContent = 'Ditolak';
+                } else if (data.status === 'TERVALIDASI') {
+                    statusBadge.textContent = 'Tervalidasi';
+                } else if (data.status === 'MENUNGGU_VALIDASI_ADMIN') {
+                    statusBadge.textContent = 'Verifikasi';
+                } else {
+                    statusBadge.textContent = statusLabels[data.status] || data.status;
+                }
+            }
+        }
+
         if (changed && !processing) {
             statusCard.classList.remove('fade-in');
             requestAnimationFrame(() => statusCard.classList.add('fade-in'));
@@ -348,7 +389,18 @@
             el('conditionBadge').textContent = cfg.badge;
             el('conditionTitle').textContent = cfg.title;
             if (el('conditionDesc')) el('conditionDesc').textContent = cfg.desc;
-            el('confidenceHint').textContent = cfg.hint;
+
+            let hintText = cfg.hint;
+            if (label === 'BAIK') {
+                hintText = (hasScore && score >= 0.8)
+                    ? 'Fasilitas terdeteksi dalam kondisi normal/tidak rusak. Laporan ditolak otomatis oleh sistem.'
+                    : 'Fasilitas terindikasi dalam kondisi normal dengan keyakinan di bawah 80%. Laporan diteruskan ke petugas untuk verifikasi.';
+            } else if (label === 'SPAM') {
+                hintText = (hasScore && score >= 0.8)
+                    ? 'Foto terdeteksi bukan fasilitas pejalan kaki publik (≥80%). Laporan ditolak otomatis oleh sistem.'
+                    : 'Foto terindikasi tidak relevan dengan keyakinan di bawah 80%. Laporan diteruskan ke petugas untuk verifikasi manual.';
+            }
+            el('confidenceHint').textContent = hintText;
         } else if (data.status === 'TERVALIDASI') {
             conditionCard.hidden = false;
             conditionCard.dataset.condition = 'RUSAK';

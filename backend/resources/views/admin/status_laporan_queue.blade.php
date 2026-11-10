@@ -128,12 +128,21 @@
 
     function getRepairBadge(statusPerbaikan) {
         if (statusPerbaikan === 'SUDAH_DIPERBAIKI') {
-            return `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-bold">Sudah Diperbaiki</span>`;
+            return `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200/80 rounded-full text-[10.5px] font-semibold whitespace-nowrap shrink-0 shadow-2xs">
+                <svg class="w-3 h-3 text-emerald-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                <span>Sudah Diperbaiki</span>
+            </span>`;
         }
         if (statusPerbaikan === 'SEDANG_DIPERBAIKI') {
-            return `<span class="px-2 py-0.5 bg-sky-100 text-sky-800 rounded-full text-[10px] font-bold">Sedang Diperbaiki</span>`;
+            return `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-sky-50 text-sky-700 border border-sky-200/80 rounded-full text-[10.5px] font-semibold whitespace-nowrap shrink-0 shadow-2xs">
+                <svg class="w-3 h-3 text-sky-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                <span>Sedang Diperbaiki</span>
+            </span>`;
         }
-        return `<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full text-[10px] font-bold">Belum Ditangani</span>`;
+        return `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200/80 rounded-full text-[10.5px] font-semibold whitespace-nowrap shrink-0 shadow-2xs">
+            <svg class="w-3 h-3 text-amber-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>Belum Ditangani</span>
+        </span>`;
     }
 
     function renderReports() {
@@ -226,12 +235,14 @@
 
         container.innerHTML = filtered.map(r => `
             <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:border-brand-500/40 transition flex flex-col gap-2.5">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-1.5">
-                        <span class="text-xs font-bold text-slate-800 tracking-tight tabular-nums">${r.kode_laporan}</span>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium text-slate-600 bg-slate-100">${r.kategori}</span>
+                <div class="flex items-start justify-between gap-2">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="text-xs font-bold text-slate-800 tracking-tight tabular-nums shrink-0">${r.kode_laporan}</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium text-slate-600 bg-slate-100 shrink-0">${r.kategori}</span>
                     </div>
-                    ${getRepairBadge(r.status_perbaikan)}
+                    <div class="shrink-0 pt-0.5">
+                        ${getRepairBadge(r.status_perbaikan)}
+                    </div>
                 </div>
 
                 <div>

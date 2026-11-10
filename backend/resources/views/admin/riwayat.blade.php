@@ -130,13 +130,15 @@
                 const pelapor = (r.pelapor_nama || '').toLowerCase();
                 const kat = (r.kategori || '').toLowerCase();
                 const alasan = (r.alasan_penolakan || '').toLowerCase();
+                const cvLabel = (r.cv_label || '').toLowerCase();
                 return kode.includes(searchVal) ||
                        idStr.includes(searchVal) ||
                        alamat.includes(searchVal) ||
                        deskripsi.includes(searchVal) ||
                        pelapor.includes(searchVal) ||
                        kat.includes(searchVal) ||
-                       alasan.includes(searchVal);
+                       alasan.includes(searchVal) ||
+                       cvLabel.includes(searchVal);
             });
         }
 
@@ -171,15 +173,53 @@
             return;
         }
 
+        function getMlBadge(r) {
+            if (r.confidence_score !== null && r.confidence_score !== undefined && r.cv_label) {
+                const pct = Math.round(Number(r.confidence_score) * 100);
+                const lbl = String(r.cv_label).toUpperCase();
+
+                let dotClass = 'bg-slate-400';
+                let pillStyle = 'bg-slate-50 text-slate-700 border-slate-200/70';
+                let text = `${lbl.charAt(0) + lbl.slice(1).toLowerCase()} ${pct}%`;
+
+                if (lbl === 'RUSAK') {
+                    dotClass = 'bg-rose-500';
+                    pillStyle = 'bg-rose-50/90 text-rose-700 border-rose-200/70';
+                    text = `Rusak ${pct}%`;
+                } else if (lbl === 'TERHALANG') {
+                    dotClass = 'bg-amber-500';
+                    pillStyle = 'bg-amber-50/90 text-amber-700 border-amber-200/70';
+                    text = `Terhalang ${pct}%`;
+                } else if (lbl === 'BAIK') {
+                    dotClass = 'bg-emerald-500';
+                    pillStyle = 'bg-emerald-50/90 text-emerald-700 border-emerald-200/70';
+                    text = `Baik ${pct}%`;
+                } else if (lbl === 'SPAM') {
+                    dotClass = 'bg-rose-400';
+                    pillStyle = 'bg-rose-50/80 text-rose-700 border-rose-200/60';
+                    text = `Spam ${pct}%`;
+                }
+
+                return `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${pillStyle} border whitespace-nowrap shrink-0">
+                    <span class="w-1.5 h-1.5 rounded-full ${dotClass} shrink-0"></span>
+                    <span>${text}</span>
+                </span>`;
+            }
+            return '';
+        }
+
         container.innerHTML = filtered.map(lap => `
             <button type="button" onclick="openDetail(${lap.laporan_id})"
                 class="w-full text-left bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex flex-col gap-2 hover:border-brand-500/40 transition">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-1.5">
-                        <span class="text-xs font-bold text-slate-800 tracking-tight tabular-nums">${esc(lap.kode_laporan)}</span>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium text-slate-600 bg-slate-100">${esc(lap.kategori)}</span>
+                <div class="flex items-start justify-between gap-2">
+                    <div class="flex items-center gap-1.5 flex-wrap min-w-0">
+                        <span class="text-xs font-bold text-slate-800 tracking-tight tabular-nums shrink-0">${esc(lap.kode_laporan)}</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium text-slate-600 bg-slate-100 shrink-0">${esc(lap.kategori)}</span>
+                        ${getMlBadge(lap)}
                     </div>
-                    ${statusBadge(lap.status)}
+                    <div class="shrink-0 pt-0.5">
+                        ${statusBadge(lap.status)}
+                    </div>
                 </div>
                 <div>
                     <p class="text-xs font-bold text-slate-800 truncate mb-0.5">${esc(lap.alamat || 'Alamat tidak tersedia')}</p>

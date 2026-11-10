@@ -358,7 +358,6 @@
                     <option value="1">Trotoar Rusak</option>
                     <option value="2">Masalah Drainase</option>
                     <option value="3">Guiding Block</option>
-                    <option value="4">Penyeberangan</option>
                     <option value="5">Parkir Liar</option>
                 </select>
                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
@@ -1107,8 +1106,9 @@
         if (!headerEl || !bodyEl) return;
 
         const catIcons = {
-            'Trotoar Rusak': `<span class="w-4 h-4 rounded bg-teal-100 text-brand-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>`,
-            'Masalah Drainase': `<span class="w-4 h-4 rounded bg-sky-100 text-sky-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg></span>`,
+            'Trotoar Rusak': `<span class="w-4 h-4 rounded bg-teal-100 text-brand-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 21 8.5 3m11.5 18L15.5 3M5.5 15h13M7 9h10M12 21v-6m-2.5 0V9m5 6V9M12 9V3"/></svg></span>`,
+            'Masalah Drainase': `<span class="w-4 h-4 rounded bg-sky-100 text-sky-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v4m0 10v4M3 12h4m10 0h4"/></svg></span>`,
+            'Drainase': `<span class="w-4 h-4 rounded bg-sky-100 text-sky-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v4m0 10v4M3 12h4m10 0h4"/></svg></span>`,
             'Guiding Block Rusak': `<span class="w-4 h-4 rounded bg-amber-100 text-amber-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="16" cy="4" r="1"/><path stroke-linecap="round" stroke-linejoin="round" d="m18 19 1-7-6 1M5 8l3-3 5.5 3-2.36 3.5M4.24 14.5a5 5 0 0 0 6.88 6M13.76 17.5a5 5 0 0 0-6.88-6"/></svg></span>`,
             'Guiding Block': `<span class="w-4 h-4 rounded bg-amber-100 text-amber-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="16" cy="4" r="1"/><path stroke-linecap="round" stroke-linejoin="round" d="m18 19 1-7-6 1M5 8l3-3 5.5 3-2.36 3.5M4.24 14.5a5 5 0 0 0 6.88 6M13.76 17.5a5 5 0 0 0-6.88-6"/></svg></span>`,
             'Penyebrangan Rusak': `<span class="w-4 h-4 rounded bg-emerald-100 text-emerald-700 inline-flex items-center justify-center shrink-0"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect width="10" height="18" x="7" y="3" rx="4"/><circle cx="12" cy="7.5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="16.5" r="1.5" fill="currentColor"/></svg></span>`,
@@ -1119,12 +1119,12 @@
 
         function getReparationBadge(status) {
             if (status === 'SUDAH_DIPERBAIKI') {
-                return `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-extrabold rounded-full flex items-center gap-1 shadow-sm"><svg class="w-3 h-3 text-emerald-700" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Selesai</span>`;
+                return `<span class="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[10px] font-bold rounded-full inline-flex items-center gap-1 shadow-2xs whitespace-nowrap shrink-0"><svg class="w-3 h-3 text-emerald-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Selesai</span>`;
             }
             if (status === 'SEDANG_DIPERBAIKI') {
-                return `<span class="px-2 py-0.5 bg-sky-100 text-sky-800 text-[10px] font-extrabold rounded-full flex items-center gap-1 shadow-sm"><svg class="w-3 h-3 text-sky-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Dikerjakan</span>`;
+                return `<span class="px-2.5 py-0.5 bg-sky-50 text-sky-700 border border-sky-200/80 text-[10px] font-bold rounded-full inline-flex items-center gap-1 shadow-2xs whitespace-nowrap shrink-0"><svg class="w-3 h-3 text-sky-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> Dikerjakan</span>`;
             }
-            return `<span class="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-extrabold rounded-full flex items-center gap-1 shadow-sm"><svg class="w-3 h-3 text-amber-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Belum Ditangani</span>`;
+            return `<span class="px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200/80 text-[10px] font-bold rounded-full inline-flex items-center gap-1 shadow-2xs whitespace-nowrap shrink-0"><svg class="w-3 h-3 text-amber-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Belum Ditangani</span>`;
         }
 
         function formatReportDate(isoStr) {

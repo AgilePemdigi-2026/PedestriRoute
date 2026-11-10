@@ -40,22 +40,22 @@ Feature: Memvalidasi Laporan dengan Computer Vision
     And every Admin should have a notification with key "NOTIF_QUEUE_ADMIN"
 
   @srs @f4
-  Scenario: Foto fasilitas normal tidak lolos otomatis
+  Scenario: Foto fasilitas normal ditolak otomatis bila keyakinan tinggi
     Given a report exists with status "DIPROSES" in category "Guiding Block Rusak"
     And the CV returns label "BAIK" with confidence 0.95
     When the job "ProcessReportCv" runs
-    Then the report status should be "MENUNGGU_VALIDASI_ADMIN"
+    Then the report status should be "DITOLAK"
     And "cv_label" should be "BAIK"
-    And the Warga should have a notification with key "NOTIF_PENDING_ADMIN"
+    And the Warga should have a notification with key "NOTIF_REJECTED"
 
   @srs @f4
-  Scenario: Foto non-infrastruktur atau spam tidak lolos otomatis
+  Scenario: Foto non-infrastruktur atau spam ditolak otomatis bila keyakinan tinggi
     Given a report exists with status "DIPROSES" in category "Penyebrangan Rusak"
     And the CV returns label "SPAM" with confidence 0.96
     When the job "ProcessReportCv" runs
-    Then the report status should be "MENUNGGU_VALIDASI_ADMIN"
+    Then the report status should be "DITOLAK"
     And "cv_label" should be "SPAM"
-    And the Warga should have a notification with key "NOTIF_PENDING_ADMIN"
+    And the Warga should have a notification with key "NOTIF_REJECTED"
 
   @srs @f4
   Scenario: Layanan CV gagal atau timeout

@@ -405,6 +405,27 @@ class ReportController extends Controller
             }
         }
 
+        // Auto-heal reports with BAIK/SPAM >= 80% that were previously marked MENUNGGU_VALIDASI_ADMIN
+        if ($laporan && $laporan->status === 'MENUNGGU_VALIDASI_ADMIN' && in_array($laporan->cv_label, ['BAIK', 'SPAM'], true) && (float) $laporan->confidence_score >= 0.80) {
+            $confPct = round((float) $laporan->confidence_score * 100, 1);
+            $alasan = $laporan->cv_label === 'BAIK'
+                ? "Ditolak otomatis oleh Computer Vision: Fasilitas terdeteksi dalam kondisi baik/tidak rusak ({$confPct}%)."
+                : "Ditolak otomatis oleh Computer Vision: Foto terdeteksi bukan merupakan fasilitas pejalan kaki publik ({$confPct}%).";
+            $laporan->status = 'DITOLAK';
+            $laporan->alasan_penolakan = $alasan;
+            $laporan->tanggal_validasi = now();
+            $laporan->save();
+            DB::table('riwayat_status_laporan')->insert([
+                'laporan_id' => $laporan->laporan_id,
+                'jenis' => 'VALIDASI',
+                'status' => 'DITOLAK',
+                'admin_id' => null,
+                'catatan' => $alasan,
+                'waktu' => now(),
+            ]);
+            $laporan = Laporan::with(['lokasi.segmen', 'kategori', 'foto', 'riwayat.admin'])->find($id);
+        }
+
         // Use the segment already assigned during submission, never re-snap to a new one.
         $segmentMap = null;
         if ($isAdmin && $laporan->lokasi?->segmen_id) {

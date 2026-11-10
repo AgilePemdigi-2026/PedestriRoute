@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Laporan;
+use App\Services\CvService;
 use App\Services\NotificationService;
 use App\Services\SegmentScoreService;
 use App\Support\MessageCatalog;
@@ -32,7 +33,19 @@ class AdminValidationController extends Controller
         if (! $statuses) {
             $statuses = ['MENUNGGU_VALIDASI_ADMIN'];
         }
-        $isQueue = $statuses === ['MENUNGGU_VALIDASI_ADMIN'];
+        $isQueue = in_array('MENUNGGU_VALIDASI_ADMIN', $statuses, true);
+
+        // Auto-heal / process DIPROSES reports if in validation queue
+        if ($isQueue && config('services.cv.enabled')) {
+            $inProcess = Laporan::where('status', 'DIPROSES')->limit(10)->get();
+            foreach ($inProcess as $pLap) {
+                try {
+                    \App\Jobs\ProcessReportCv::dispatchSync($pLap->laporan_id);
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("AdminValidationController index auto-process: " . $e->getMessage());
+                }
+            }
+        }
 
         $repairFilter = strtoupper(trim((string) $request->query('status_perbaikan', $request->query('repair_status', ''))));
 
@@ -258,6 +271,99 @@ class AdminValidationController extends Controller
                 'alasan_penolakan' => $laporan->alasan_penolakan,
             ],
             'message' => 'Keputusan validasi berhasil disimpan.',
+        ], 200);
+    }
+
+    /**
+     * Trigger Machine Learning analysis on report photo on demand (Protocol integration).
+     */
+    public function analyzeCv(Request $request, int $id, CvService $cvService): JsonResponse
+    {
+        $laporan = Laporan::with(['kategori', 'foto', 'fotoLaporan'])->find($id);
+
+        if (!$laporan) {
+            return response()->json([
+                'error' => [
+                    'code' => 'NOT_FOUND',
+                    'message' => 'Laporan tidak ditemukan.',
+                ]
+            ], 404);
+        }
+
+        $photoPath = $laporan->foto->url_foto ?? ($laporan->fotoLaporan->first()->url_foto ?? null);
+        if (!$photoPath) {
+            return response()->json([
+                'error' => [
+                    'code' => 'PHOTO_NOT_FOUND',
+                    'message' => 'Berkas foto laporan tidak ditemukan untuk dianalisis.',
+                ]
+            ], 422);
+        }
+
+        $category = $laporan->kategori->nama_kategori ?? 'Trotoar Rusak';
+        $cvResult = $cvService->analyze($photoPath, $category);
+
+        if (!$cvResult) {
+            return response()->json([
+                'error' => [
+                    'code' => 'CV_SERVICE_UNAVAILABLE',
+                    'message' => 'Layanan Machine Learning tidak merespons atau sedang offline.',
+                ]
+            ], 502);
+        }
+
+        $label = $cvResult['label'];
+        $confidence = $cvResult['confidence'];
+        $confPct = round($confidence * 100, 1);
+
+        $laporan->cv_label = $label;
+        $laporan->confidence_score = $confidence;
+
+        // If report is DIPROSES, apply standard auto-validation/auto-rejection protocol
+        if ($laporan->status === 'DIPROSES') {
+            $threshold = $cvService->getThreshold();
+            if ($confidence >= $threshold) {
+                if (in_array($label, ['RUSAK', 'TERHALANG'], true)) {
+                    $laporan->status = 'TERVALIDASI';
+                    $laporan->admin_id = null;
+                    $laporan->tanggal_validasi = now();
+                    $laporan->alasan_penolakan = null;
+                } elseif (in_array($label, ['BAIK', 'SPAM'], true)) {
+                    $alasan = $label === 'BAIK'
+                        ? "Ditolak otomatis oleh Computer Vision: Fasilitas terdeteksi dalam kondisi baik/tidak rusak ({$confPct}%)."
+                        : "Ditolak otomatis oleh Computer Vision: Foto terdeteksi bukan merupakan fasilitas pejalan kaki publik ({$confPct}%).";
+                    $laporan->status = 'DITOLAK';
+                    $laporan->admin_id = null;
+                    $laporan->tanggal_validasi = now();
+                    $laporan->alasan_penolakan = $alasan;
+                }
+            } else {
+                $laporan->status = 'MENUNGGU_VALIDASI_ADMIN';
+            }
+        }
+        $laporan->save();
+
+        DB::table('riwayat_status_laporan')->insert([
+            'laporan_id' => $laporan->laporan_id,
+            'jenis' => 'VALIDASI',
+            'status' => $laporan->status,
+            'admin_id' => $request->user()->admin_id,
+            'catatan' => "Analisis Machine Learning (YOLOv8) dijalankan oleh Admin: [{$label}] (Keyakinan: {$confPct}%)",
+            'waktu' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Analisis Machine Learning berhasil dijalankan.',
+            'data' => [
+                'laporan_id' => $laporan->laporan_id,
+                'label' => $label,
+                'confidence' => $confidence,
+                'confidence_percent' => round($confidence * 100),
+                'probabilities' => $cvResult['probabilities'] ?? null,
+                'detected_category' => $cvResult['detected_category'] ?? $category,
+                'status' => $laporan->status,
+            ]
         ], 200);
     }
 }

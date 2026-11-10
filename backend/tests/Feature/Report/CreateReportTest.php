@@ -64,7 +64,7 @@ class CreateReportTest extends TestCase
             'warga_id' => $this->warga->warga_id,
         ]);
         $laporanDb = \Illuminate\Support\Facades\DB::table('laporan')->where('laporan_id', $laporanId)->first();
-        $this->assertTrue(in_array($laporanDb->status, ['DIPROSES', 'TERVALIDASI', 'MENUNGGU_VALIDASI_ADMIN']));
+        $this->assertTrue(in_array($laporanDb->status, ['DIPROSES', 'TERVALIDASI', 'MENUNGGU_VALIDASI_ADMIN', 'DITOLAK']));
 
         $this->assertDatabaseHas('foto_laporan', [
             'laporan_id' => $laporanId,

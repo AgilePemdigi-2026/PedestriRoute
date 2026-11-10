@@ -101,6 +101,7 @@ class ProcessReportCv implements ShouldQueue
                 $locked->confidence_score = $confidence;
                 $locked->admin_id = null;
                 $locked->tanggal_validasi = now();
+                $locked->alasan_penolakan = null;
                 $locked->save();
 
                 DB::table('riwayat_status_laporan')->insert([
@@ -119,8 +120,33 @@ class ProcessReportCv implements ShouldQueue
 
                 // Notify citizen
                 $notificationService->notifyAutoValidated($locked);
+            } elseif (in_array($label, ['BAIK', 'SPAM'], true) && $confidence >= $threshold) {
+                // Auto-reject if label is BAIK or SPAM and confidence >= threshold
+                $alasan = $label === 'BAIK'
+                    ? "Ditolak otomatis oleh Computer Vision: Fasilitas terdeteksi dalam kondisi baik/tidak rusak ({$confPct}%)."
+                    : "Ditolak otomatis oleh Computer Vision: Foto terdeteksi bukan merupakan fasilitas pejalan kaki publik ({$confPct}%).";
+
+                $locked->status = 'DITOLAK';
+                $locked->cv_label = $label;
+                $locked->confidence_score = $confidence;
+                $locked->admin_id = null;
+                $locked->tanggal_validasi = now();
+                $locked->alasan_penolakan = $alasan;
+                $locked->save();
+
+                DB::table('riwayat_status_laporan')->insert([
+                    'laporan_id' => $locked->laporan_id,
+                    'jenis' => 'VALIDASI',
+                    'status' => 'DITOLAK',
+                    'admin_id' => null,
+                    'catatan' => $alasan,
+                    'waktu' => now(),
+                ]);
+
+                // Notify citizen
+                $notificationService->notifyRejected($locked, $alasan);
             } else {
-                // FR-F4-04: confidence < threshold OR label in ('BAIK', 'SPAM') -> Route to Admin
+                // FR-F4-04: confidence < threshold -> Route to Admin
                 $locked->status = 'MENUNGGU_VALIDASI_ADMIN';
                 $locked->cv_label = $label;
                 $locked->confidence_score = $confidence;

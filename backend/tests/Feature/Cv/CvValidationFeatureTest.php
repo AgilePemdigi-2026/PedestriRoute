@@ -156,7 +156,7 @@ class CvValidationFeatureTest extends TestCase
         $this->assertEquals(0.65, (float) $laporan->confidence_score);
     }
 
-    public function test_cv_job_routes_to_admin_when_label_is_spam_or_baik(): void
+    public function test_cv_job_auto_rejects_when_label_is_spam_with_high_confidence(): void
     {
         $laporanId = $this->createReportWithPhoto('DIPROSES', 1);
 
@@ -173,8 +173,57 @@ class CvValidationFeatureTest extends TestCase
         ProcessReportCv::dispatchSync($laporanId);
 
         $laporan = Laporan::find($laporanId);
-        $this->assertEquals('MENUNGGU_VALIDASI_ADMIN', $laporan->status);
+        $this->assertEquals('DITOLAK', $laporan->status);
         $this->assertEquals('SPAM', $laporan->cv_label);
+        $this->assertEquals(0.95, (float) $laporan->confidence_score);
+        $this->assertNotNull($laporan->alasan_penolakan);
+        $this->assertStringContainsString('bukan merupakan fasilitas', $laporan->alasan_penolakan);
+    }
+
+    public function test_cv_job_auto_rejects_when_label_is_baik_with_high_confidence(): void
+    {
+        $laporanId = $this->createReportWithPhoto('DIPROSES', 1);
+
+        $mockCv = Mockery::mock(CvService::class);
+        $mockCv->shouldReceive('isCategorySupported')->andReturn(true);
+        $mockCv->shouldReceive('getThreshold')->andReturn(0.80);
+        $mockCv->shouldReceive('analyze')->once()->andReturn([
+            'label' => 'BAIK',
+            'confidence' => 0.92,
+            'detected_category' => null,
+        ]);
+        $this->app->instance(CvService::class, $mockCv);
+
+        ProcessReportCv::dispatchSync($laporanId);
+
+        $laporan = Laporan::find($laporanId);
+        $this->assertEquals('DITOLAK', $laporan->status);
+        $this->assertEquals('BAIK', $laporan->cv_label);
+        $this->assertEquals(0.92, (float) $laporan->confidence_score);
+        $this->assertNotNull($laporan->alasan_penolakan);
+        $this->assertStringContainsString('kondisi baik/tidak rusak', $laporan->alasan_penolakan);
+    }
+
+    public function test_cv_job_routes_to_admin_when_label_is_spam_or_baik_with_low_confidence(): void
+    {
+        $laporanId = $this->createReportWithPhoto('DIPROSES', 1);
+
+        $mockCv = Mockery::mock(CvService::class);
+        $mockCv->shouldReceive('isCategorySupported')->andReturn(true);
+        $mockCv->shouldReceive('getThreshold')->andReturn(0.80);
+        $mockCv->shouldReceive('analyze')->once()->andReturn([
+            'label' => 'BAIK',
+            'confidence' => 0.65,
+            'detected_category' => null,
+        ]);
+        $this->app->instance(CvService::class, $mockCv);
+
+        ProcessReportCv::dispatchSync($laporanId);
+
+        $laporan = Laporan::find($laporanId);
+        $this->assertEquals('MENUNGGU_VALIDASI_ADMIN', $laporan->status);
+        $this->assertEquals('BAIK', $laporan->cv_label);
+        $this->assertEquals(0.65, (float) $laporan->confidence_score);
     }
 
     public function test_cv_job_fallback_when_category_not_supported(): void

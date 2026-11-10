@@ -6,11 +6,13 @@ use App\Models\Admin;
 use App\Models\Laporan;
 use App\Models\SegmenJalur;
 use App\Models\Warga;
+use App\Services\CvService;
 use App\Support\MessageCatalog;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Mockery;
 use Tests\TestCase;
 
 class ValidateReportTest extends TestCase
@@ -201,5 +203,103 @@ class ValidateReportTest extends TestCase
         $response->assertStatus(200)
             ->assertSee('Validasi & Perbaikan')
             ->assertSee('Ditolak');
+    }
+
+    public function test_admin_can_trigger_ml_analysis_via_api(): void
+    {
+        $fakePath = 'laporan/test_admin_ml_' . uniqid() . '.jpg';
+        Storage::disk('public')->put($fakePath, 'fake-image-data');
+
+        DB::table('foto_laporan')->insert([
+            'laporan_id' => $this->laporanId,
+            'url_foto' => $fakePath,
+            'tanggal_upload' => now(),
+        ]);
+
+        $mockCv = Mockery::mock(CvService::class);
+        $mockCv->shouldReceive('analyze')->once()->andReturn([
+            'label' => 'RUSAK',
+            'confidence' => 0.88,
+            'probabilities' => ['rusak' => 0.88, 'baik' => 0.10, 'spam' => 0.02],
+            'detected_category' => 'Trotoar Rusak',
+        ]);
+        $this->app->instance(CvService::class, $mockCv);
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->adminToken)
+            ->postJson("/api/v1/admin/reports/{$this->laporanId}/analyze-cv");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.label', 'RUSAK')
+            ->assertJsonPath('data.confidence', 0.88)
+            ->assertJsonPath('data.confidence_percent', 88)
+            ->assertJsonPath('data.probabilities.rusak', 0.88);
+
+        $this->assertDatabaseHas('laporan', [
+            'laporan_id' => $this->laporanId,
+            'cv_label' => 'RUSAK',
+            'confidence_score' => 0.88,
+        ]);
+    }
+
+    public function test_admin_trigger_ml_analysis_supports_terhalang_baik_and_spam(): void
+    {
+        $fakePath = 'laporan/test_admin_ml2_' . uniqid() . '.jpg';
+        Storage::disk('public')->put($fakePath, 'fake-image-data');
+
+        DB::table('foto_laporan')->insert([
+            'laporan_id' => $this->laporanId,
+            'url_foto' => $fakePath,
+            'tanggal_upload' => now(),
+        ]);
+
+        // Test TERHALANG
+        $mockCv = Mockery::mock(CvService::class);
+        $mockCv->shouldReceive('analyze')->once()->andReturn([
+            'label' => 'TERHALANG',
+            'confidence' => 0.94,
+            'probabilities' => ['terhalang' => 0.94, 'baik' => 0.04, 'spam' => 0.02],
+            'detected_category' => 'Parkir Liar',
+        ]);
+        $this->app->instance(CvService::class, $mockCv);
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->adminToken)
+            ->postJson("/api/v1/admin/reports/{$this->laporanId}/analyze-cv");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.label', 'TERHALANG')
+            ->assertJsonPath('data.confidence', 0.94);
+
+        $this->assertDatabaseHas('laporan', [
+            'laporan_id' => $this->laporanId,
+            'cv_label' => 'TERHALANG',
+            'confidence_score' => 0.94,
+        ]);
+    }
+
+    public function test_warga_cannot_trigger_admin_ml_analysis(): void
+    {
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->wargaToken)
+            ->postJson("/api/v1/admin/reports/{$this->laporanId}/analyze-cv");
+
+        $response->assertStatus(403);
+    }
+
+    public function test_admin_reports_endpoint_returns_ml_label_and_confidence(): void
+    {
+        DB::table('laporan')->where('laporan_id', $this->laporanId)->update([
+            'cv_label' => 'RUSAK',
+            'confidence_score' => 0.85,
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->adminToken)
+            ->getJson('/api/v1/admin/reports?status=MENUNGGU_VALIDASI_ADMIN');
+
+        $response->assertStatus(200)
+            ->assertJsonFragment([
+                'laporan_id' => $this->laporanId,
+                'cv_label' => 'RUSAK',
+                'confidence_score' => 0.85,
+            ]);
     }
 }

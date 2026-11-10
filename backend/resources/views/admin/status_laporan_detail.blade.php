@@ -78,7 +78,7 @@
                     <div class="flex items-center gap-2">
                         <span class="w-6 h-6 rounded-lg bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold">✓</span>
                         <div>
-                            <span class="font-bold text-emerald-950 block text-[11px]">Validasi Otomatis Computer Vision</span>
+                            <span class="font-bold text-emerald-950 block text-[11px]">Validasi Otomatis Machine Learning (YOLOv8)</span>
                             <span id="aiValidationSubtitle" class="text-[10px] text-emerald-700">Skor keyakinan: -</span>
                         </div>
                     </div>
@@ -302,7 +302,22 @@
                     aiCard.classList.remove('hidden');
                     const pct = Math.round(reportData.confidence_score * 100);
                     if (aiSub) aiSub.innerText = `Skor keyakinan model YOLOv8: ${pct}%`;
-                    if (aiPill) aiPill.innerText = reportData.cv_label || 'RUSAK';
+                    const lbl = (reportData.cv_label || 'RUSAK').toUpperCase();
+                    if (aiPill) {
+                        if (lbl === 'TERHALANG') {
+                            aiPill.innerText = 'TERHALANG (Parkir Liar)';
+                            aiPill.className = 'text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800';
+                        } else if (lbl === 'BAIK') {
+                            aiPill.innerText = 'BAIK (Normal)';
+                            aiPill.className = 'text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800';
+                        } else if (lbl === 'SPAM') {
+                            aiPill.innerText = 'SPAM';
+                            aiPill.className = 'text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-100 text-rose-800';
+                        } else {
+                            aiPill.innerText = 'RUSAK (Cacat Fisik)';
+                            aiPill.className = 'text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800';
+                        }
+                    }
                 }
             }
 
@@ -375,10 +390,13 @@
             if (cur === 'SUDAH_DIPERBAIKI') {
                 curStatusContainer.innerHTML = `
                     <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                         <span class="text-sm font-extrabold text-emerald-800">Sudah Diperbaiki</span>
                     </div>
-                    <span class="text-xs text-slate-400">${formatTime(reportData.tanggal_perbaikan)}</span>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200/80 rounded-full text-[10.5px] font-semibold whitespace-nowrap shadow-2xs">
+                        <svg class="w-3 h-3 text-emerald-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        <span>Selesai</span>
+                    </span>
                 `;
                 // Disable form because final
                 document.getElementById('btnSubmitRepair').classList.add('hidden');
@@ -387,20 +405,26 @@
             } else if (cur === 'SEDANG_DIPERBAIKI') {
                 curStatusContainer.innerHTML = `
                     <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full bg-sky-500"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
                         <span class="text-sm font-extrabold text-sky-800">Sedang Diperbaiki</span>
                     </div>
-                    <span class="px-2 py-0.5 bg-sky-100 text-sky-800 rounded-md text-[10px] font-bold">Aktif</span>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-sky-50 text-sky-700 border border-sky-200/80 rounded-full text-[10.5px] font-semibold whitespace-nowrap shadow-2xs">
+                        <svg class="w-3 h-3 text-sky-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                        <span>Proses</span>
+                    </span>
                 `;
                 const rSudah = document.querySelector('input[value="SUDAH_DIPERBAIKI"]');
                 if (rSudah) rSudah.checked = true;
             } else {
                 curStatusContainer.innerHTML = `
                     <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
                         <span class="text-sm font-extrabold text-amber-800">Belum Ditangani</span>
                     </div>
-                    <span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-md text-[10px] font-bold">Menunggu Aksi</span>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200/80 rounded-full text-[10.5px] font-semibold whitespace-nowrap shadow-2xs">
+                        <svg class="w-3 h-3 text-amber-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span>Menunggu</span>
+                    </span>
                 `;
                 const rSedang = document.querySelector('input[value="SEDANG_DIPERBAIKI"]');
                 if (rSedang) rSedang.checked = true;
