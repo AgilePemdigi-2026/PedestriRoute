@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AdminRepairController;
 use App\Http\Controllers\Api\AdminValidationController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HeatmapController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\RegisterOtpController;
 use App\Http\Controllers\Api\ReportController;
 use Illuminate\Support\Facades\Route;
@@ -42,6 +43,7 @@ Route::prefix('v1')->group(function () {
 
     // Authenticated routes
     Route::middleware('auth:sanctum')->group(function () {
+            Route::post('/broadcasting/auth', [\Illuminate\Broadcasting\BroadcastController::class, 'authenticate']);
         // Warga specific routes
         Route::middleware('role:warga')->group(function () {
             Route::post('/reports', [ReportController::class, 'store']);
@@ -54,7 +56,11 @@ Route::prefix('v1')->group(function () {
 
         // Heatmap endpoint (F6 - accessible by warga and admin)
         Route::get('/heatmap', [HeatmapController::class, 'index']);
-
+        // Pusat notifikasi (F10) - warga dan admin
+        Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+        Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
+        Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead']);
         // Admin specific validation & repair routes (F5, F9)
         Route::middleware('role:admin')->prefix('admin')->group(function () {
             Route::get('/reports', [AdminValidationController::class, 'index']);

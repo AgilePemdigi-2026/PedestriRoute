@@ -91,6 +91,220 @@
             }
         });
     </script>
+
+    <!-- Real-time notifikasi (F10): Pusher JS + Laravel Echo -->
+    <script src="https://unpkg.com/pusher-js@8.4.0/dist/web/pusher.min.js"></script>
+    <script src="https://unpkg.com/laravel-echo@1.16.1/dist/echo.iife.js"></script>
+    <script>
+        (function () {
+            const token = localStorage.getItem('token');
+            if (!token) return; // belum login (mis. halaman login): lewati semuanya
+
+            const authHeaders = { Authorization: 'Bearer ' + token, Accept: 'application/json' };
+            const seen = new Set();
+            let role = null;
+            let badge, panel, listEl;
+
+            // ---------- helpers ----------
+            function targetUrl(n) {
+                if (!n.laporan_id) return null;
+                return role === 'admin'
+                    ? '/admin/validasi/' + n.laporan_id
+                    : '/laporan/' + n.laporan_id + '/analisis';
+            }
+
+            function fmtTime(iso) {
+                if (!iso) return '';
+                return new Date(iso).toLocaleString('id-ID', {
+                    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+                });
+            }
+
+            function setBadge(count) {
+                if (!badge) return;
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.style.display = count > 0 ? 'flex' : 'none';
+            }
+
+            // PATCH dulu; kalau server menjawab 405, coba POST
+            async function sendAction(url) {
+                let res = await fetch(url, { method: 'PATCH', headers: authHeaders });
+                if (res.status === 405) res = await fetch(url, { method: 'POST', headers: authHeaders });
+                return res;
+            }
+
+            // ---------- UI bel ----------
+            function buildBell() {
+                // Pakai bel bawaan halaman kalau ada (beranda warga); kalau tidak, bikin bel floating (admin).
+                let btn = document.getElementById('notifBellBtn');
+                if (!btn) {
+                    btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.setAttribute('aria-label', 'Notifikasi');
+                    btn.style.cssText = 'position:fixed;top:12px;right:12px;z-index:40;width:42px;height:42px;'
+                        + 'border-radius:9999px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2);display:flex;'
+                        + 'align-items:center;justify-content:center;border:0;cursor:pointer;';
+                    btn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#374151" '
+                        + 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+                        + '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>'
+                        + '<path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>';
+                    document.body.appendChild(btn);
+                }
+
+                badge = document.createElement('span');
+                badge.style.cssText = 'position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 4px;'
+                    + 'border-radius:9999px;background:#dc2626;color:#fff;font-size:11px;font-weight:700;'
+                    + 'display:none;align-items:center;justify-content:center;pointer-events:none;';
+                btn.appendChild(badge);
+
+                panel = document.createElement('div');
+                panel.style.cssText = 'display:none;position:fixed;z-index:60;width:min(320px,calc(100vw - 24px));'
+                    + 'max-height:70vh;overflow:auto;background:#fff;border-radius:12px;'
+                    + 'box-shadow:0 8px 24px rgba(0,0,0,.2);';
+
+                const head = document.createElement('div');
+                head.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px 12px;'
+                    + 'border-bottom:1px solid #e5e7eb;font-weight:600;font-size:14px;color:#111827;';
+                head.innerHTML = '<span>Notifikasi</span>';
+
+                const readAll = document.createElement('button');
+                readAll.type = 'button';
+                readAll.textContent = 'Tandai semua dibaca';
+                readAll.style.cssText = 'font-size:12px;font-weight:500;color:#008775;background:none;border:0;cursor:pointer;';
+                readAll.addEventListener('click', async () => {
+                    const res = await sendAction('/api/v1/notifications/read-all');
+                    if (res.ok) loadList();
+                });
+                head.appendChild(readAll);
+
+                listEl = document.createElement('div');
+                panel.appendChild(head);
+                panel.appendChild(listEl);
+                document.body.appendChild(panel);
+
+                btn.addEventListener('click', () => {
+                    const open = panel.style.display === 'block';
+                    if (open) { panel.style.display = 'none'; return; }
+                    const r = btn.getBoundingClientRect();
+                    panel.style.top = (r.bottom + 8) + 'px';
+                    panel.style.right = Math.max(12, window.innerWidth - r.right) + 'px';
+                    panel.style.display = 'block';
+                });
+                document.addEventListener('click', (e) => {
+                    if (!panel.contains(e.target) && !btn.contains(e.target)) panel.style.display = 'none';
+                });
+            }
+
+            function renderList(items) {
+                listEl.innerHTML = '';
+                if (!items.length) {
+                    const empty = document.createElement('div');
+                    empty.textContent = 'Belum ada notifikasi';
+                    empty.style.cssText = 'padding:16px;text-align:center;font-size:13px;color:#6b7280;';
+                    listEl.appendChild(empty);
+                    return;
+                }
+                items.forEach((n) => {
+                    const unread = n.status_baca === 'BELUM';
+                    const row = document.createElement('div');
+                    row.style.cssText = 'padding:10px 12px;border-bottom:1px solid #f3f4f6;cursor:pointer;'
+                        + (unread ? 'background:#e6f5f3;' : '');
+
+                    const msg = document.createElement('div');
+                    msg.textContent = n.pesan;
+                    msg.style.cssText = 'font-size:13px;color:#111827;' + (unread ? 'font-weight:600;' : '');
+
+                    const time = document.createElement('div');
+                    time.textContent = fmtTime(n.tanggal_kirim);
+                    time.style.cssText = 'font-size:11px;color:#6b7280;margin-top:2px;';
+
+                    row.appendChild(msg);
+                    row.appendChild(time);
+                    row.addEventListener('click', async () => {
+                        if (unread) await sendAction('/api/v1/notifications/' + n.notifikasi_id + '/read');
+                        const url = targetUrl(n);
+                        if (url) window.location.href = url;
+                        else loadList();
+                    });
+                    listEl.appendChild(row);
+                });
+            }
+
+            async function loadList() {
+                try {
+                    const res = await fetch('/api/v1/notifications?limit=20', { headers: authHeaders });
+                    if (!res.ok) return;
+                    const json = await res.json();
+                    renderList(json.data || []);
+                    setBadge((json.meta && json.meta.unread_count) || 0);
+                } catch (e) {
+                    console.warn('[Notif] gagal memuat:', e);
+                }
+            }
+
+            // ---------- toast yang bisa diklik ----------
+            function clickableToast(payload) {
+                if (typeof showToast === 'function') showToast(payload.pesan, 'success');
+                const t = document.getElementById('toast');
+                const url = targetUrl(payload);
+                if (t) {
+                    t.style.cursor = url ? 'pointer' : '';
+                    t.onclick = url ? () => { window.location.href = url; } : null;
+                }
+            }
+
+            // ---------- satu pintu untuk semua event real-time ----------
+            function onRealtime(name, payload) {
+                console.log('[Echo]', name, payload);
+                if (payload.notifikasi_id) {
+                    if (seen.has(payload.notifikasi_id)) return; // anti dobel
+                    seen.add(payload.notifikasi_id);
+                }
+                clickableToast(payload);
+                loadList(); // sumber kebenaran tetap server
+                window.dispatchEvent(new CustomEvent('realtime-notification', { detail: { name, payload } }));
+            }
+
+            // ---------- init ----------
+            fetch('/api/v1/auth/me', { headers: authHeaders })
+                .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+                .then(({ data }) => {
+                    role = data.role;
+                    buildBell();
+                    loadList();
+
+                    window.Pusher = Pusher;
+
+                    const echo = new Echo({
+                        broadcaster: 'reverb',
+                        key: @json(config('broadcasting.connections.reverb.key')),
+                        wsHost: window.location.hostname, // jangan pakai REVERB_HOST: di container nilainya "reverb"
+                        wsPort: 8080,
+                        wssPort: 8080,
+                        forceTLS: false,
+                        enabledTransports: ['ws', 'wss'],
+                        authEndpoint: '/api/v1/broadcasting/auth',
+                        auth: { headers: authHeaders },
+                    });
+                    window.Echo = echo;
+
+                    echo.connector.pusher.connection.bind('state_change', (s) => {
+                        console.log('[Echo] koneksi:', s.previous, '->', s.current);
+                    });
+
+                    if (role === 'warga') {
+                        echo.private('warga.' + data.id)
+                            .listen('.report.validated', (e) => onRealtime('report.validated', e))
+                            .listen('.report.auto-rejected', (e) => onRealtime('report.auto-rejected', e))
+                            .listen('.report.repair-updated', (e) => onRealtime('report.repair-updated', e));
+                    } else if (role === 'admin') {
+                        echo.private('admin.reports')
+                            .listen('.admin.queue-updated', (e) => onRealtime('admin.queue-updated', e));
+                    }
+                })
+                .catch((err) => console.warn('[Echo] tidak aktif:', err));
+        })();
+    </script>
     @stack('scripts')
 </body>
 </html>

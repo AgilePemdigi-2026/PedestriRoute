@@ -2,6 +2,10 @@
 
 namespace App\Services;
 
+use App\Events\AdminQueueUpdated;
+use App\Events\ReportAutoRejected;
+use App\Events\ReportRepairUpdated;
+use App\Events\ReportValidated;
 use App\Models\Admin;
 use App\Models\Laporan;
 use App\Models\Notifikasi;
@@ -52,7 +56,9 @@ class NotificationService
         $jalan = $laporan->lokasi->alamat ?? $laporan->lokasi->segmen->nama_jalan ?? 'Surabaya';
         $pesan = MessageCatalog::format(MessageCatalog::NOTIF_AUTO_VALIDATED, ['jalan' => $jalan]);
 
-        $this->create('WARGA', $laporan->warga_id, 'STATUS_LAPORAN', $pesan, $laporan->laporan_id);
+        $notif = $this->create('WARGA', $laporan->warga_id, 'STATUS_LAPORAN', $pesan, $laporan->laporan_id);
+
+        event(new ReportValidated($notif));
     }
 
     /**
@@ -67,6 +73,9 @@ class NotificationService
         foreach ($admins as $admin) {
             $this->create('ADMIN', $admin->admin_id, 'ANTREAN_VALIDASI', $pesan, $laporan->laporan_id);
         }
+
+        // Cukup satu kali: semua admin mendengarkan channel yang sama (admin.reports)
+        event(new AdminQueueUpdated($laporan->laporan_id, $pesan));
     }
 
     /**
@@ -77,7 +86,9 @@ class NotificationService
         $jalan = $laporan->lokasi->alamat ?? $laporan->lokasi->segmen->nama_jalan ?? 'Surabaya';
         $pesan = MessageCatalog::format(MessageCatalog::NOTIF_VALIDATED, ['jalan' => $jalan]);
 
-        $this->create('WARGA', $laporan->warga_id, 'STATUS_LAPORAN', $pesan, $laporan->laporan_id);
+        $notif = $this->create('WARGA', $laporan->warga_id, 'STATUS_LAPORAN', $pesan, $laporan->laporan_id);
+
+        event(new ReportValidated($notif));
     }
 
     /**
@@ -91,7 +102,9 @@ class NotificationService
             'alasan' => $alasan,
         ]);
 
-        $this->create('WARGA', $laporan->warga_id, 'STATUS_LAPORAN', $pesan, $laporan->laporan_id);
+        $notif = $this->create('WARGA', $laporan->warga_id, 'STATUS_LAPORAN', $pesan, $laporan->laporan_id);
+
+        event(new ReportAutoRejected($notif));
     }
 
     /**
@@ -102,7 +115,9 @@ class NotificationService
         $jalan = $laporan->lokasi->alamat ?? $laporan->lokasi->segmen->nama_jalan ?? 'Surabaya';
         $pesan = MessageCatalog::format(MessageCatalog::NOTIF_REPAIRING, ['jalan' => $jalan]);
 
-        $this->create('WARGA', $laporan->warga_id, 'STATUS_LAPORAN', $pesan, $laporan->laporan_id);
+        $notif = $this->create('WARGA', $laporan->warga_id, 'STATUS_LAPORAN', $pesan, $laporan->laporan_id);
+
+        event(new ReportRepairUpdated($notif, 'SEDANG'));
     }
 
     /**
@@ -113,6 +128,8 @@ class NotificationService
         $jalan = $laporan->lokasi->alamat ?? $laporan->lokasi->segmen->nama_jalan ?? 'Surabaya';
         $pesan = MessageCatalog::format(MessageCatalog::NOTIF_REPAIRED, ['jalan' => $jalan]);
 
-        $this->create('WARGA', $laporan->warga_id, 'STATUS_LAPORAN', $pesan, $laporan->laporan_id);
+        $notif = $this->create('WARGA', $laporan->warga_id, 'STATUS_LAPORAN', $pesan, $laporan->laporan_id);
+
+        event(new ReportRepairUpdated($notif, 'SELESAI'));
     }
 }
