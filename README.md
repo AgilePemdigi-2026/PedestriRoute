@@ -64,8 +64,17 @@ Platform ini dirancang untuk memberdayakan partisipasi aktif warga dalam melapor
 
 ---
 
-### 🔮 Sprint 3 (Roadmap Selanjutnya)
-9. **Rekomendasi Rute Pejalan Kaki Ramah Disabilitas (F7):** Pencarian rute pejalan kaki terpendek dan teraman berbasis skor kelayakan jalan WSM dan preferensi difabel.
+### ✅ Sprint 3
+
+9. **Rekomendasi Rute Pejalan Kaki Ramah Disabilitas (F7):**
+   - Endpoint `POST /api/v1/routes/recommend` menerima titik awal, titik tujuan, dan preferensi `safest` atau `fastest`.
+   - Pencarian rute menggunakan algoritma **A\*** pada graf segmen pejalan kaki yang dimuat dari **PostGIS** (`segmen_jalur`), lengkap dengan penyambungan simpul jalan yang berdekatan.
+   - **Penalti WSM Dinamis:** Skor kelayakan setiap segmen (`skor_kelayakan`) dikonversi menjadi biaya rute. Segmen dengan skor rendah otomatis dihindari pada mode `safest`, sedangkan mode `fastest` meminimalkan jarak tempuh.
+   - Segmen yang sedang diperbaiki (`SEDANG_DIPERBAIKI`) mendapat penalti tambahan, dan respons menyertakan peringatan kondisi jalur.
+   - Respons memuat `route_id`, `distance_m`, `duration_min`, `polyline`, rincian segmen beserta skor WSM dan tingkat kelayakan, ringkasan skor rata-rata/minimum, serta `warnings`.
+   - **Fallback adaptif:** Bila topologi OSM belum lengkap, sistem mengikuti koridor segmen terdekat atau memberikan garis langsung agar rute tetap dapat ditampilkan.
+
+### 🔮 Roadmap Selanjutnya
 10. **Sistem Navigasi Turn-by-Turn (F8):** Panduan navigasi langkah demi langkah berbasis koordinat GPS pengguna.
 11. **Sistem Notifikasi Terpadu (F10):** Notifikasi *push real-time* menggunakan protokol WebSocket (Laravel Reverb).
 
@@ -83,7 +92,7 @@ Platform ini dirancang untuk memberdayakan partisipasi aktif warga dalam melapor
 | **Frontend & Templating** | **Blade + Tailwind CSS + Alpine.js** | Antarmuka pengguna *mobile-first* yang responsif, interaktif, dan ringan |
 | **Peta Digital & GIS** | **Leaflet.js (Canvas) + OSM Nominatim** | Visualisasi peta, canvas renderer, cluster density heat dots, dan reverse geocoding alamat |
 | **Web Server & Proxy** | **Nginx (Alpine)** | Reverse proxy HTTP/FastCGI, penanganan berkas statis, dan kompresi gzip |
-| **Pengujian Otomatis** | **PHPUnit (68 tests) + Behave BDD (10 scenarios)** | Pengujian fitur, unit testing (911 assertions), serta pengujian skenario penerimaan berbasis Gherkin |
+| **Pengujian Otomatis** | **PHPUnit (83 tests) + Behave BDD (14 scenarios)** | Pengujian fitur, unit testing (582 assertions), serta pengujian skenario penerimaan berbasis Gherkin untuk F1–F9 |
 | **Orkestrasi Lingkungan** | **Docker Compose** | Manajemen container multi-layanan (`db`, `app`, `nginx`, `queue`, `cv-service`) |
 
 ---
@@ -110,7 +119,7 @@ PedestriRoute/
 │   ├── app/                       # Controllers, Models, Jobs (ProcessReportCv), Services
 │   ├── database/                  # Migrasi tabel PostGIS, Seeder (DemoLaporanSeeder)
 │   ├── resources/views/           # Antarmuka Warga & Admin (Blade, Tailwind CSS, Alpine.js)
-│   └── tests/                     # 68 Skenario PHPUnit Automated Tests (Feature & Unit)
+│   └── tests/                     # 83 Skenario PHPUnit Automated Tests (Feature & Unit)
 ├── cv-service/                    # Microservice Computer Vision (FastAPI)
 │   ├── app/                       # Logika routing inferensi & spatial pooling (main.py)
 │   ├── models/                    # 5 Model Spesialis ONNX (trotoar, drainase, guiding, dll.)
@@ -180,18 +189,21 @@ docker exec pedestriroute_app php artisan db:seed --class=DemoLaporanSeeder
 ## 🧪 Menjalankan Pengujian Otomatis
 
 ### A. Pengujian Unit & Feature (PHPUnit)
-Eksekusi 68 skenario pengujian otomatis di dalam container Docker:
+Eksekusi 83 skenario pengujian otomatis di dalam container Docker:
 ```bash
 docker exec pedestriroute_app php artisan test
 ```
-*Status: 68 passed (911 assertions), 100% Green.*
+*Status: 83 passed (582 assertions), 100% Green.*
 
 ### B. Pengujian Acceptance Criteria BDD (Behave)
 Jalankan otomasi pengujian skenario Gherkin:
 ```bash
 ./bdd/run_bdd.sh
+
+# Khusus fitur Sprint 3 (F7)
+./bdd/run_sprint3.sh
 ```
-*Status: 10 scenarios passed (60 steps passed), 100% Green.*
+*Status: 14 scenarios (78 steps) mencakup alur F1–F9, termasuk F7 rekomendasi rute pejalan kaki.*
 
 ---
 
