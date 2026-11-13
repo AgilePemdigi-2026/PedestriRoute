@@ -64,9 +64,17 @@ Platform ini dirancang untuk memberdayakan partisipasi aktif warga dalam melapor
 
 ---
 
+### 🚀 Sprint 3
+9. **Sistem Navigasi Turn-by-Turn (F8):**
+   - Endpoint `POST /api/v1/routes/recommend` menghitung rute berjalan kaki dari koordinat GPS pengguna memakai graf segmen PostGIS + pencarian A* berbobot skor kelayakan (WSM), dengan *corridor fallback* saat topologi OSM belum lengkap.
+   - Respons memuat polyline rute, segmen yang dilalui, ringkasan jarak/estimasi waktu, dan langkah navigasi (`depart`, `turn`, `continue`, `arrive`) berbahasa Indonesia.
+   - Halaman `/navigasi` menampilkan banner instruksi, peta rute, posisi pengguna, panduan suara (*Web Speech API*), deteksi keluar jalur > 20 m selama 3 detik, dan perhitungan ulang rute otomatis.
+   - Mode simulasi perjalanan tersedia untuk pengujian di desktop tanpa perangkat GPS.
+
+---
+
 ### 🔮 Sprint 3 (Roadmap Selanjutnya)
-9. **Rekomendasi Rute Pejalan Kaki Ramah Disabilitas (F7):** Pencarian rute pejalan kaki terpendek dan teraman berbasis skor kelayakan jalan WSM dan preferensi difabel.
-10. **Sistem Navigasi Turn-by-Turn (F8):** Panduan navigasi langkah demi langkah berbasis koordinat GPS pengguna.
+10. **Rekomendasi Rute Pejalan Kaki Ramah Disabilitas (F7):** Pencarian rute pejalan kaki terpendek dan teraman berbasis skor kelayakan jalan WSM dan preferensi difabel.
 11. **Sistem Notifikasi Terpadu (F10):** Notifikasi *push real-time* menggunakan protokol WebSocket (Laravel Reverb).
 
 ---
