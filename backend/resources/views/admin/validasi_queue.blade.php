@@ -499,5 +499,17 @@
     }
 
     loadAllData();
+
+    // Auto-update antrean saat ada notifikasi real-time (issue #50).
+    // Event 'realtime-notification' dipancarkan oleh layouts/app.blade.php.
+    let realtimeRefreshTimer = null;
+    window.addEventListener('realtime-notification', (e) => {
+        const name = e.detail && e.detail.name;
+        if (!['admin.queue-updated', 'report.validated', 'report.auto-rejected', 'report.repair-updated'].includes(name)) return;
+
+        // Tunda sebentar & gabungkan beberapa event beruntun jadi satu refresh
+        clearTimeout(realtimeRefreshTimer);
+        realtimeRefreshTimer = setTimeout(loadAllData, 400);
+    });
 </script>
 @endpush
