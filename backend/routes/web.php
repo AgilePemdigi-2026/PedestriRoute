@@ -33,6 +33,10 @@ Route::get('/laporan/{id}/analisis', function ($id) {
     return view('warga.analisis', ['id' => $id]);
 })->name('warga.analisis');
 
+Route::get('/navigasi', function () {
+    return view('warga.navigasi');
+})->name('warga.navigasi');
+
 // Admin views
 Route::get('/admin', function () {
     return redirect('/admin/validasi');

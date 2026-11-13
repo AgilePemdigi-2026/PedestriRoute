@@ -34,6 +34,16 @@ class MessageCatalog
     public const HEATMAP_FILTER_EMPTY = 'Tidak ada data laporan yang sesuai dengan filter.';
     public const HEATMAP_ZOOM_IN = 'Perbesar peta untuk melihat semua segmen jalur.';
 
+    // Navigation Messages (F7/F8)
+    public const ROUTE_INVALID_COORDINATES = 'Koordinat atau preferensi rute tidak valid.';
+    public const ROUTE_ENGINE_ERROR = 'Rute tidak dapat dihitung saat ini. Silakan coba lagi.';
+    public const NAV_GPS_REQUIRED = 'Aktifkan GPS perangkat untuk memulai navigasi.';
+    public const NAV_OFF_ROUTE = 'Anda keluar dari jalur. Menghitung ulang rute...';
+    public const NAV_REROUTE_SUCCESS = 'Rute baru ditemukan. Lanjutkan perjalanan.';
+    public const NAV_ARRIVED = 'Anda telah tiba di tujuan.';
+    public const NAV_VOICE_MUTED = 'Panduan suara dinonaktifkan.';
+    public const NAV_VOICE_ENABLED = 'Panduan suara diaktifkan.';
+
     // Notification Templates
     public const NOTIF_AUTO_VALIDATED = 'Laporan Anda di {jalan} telah tervalidasi.';
     public const NOTIF_PENDING_ADMIN = 'Laporan Anda di {jalan} menunggu validasi Admin.';
