@@ -34,6 +34,13 @@ class MessageCatalog
     public const HEATMAP_FILTER_EMPTY = 'Tidak ada data laporan yang sesuai dengan filter.';
     public const HEATMAP_ZOOM_IN = 'Perbesar peta untuk melihat semua segmen jalur.';
 
+    // Route Recommendation Messages (SRS Section 2.4 / F7)
+    public const ROUTE_INVALID_PARAMETERS = 'Koordinat atau preferensi rute tidak valid.';
+    public const ROUTE_ENGINE_ERROR = 'Rute tidak dapat dihitung saat ini. Silakan coba lagi.';
+    public const ROUTE_ACTIVE_REPAIR = 'Rute melewati segmen yang sedang diperbaiki. Berhati-hatilah saat melintas.';
+    public const ROUTE_LOW_FEASIBILITY = 'Sebagian rute memiliki skor kelayakan rendah. Pertimbangkan rute lain bila memungkinkan.';
+    public const ROUTE_NETWORK_FALLBACK = 'Jaringan jalur belum lengkap di area ini, sehingga rute mengikuti perkiraan koridor jalan.';
+
     // Notification Templates
     public const NOTIF_AUTO_VALIDATED = 'Laporan Anda di {jalan} telah tervalidasi.';
     public const NOTIF_PENDING_ADMIN = 'Laporan Anda di {jalan} menunggu validasi Admin.';

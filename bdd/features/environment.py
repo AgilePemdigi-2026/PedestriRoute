@@ -23,6 +23,11 @@ MESSAGE_CATALOG = {
     "HEATMAP_NO_DATA": "Data kelayakan jalur belum tersedia untuk area ini.",
     "HEATMAP_FILTER_EMPTY": "Tidak ada data laporan yang sesuai dengan filter.",
     "HEATMAP_ZOOM_IN": "Perbesar peta untuk melihat semua segmen jalur.",
+    "ROUTE_INVALID_PARAMETERS": "Koordinat atau preferensi rute tidak valid.",
+    "ROUTE_ENGINE_ERROR": "Rute tidak dapat dihitung saat ini. Silakan coba lagi.",
+    "ROUTE_ACTIVE_REPAIR": "Rute melewati segmen yang sedang diperbaiki. Berhati-hatilah saat melintas.",
+    "ROUTE_LOW_FEASIBILITY": "Sebagian rute memiliki skor kelayakan rendah. Pertimbangkan rute lain bila memungkinkan.",
+    "ROUTE_NETWORK_FALLBACK": "Jaringan jalur belum lengkap di area ini, sehingga rute mengikuti perkiraan koridor jalan.",
     "REPAIR_STATUS_REQUIRED": "Mohon pilih status perbaikan terlebih dahulu",
     "REPAIR_STATUS_SAVED": "Notifikasi Status Berhasil Diperbarui",
     "REPAIR_SAVE_FAILED": "Pembaruan status gagal disimpan. Silakan coba lagi.",
@@ -71,6 +76,10 @@ def cleanup_test_data(context):
         App\\Models\\Notifikasi::where('penerima_id', $w->warga_id)->where('penerima_tipe', 'WARGA')->delete();
     }
     Illuminate\\Support\\Facades\\DB::table('kategori_masalah')->where('kategori_id', '>', 5)->delete();
+    Illuminate\\Support\\Facades\\DB::table('segmen_jalur')
+        ->where('nama_jalan', 'like', 'Jl. Rute BDD%')
+        ->orWhere('nama_jalan', 'like', 'Jl. Navigasi BDD%')
+        ->delete();
     """
     context.run_tinker(php)
 
