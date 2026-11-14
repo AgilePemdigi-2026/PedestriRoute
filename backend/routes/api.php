@@ -52,6 +52,8 @@ Route::prefix('v1')->group(function () {
         // Common report detail (accessible by report owner or admin)
         Route::get('/reports/{id}', [ReportController::class, 'show']);
 
+        Route::match(['get', 'post'], '/routes/recommend', \App\Http\Controllers\Api\RouteRecommendationController::class)->middleware('throttle:30,1');
+
         // Heatmap endpoint (F6 - accessible by warga and admin)
         Route::get('/heatmap', [HeatmapController::class, 'index']);
 
