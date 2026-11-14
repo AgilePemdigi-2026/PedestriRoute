@@ -28,7 +28,7 @@
     @endforeach
 
     <!-- Notifikasi (stub, aktif penuh di Sprint 3) -->
-    <a href="javascript:void(0)" onclick="showToast('Pusat Notifikasi lengkap aktif pada Sprint 3', 'info')"
+    <a href="/notifikasi"
        class="relative flex-1 flex flex-col items-center gap-0.5 pt-1.5 pb-0.5 text-slate-400 hover:text-slate-600 transition">
         <span class="w-9 h-6 flex items-center justify-center rounded-full">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -66,4 +66,7 @@ Route::get('/admin/statistik', function () {
     return view('admin.statistik');
 })->name('admin.statistik');
 
+Route::view('/notifikasi', 'notifikasi.index')
+    ->name('notifikasi.index');
+    
 Route::view('/verify-otp', 'auth.verify-otp')->name('otp.verify.page');
