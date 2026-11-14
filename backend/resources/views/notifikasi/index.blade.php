@@ -10,9 +10,14 @@
                 Notifikasi
             </h1>
             <p id="notificationSummary"
-               class="text-xs text-slate-500 mt-1"
-               aria-live="polite">
+                class="text-xs text-slate-500 mt-1"
+                aria-live="polite">
                 Memuat notifikasi...
+            </p>
+            <p data-notification-connection
+                class="text-[11px] text-slate-400 mt-1"
+                role="status">
+                Menghubungkan notifikasi...
             </p>
         </div>
 
@@ -102,6 +107,7 @@
     let currentPage = 0;
     let unreadCount = 0;
     let busy = false;
+    let pendingLiveRefresh = false;
 
     async function api(path, method = 'GET') {
         const response = await fetch('/api/v1' + path, {
@@ -238,6 +244,10 @@
     async function loadNotifications(reset = true) {
         if (busy) return;
 
+        if (reset) {
+            pendingLiveRefresh = false;
+        }
+
         setBusy(true);
         showMessage(reset ? 'Memuat notifikasi...' : '');
 
@@ -279,6 +289,11 @@
             showMessage(error.message);
         } finally {
             setBusy(false);
+
+            if (pendingLiveRefresh) {
+                pendingLiveRefresh = false;
+                queueMicrotask(() => loadNotifications(true));
+            }
         }
     }
 
@@ -302,7 +317,16 @@
         setBusy(false);
         await loadNotifications(true);
     });
+    
+    window.addEventListener('notifications:changed', () => {
+        if (busy) {
+            pendingLiveRefresh = true;
+            return;
+        }
 
+        loadNotifications(true);
+    });
+    
     try {
         const result = await api('/auth/me');
         const isAdmin = result.data.role === 'admin';
