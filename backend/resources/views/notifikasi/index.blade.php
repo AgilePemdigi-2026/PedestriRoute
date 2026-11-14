@@ -225,6 +225,7 @@
 
                 try {
                     await api('/notifications/' + item.notifikasi_id + '/read', 'PATCH');
+                    window.dispatchEvent(new Event('notifications:read'));
                 } catch (error) {
                     showToast(error.message, 'error');
                     setBusy(false);
@@ -308,6 +309,7 @@
 
         try {
             await api('/notifications/read-all', 'PATCH');
+            window.dispatchEvent(new Event('notifications:read'));
         } catch (error) {
             showToast(error.message, 'error');
             setBusy(false);
@@ -326,7 +328,7 @@
 
         loadNotifications(true);
     });
-    
+
     try {
         const result = await api('/auth/me');
         const isAdmin = result.data.role === 'admin';
