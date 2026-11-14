@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\AdminRepairController;
 use App\Http\Controllers\Api\AdminValidationController;
 use App\Http\Controllers\Api\AuthController;
@@ -55,6 +56,19 @@ Route::prefix('v1')->group(function () {
         // Heatmap endpoint (F6 - accessible by warga and admin)
         Route::get('/heatmap', [HeatmapController::class, 'index']);
 
+        // Notifikasi milik akun yang sedang login.
+        Route::get('/notifications', [NotificationController::class, 'index']);
+
+        Route::patch(
+            '/notifications/read-all',
+            [NotificationController::class, 'markAllRead']
+        );
+
+        Route::patch(
+            '/notifications/{id}/read',
+            [NotificationController::class, 'markRead']
+        )->whereNumber('id');
+        
         // Admin specific validation & repair routes (F5, F9)
         Route::middleware('role:admin')->prefix('admin')->group(function () {
             Route::get('/reports', [AdminValidationController::class, 'index']);
