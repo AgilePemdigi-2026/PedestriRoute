@@ -1153,68 +1153,68 @@ class RouteRecommendationService
         $fastestCollisions = $this->findCollidingObstacles($fastestRoute['geometry']['coordinates'] ?? [], $obstacles, $avoidRadius);
         $directDistance = (float) ($fastestRoute['distance'] ?? 0.0);
 
-        if ($preference === 'safest' && ! empty($obstacles)) {
-            // 1. First check all direct candidate routes from OSRM
-            $bestCandidate = null;
-            $minCollisions = count($fastestCollisions);
-            $bestDistance = $directDistance;
+        if ($preference === 'fastest') {
+            // Fastest preference strictly prioritizes shortest distance/time
+            $chosenRoute = $fastestRoute;
+            $collidingObstacles = $fastestCollisions;
+            $avoidedObstacles = [];
+        } else {
+            // Safest preference strictly prioritizes avoiding hazardous/reported points
+            if (empty($fastestCollisions)) {
+                // Fastest route is already 100% safe (0 collisions)
+                $chosenRoute = $fastestRoute;
+                $collidingObstacles = [];
+                $avoidedObstacles = [];
+            } else {
+                // The fastest route collides with reports! Search for safest alternatives.
+                $allCandidates = [];
 
-            foreach ($candidates as $cand) {
-                $candCollisions = $this->findCollidingObstacles($cand['geometry']['coordinates'] ?? [], $obstacles, $avoidRadius);
-                $candCount = count($candCollisions);
-                $candDist = (float) ($cand['distance'] ?? 0.0);
-
-                if ($candCount < $minCollisions || ($candCount === $minCollisions && $candCount === 0 && $candDist < $bestDistance)) {
-                    $minCollisions = $candCount;
-                    $bestDistance = $candDist;
-                    $bestCandidate = [
+                // 1. Evaluate all direct candidate routes returned by OSRM
+                foreach ($candidates as $cand) {
+                    $candCollisions = $this->findCollidingObstacles($cand['geometry']['coordinates'] ?? [], $obstacles, $avoidRadius);
+                    $allCandidates[] = [
                         'route' => $cand,
+                        'collisions_count' => count($candCollisions),
                         'collisions' => $candCollisions,
+                        'distance' => (float) ($cand['distance'] ?? 0.0),
                     ];
                 }
-            }
 
-            if ($bestCandidate !== null && $minCollisions === 0) {
-                $chosenRoute = $bestCandidate['route'];
-                $avoidedObstacles = $fastestCollisions;
-                $collidingObstacles = [];
-            } else {
-                // Direct routes collide with reported obstacles. Search safe parallel corridor bypasses.
+                // 2. Search detour routes via parallel corridors around the obstacles
                 $detourCandidates = $this->searchDetourRoutes($origin, $destination, $fastestCollisions, $obstacles, $avoidRadius, $directDistance);
-
-                if (! empty($detourCandidates)) {
-                    $bestDetour = $detourCandidates[0];
-                    if ($bestDetour['collisions_count'] < $minCollisions) {
-                        $chosenRoute = $bestDetour['route'];
-                        $collidingObstacles = $bestDetour['collisions'];
-
-                        $detourObsIds = array_flip(array_map(fn ($o) => (int) $o['laporan_id'], $collidingObstacles));
-                        foreach ($fastestCollisions as $fc) {
-                            if (! isset($detourObsIds[(int) $fc['laporan_id']])) {
-                                $avoidedObstacles[] = $fc;
-                            }
-                        }
-                    }
+                foreach ($detourCandidates as $dc) {
+                    $allCandidates[] = $dc;
                 }
 
-                // If no waypoint detour improved safety, but a direct alternative reduced collisions:
-                if ($chosenRoute === null && $bestCandidate !== null && $minCollisions < count($fastestCollisions)) {
+                // 3. Sort candidates: primary key is collisions_count ASC (safest first!),
+                // secondary key is distance ASC (shortest among equally safe)
+                usort($allCandidates, function ($a, $b) {
+                    if ($a['collisions_count'] !== $b['collisions_count']) {
+                        return $a['collisions_count'] <=> $b['collisions_count'];
+                    }
+                    return $a['distance'] <=> $b['distance'];
+                });
+
+                $bestCandidate = $allCandidates[0];
+
+                if ($bestCandidate['collisions_count'] < count($fastestCollisions)) {
                     $chosenRoute = $bestCandidate['route'];
                     $collidingObstacles = $bestCandidate['collisions'];
-                    $candObsIds = array_flip(array_map(fn ($o) => (int) $o['laporan_id'], $collidingObstacles));
+
+                    // Compute which obstacles were successfully avoided
+                    $chosenObsIds = array_flip(array_map(fn ($o) => (int) $o['laporan_id'], $collidingObstacles));
                     foreach ($fastestCollisions as $fc) {
-                        if (! isset($candObsIds[(int) $fc['laporan_id']])) {
+                        if (! isset($chosenObsIds[(int) $fc['laporan_id']])) {
                             $avoidedObstacles[] = $fc;
                         }
                     }
+                } else {
+                    // No route could reduce collisions (e.g. report is directly at origin/destination)
+                    $chosenRoute = $fastestRoute;
+                    $collidingObstacles = $fastestCollisions;
+                    $avoidedObstacles = [];
                 }
             }
-        }
-
-        // If fastest preference, or if no safer detour could be found (e.g. origin/destination directly at obstacle)
-        if ($chosenRoute === null) {
-            $chosenRoute = $fastestRoute;
-            $collidingObstacles = $fastestCollisions;
         }
 
         return $this->formatOsrmResponse(
@@ -1302,7 +1302,7 @@ class RouteRecommendationService
             $ctx = stream_context_create([
                 'http' => [
                     'method' => 'GET',
-                    'timeout' => 4.5,
+                    'timeout' => 6.0,
                     'header' => "User-Agent: PedestriRoute/1.0\r\nAccept: application/json\r\n",
                     'ignore_errors' => true,
                 ],
@@ -1316,6 +1316,55 @@ class RouteRecommendationService
             $data = json_decode($raw, true);
             if (! is_array($data) || ($data['code'] ?? '') !== 'Ok' || empty($data['routes'])) {
                 return [];
+            }
+
+            // Check if origin in Wisma Permai (north of the river) snapped across the river to Jalan Raya ITS
+            $wp0 = $data['waypoints'][0] ?? null;
+            if ($wp0 !== null) {
+                $snapLoc = $wp0['location'] ?? null;
+                $snapName = (string) ($wp0['name'] ?? '');
+
+                $isOriginNorthOfCanal = ($origin['lat'] >= -7.2752 && $origin['lat'] <= -7.2720 && $origin['lng'] >= 112.7880 && $origin['lng'] <= 112.7980);
+                $snappedAcrossCanal = $snapLoc && ($snapLoc[1] < -7.2750 || stripos($snapName, 'ITS') !== false);
+                $isAlreadyAtGate = ($this->haversine($origin, ['lat' => -7.27402, 'lng' => 112.79700]) < 25.0);
+
+                if ($isOriginNorthOfCanal && $snappedAcrossCanal && ! $isAlreadyAtGate) {
+                    $mulyosariGate = ['lat' => -7.27402, 'lng' => 112.79700];
+                    $altRoutes = $this->fetchOsrmCandidateRoutes($mulyosariGate, $destination, $waypoints, $alternatives);
+
+                    if (! empty($altRoutes)) {
+                        $connectorDistance = $this->haversine($origin, $mulyosariGate);
+                        $prepended = [];
+                        foreach ($altRoutes as $altRoute) {
+                            $coords = $altRoute['geometry']['coordinates'] ?? [];
+                            array_unshift($coords, [$origin['lng'], $origin['lat']]);
+                            $altRoute['geometry']['coordinates'] = $coords;
+                            $altRoute['distance'] = (float) ($altRoute['distance'] ?? 0) + $connectorDistance;
+
+                            if (! empty($altRoute['legs'][0]['steps'])) {
+                                $firstLegSteps = $altRoute['legs'][0]['steps'];
+                                array_unshift($firstLegSteps, [
+                                    'name' => 'Jalan Wisma Permai',
+                                    'distance' => round($connectorDistance, 1),
+                                    'duration' => round($connectorDistance / self::WALK_SPEED_MPS, 1),
+                                    'geometry' => [
+                                        [$origin['lng'], $origin['lat']],
+                                        [$mulyosariGate['lng'], $mulyosariGate['lat']],
+                                    ],
+                                    'maneuver' => [
+                                        'type' => 'depart',
+                                        'modifier' => 'straight',
+                                        'location' => [$origin['lng'], $origin['lat']],
+                                    ],
+                                ]);
+                                $altRoute['legs'][0]['steps'] = $firstLegSteps;
+                            }
+                            $prepended[] = $altRoute;
+                        }
+
+                        return $prepended;
+                    }
+                }
             }
 
             return $data['routes'];
@@ -1381,22 +1430,53 @@ class RouteRecommendationService
         $centroidLat = array_sum(array_map(fn ($o) => (float) $o['lat'], $collidingObstacles)) / $total;
         $centroidLng = array_sum(array_map(fn ($o) => (float) $o['lng'], $collidingObstacles)) / $total;
 
-        $bearing = $this->bearing($origin, $destination);
+        $odBearing = $this->bearing($origin, $destination);
+        $clusterBearing = $total >= 2
+            ? $this->bearing(
+                ['lat' => (float) $collidingObstacles[0]['lat'], 'lng' => (float) $collidingObstacles[0]['lng']],
+                ['lat' => (float) $collidingObstacles[$total - 1]['lat'], 'lng' => (float) $collidingObstacles[$total - 1]['lng']]
+            )
+            : $odBearing;
+
         $waypoints = [];
 
+        // 1. Strategic alternative pedestrian corridors in Kecamatan Mulyorejo (Tested bypass routes)
+        $strategicSpines = [
+            // South-West network (Kertajaya Indah / Merr)
+            ['lat' => -7.2750, 'lng' => 112.7850],
+            ['lat' => -7.2760, 'lng' => 112.7800],
+            ['lat' => -7.2720, 'lng' => 112.7820],
+            ['lat' => -7.2780, 'lng' => 112.7930],
+            // Sutorejo west parallel network
+            ['lat' => -7.2680, 'lng' => 112.7930],
+            ['lat' => -7.2650, 'lng' => 112.7925],
+            ['lat' => -7.2620, 'lng' => 112.7915],
+            ['lat' => -7.2700, 'lng' => 112.7935],
+            // East parallel network (Mulyosari Timur / Kalisari)
+            ['lat' => -7.2680, 'lng' => 112.7995],
+            ['lat' => -7.2650, 'lng' => 112.7995],
+            ['lat' => -7.2635, 'lng' => 112.8020],
+            ['lat' => -7.2610, 'lng' => 112.7990],
+        ];
+
+        foreach ($strategicSpines as $spine) {
+            $waypoints[] = $spine;
+        }
+
+        // 2. Anchors across the obstacle cluster (centroid, first obstacle, last obstacle)
         $anchorPoints = [
             ['lat' => $centroidLat, 'lng' => $centroidLng],
             ['lat' => (float) $collidingObstacles[0]['lat'], 'lng' => (float) $collidingObstacles[0]['lng']],
             ['lat' => (float) $collidingObstacles[$total - 1]['lat'], 'lng' => (float) $collidingObstacles[$total - 1]['lng']],
         ];
 
-        // Lateral offsets for pedestrian parallel streets
-        $lateralOffsets = [90.0, 160.0, 240.0];
+        // 3. Lateral offsets for pedestrian parallel streets
+        $lateralOffsets = [120.0, 220.0, 360.0, 500.0];
 
         foreach ($anchorPoints as $anchor) {
             foreach ($lateralOffsets as $dist) {
-                // Perpendicular to origin-destination line (Left and Right)
-                foreach ([$bearing + 90.0, $bearing - 90.0] as $angle) {
+                // Perpendicular to cluster road bearing
+                foreach ([$clusterBearing + 90.0, $clusterBearing - 90.0] as $angle) {
                     $rad = deg2rad($angle);
                     $dLat = ($dist / self::EARTH_RADIUS_M) * cos($rad);
                     $dLng = ($dist / (self::EARTH_RADIUS_M * cos(deg2rad($anchor['lat'])))) * sin($rad);
@@ -1414,11 +1494,25 @@ class RouteRecommendationService
             }
         }
 
+        // 4. Filter and deduplicate waypoints
         $uniqueWaypoints = [];
         foreach ($waypoints as $wp) {
+            // Must not be placed inside or right next to any known obstacle
+            $nearObstacle = false;
+            foreach ($allObstacles as $obs) {
+                if ($this->haversine($wp, ['lat' => (float) $obs['lat'], 'lng' => (float) $obs['lng']]) < 30.0) {
+                    $nearObstacle = true;
+                    break;
+                }
+            }
+            if ($nearObstacle) {
+                continue;
+            }
+
+            // Deduplicate waypoints within 35m of each other
             $duplicate = false;
             foreach ($uniqueWaypoints as $u) {
-                if ($this->haversine($wp, $u) < 30.0) {
+                if ($this->haversine($wp, $u) < 35.0) {
                     $duplicate = true;
                     break;
                 }
@@ -1428,10 +1522,11 @@ class RouteRecommendationService
             }
         }
 
-        $uniqueWaypoints = array_slice($uniqueWaypoints, 0, 8);
+        // Limit to top candidate waypoints to stay fast and responsive
+        $uniqueWaypoints = array_slice($uniqueWaypoints, 0, 18);
 
-        // Maximum reasonable detour distance overhead (max 25% extra or 450m extra)
-        $maxAllowedDistance = min($directDistance * 1.25, $directDistance + 450.0);
+        // Generous walking detour limit: up to 2.5x or 4000m extra to allow major arterial bypasses in urban grid
+        $maxAllowedDistance = max($directDistance * 2.5, $directDistance + 4000.0);
 
         $results = [];
         foreach ($uniqueWaypoints as $wp) {
@@ -1440,12 +1535,10 @@ class RouteRecommendationService
                 $cand = $routes[0];
                 $dist = (float) ($cand['distance'] ?? 0.0);
 
-                // Reject if excessive detour distance
                 if ($dist > $maxAllowedDistance) {
                     continue;
                 }
 
-                // Reject if waypoint creates a dead-end doubling back loop
                 if ($this->hasDeadEndLoop($cand)) {
                     continue;
                 }
@@ -1471,7 +1564,7 @@ class RouteRecommendationService
     }
 
     /**
-     * Check if a multi-leg route enters a dead-end street at a waypoint and walks back out.
+     * Check if a multi-leg route enters a dead-end street at a waypoint and walks back out (U-turn / doubling back).
      *
      * @param array<string, mixed> $route
      * @return bool
@@ -1483,31 +1576,28 @@ class RouteRecommendationService
             return false;
         }
 
+        foreach ($legs as $leg) {
+            foreach ($leg['steps'] ?? [] as $step) {
+                if (($step['maneuver']['modifier'] ?? '') === 'u-turn') {
+                    return true;
+                }
+            }
+        }
+
+        // Check acute heading reversal at waypoint transition
         for ($i = 0; $i < count($legs) - 1; $i++) {
             $legA = $legs[$i]['steps'] ?? [];
             $legB = $legs[$i + 1]['steps'] ?? [];
-            if (empty($legA) || empty($legB)) {
-                continue;
-            }
-
-            $lastStep = null;
-            for ($k = count($legA) - 1; $k >= 0; $k--) {
-                if (($legA[$k]['distance'] ?? 0) > 1.0) {
-                    $lastStep = $legA[$k];
-                    break;
+            if (! empty($legA) && ! empty($legB)) {
+                $lastStep = end($legA);
+                $firstStep = $legB[0];
+                $bIn = (float) ($lastStep['maneuver']['bearing_after'] ?? 0.0);
+                $bOut = (float) ($firstStep['maneuver']['bearing_after'] ?? 0.0);
+                $diff = abs($bIn - $bOut);
+                if ($diff > 180.0) {
+                    $diff = 360.0 - $diff;
                 }
-            }
-
-            $firstStep = null;
-            for ($k = 0; $k < count($legB); $k++) {
-                if (($legB[$k]['distance'] ?? 0) > 1.0) {
-                    $firstStep = $legB[$k];
-                    break;
-                }
-            }
-
-            if ($lastStep !== null && $firstStep !== null) {
-                if (! empty($lastStep['name']) && ! empty($firstStep['name']) && $lastStep['name'] === $firstStep['name']) {
+                if ($diff > 150.0 && ($lastStep['distance'] ?? 0) < 35 && ($firstStep['distance'] ?? 0) < 35) {
                     return true;
                 }
             }

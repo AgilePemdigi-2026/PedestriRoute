@@ -302,11 +302,26 @@
         });
     }
 
+    function clearActiveRoute() {
+        routeLayer.clearLayers();
+        obstacleLayer.clearLayers();
+        lastRoute = null;
+        const card = document.getElementById('routeSummary');
+        if (card) {
+            card.classList.remove('translate-y-0', 'opacity-100');
+            card.classList.add('translate-y-[130%]', 'opacity-0', 'pointer-events-none');
+        }
+        resetDetailsDrawer();
+    }
+
     document.querySelectorAll('.pref-chip').forEach((c) => {
         c.addEventListener('click', () => {
             state.preference = c.dataset.pref;
             paintChips();
-            drawRoute();
+            // If a route was already calculated and displayed, update it with new preference
+            if (lastRoute && state.origin && state.dest) {
+                drawRoute();
+            }
         });
     });
     paintChips();
@@ -351,7 +366,7 @@
         if (btnText) btnText.textContent = 'Cari Rute Pejalan Kaki';
     }
 
-    function setPoint(kind, point, autoDraw = true) {
+    function setPoint(kind, point, autoDraw = false) {
         if (!serviceArea.contains(point.lat, point.lng)) {
             showToast('Titik berada di luar area layanan Kecamatan Mulyorejo.', 'error');
             return;
@@ -373,6 +388,9 @@
 
         if (kind === 'origin') originMarker = marker; else destMarker = marker;
 
+        // Clear any old route to require user to press "Cari Rute" button
+        clearActiveRoute();
+
         if (autoDraw && state.origin && state.dest) {
             drawRoute();
         }
@@ -382,6 +400,11 @@
     const btnFindRoute = document.getElementById('btnFindRoute');
     if (btnFindRoute) {
         btnFindRoute.addEventListener('click', () => {
+            if (!state.origin) {
+                showToast('Silakan tentukan titik awal terlebih dahulu.', 'info');
+                document.getElementById('originInput').focus();
+                return;
+            }
             if (!state.dest) {
                 showToast('Silakan pilih titik tujuan terlebih dahulu.', 'info');
                 document.getElementById('destInput').focus();
@@ -396,7 +419,7 @@
         btn.addEventListener('click', () => {
             const idx = parseInt(btn.dataset.index, 10);
             const p = SAMPLE_PLACES[idx];
-            if (p) setPoint('dest', { lat: p.lat, lng: p.lng, label: p.name });
+            if (p) setPoint('dest', { lat: p.lat, lng: p.lng, label: p.name }, false);
         });
     });
 
@@ -435,12 +458,7 @@
         document.getElementById('destInput').value = '';
         document.getElementById('btnClearDest').classList.add('hidden');
         if (destMarker) pinLayer.removeLayer(destMarker);
-        routeLayer.clearLayers();
-        obstacleLayer.clearLayers();
-        const card = document.getElementById('routeSummary');
-        card.classList.remove('translate-y-0', 'opacity-100');
-        card.classList.add('translate-y-[130%]', 'opacity-0', 'pointer-events-none');
-        resetDetailsDrawer();
+        clearActiveRoute();
     });
 
     // Swap button
@@ -467,7 +485,7 @@
             }).addTo(pinLayer);
         }
 
-        drawRoute();
+        clearActiveRoute();
     });
 
     // GPS Origin
