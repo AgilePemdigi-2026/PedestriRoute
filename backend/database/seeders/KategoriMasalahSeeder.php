@@ -61,5 +61,9 @@ class KategoriMasalahSeeder extends Seeder
                 ]
             );
         }
+
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("SELECT setval(pg_get_serial_sequence('kategori_masalah', 'kategori_id'), (SELECT COALESCE(MAX(kategori_id), 1) FROM kategori_masalah))");
+        }
     }
 }
