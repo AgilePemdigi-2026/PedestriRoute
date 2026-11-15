@@ -1135,7 +1135,7 @@ class RouteRecommendationService
         $obstacles = $this->loadReportObstacles($origin, $destination);
         $avoidRadius = (float) env('ROUTE_AVOID_RADIUS_M', 25.0);
 
-        // Fetch candidate routes from OSRM
+        // Fetch candidate routes from OSRM foot engine
         $candidates = $this->fetchOsrmCandidateRoutes($origin, $destination, [], true);
         if (empty($candidates)) {
             return null;
@@ -1145,32 +1145,41 @@ class RouteRecommendationService
         $avoidedObstacles = [];
         $collidingObstacles = [];
 
+        // Direct candidate route collisions
+        $fastestRoute = $candidates[0];
+        $fastestCollisions = $this->findCollidingObstacles($fastestRoute['geometry']['coordinates'] ?? [], $obstacles, $avoidRadius);
+
         if ($preference === 'safest' && ! empty($obstacles)) {
-            // Find a candidate route that doesn't collide with any obstacles
+            // 1. First check if any direct candidate route from OSRM already has 0 collisions
+            $zeroCollisionDirect = [];
             foreach ($candidates as $cand) {
-                $collisions = $this->findCollidingObstacles($cand['geometry']['coordinates'] ?? [], $obstacles, $avoidRadius);
-                if (empty($collisions)) {
-                    $chosenRoute = $cand;
-                    $avoidedObstacles = $obstacles;
-                    break;
+                $candCollisions = $this->findCollidingObstacles($cand['geometry']['coordinates'] ?? [], $obstacles, $avoidRadius);
+                if (empty($candCollisions)) {
+                    $zeroCollisionDirect[] = $cand;
                 }
             }
 
-            // If all direct candidates collide, try perpendicular bypass waypoints
-            if ($chosenRoute === null) {
-                $firstCollision = $this->findCollidingObstacles($candidates[0]['geometry']['coordinates'] ?? [], $obstacles, $avoidRadius);
-                if (! empty($firstCollision)) {
-                    $targetObstacle = $firstCollision[0];
-                    $detourWaypoints = $this->calculateDetourWaypoints($origin, $destination, $targetObstacle);
+            if (! empty($zeroCollisionDirect)) {
+                // Pick shortest 0-collision direct route
+                usort($zeroCollisionDirect, fn ($a, $b) => ($a['distance'] ?? 0) <=> ($b['distance'] ?? 0));
+                $chosenRoute = $zeroCollisionDirect[0];
+                $avoidedObstacles = $fastestCollisions;
+                $collidingObstacles = [];
+            } else {
+                // Direct routes collide with reported obstacles. Search safe parallel corridor bypasses.
+                $detourCandidates = $this->searchDetourRoutes($origin, $destination, $fastestCollisions, $obstacles, $avoidRadius);
 
-                    foreach ($detourWaypoints as $waypoint) {
-                        $detourCandidates = $this->fetchOsrmCandidateRoutes($origin, $destination, [$waypoint], false);
-                        if (! empty($detourCandidates)) {
-                            $detourCollisions = $this->findCollidingObstacles($detourCandidates[0]['geometry']['coordinates'] ?? [], $obstacles, $avoidRadius);
-                            if (count($detourCollisions) < count($firstCollision)) {
-                                $chosenRoute = $detourCandidates[0];
-                                $avoidedObstacles[] = $targetObstacle;
-                                break;
+                if (! empty($detourCandidates)) {
+                    $bestDetour = $detourCandidates[0];
+                    // If detour reduces collisions compared to fastest direct route
+                    if ($bestDetour['collisions_count'] < count($fastestCollisions)) {
+                        $chosenRoute = $bestDetour['route'];
+                        $collidingObstacles = $bestDetour['collisions'];
+
+                        $detourObsIds = array_flip(array_map(fn ($o) => (int) $o['laporan_id'], $collidingObstacles));
+                        foreach ($fastestCollisions as $fc) {
+                            if (! isset($detourObsIds[(int) $fc['laporan_id']])) {
+                                $avoidedObstacles[] = $fc;
                             }
                         }
                     }
@@ -1178,10 +1187,10 @@ class RouteRecommendationService
             }
         }
 
-        // Fastest or fallback to primary route
+        // If fastest preference, or if no safer detour could be found (e.g. origin/destination directly at obstacle)
         if ($chosenRoute === null) {
-            $chosenRoute = $candidates[0];
-            $collidingObstacles = $this->findCollidingObstacles($chosenRoute['geometry']['coordinates'] ?? [], $obstacles, $avoidRadius);
+            $chosenRoute = $fastestRoute;
+            $collidingObstacles = $fastestCollisions;
         }
 
         return $this->formatOsrmResponse(
@@ -1202,10 +1211,10 @@ class RouteRecommendationService
      */
     private function loadReportObstacles(array $origin, array $destination): array
     {
-        $minLat = min($origin['lat'], $destination['lat']) - 0.015;
-        $maxLat = max($origin['lat'], $destination['lat']) + 0.015;
-        $minLng = min($origin['lng'], $destination['lng']) - 0.015;
-        $maxLng = max($origin['lng'], $destination['lng']) + 0.015;
+        $minLat = min($origin['lat'], $destination['lat']) - 0.025;
+        $maxLat = max($origin['lat'], $destination['lat']) + 0.025;
+        $minLng = min($origin['lng'], $destination['lng']) - 0.025;
+        $maxLng = max($origin['lng'], $destination['lng']) + 0.025;
 
         try {
             $rows = DB::table('laporan')
@@ -1252,7 +1261,7 @@ class RouteRecommendationService
      */
     private function fetchOsrmCandidateRoutes(array $origin, array $destination, array $waypoints = [], bool $alternatives = true): array
     {
-        $baseUrl = rtrim((string) env('OSRM_BASE_URL', 'http://router.project-osrm.org/route/v1/foot'), '/');
+        $baseUrl = rtrim((string) env('OSRM_BASE_URL', 'https://routing.openstreetmap.de/routed-foot/route/v1/driving'), '/');
 
         $coordList = [];
         $coordList[] = sprintf('%.6f,%.6f', $origin['lng'], $origin['lat']);
@@ -1321,31 +1330,101 @@ class RouteRecommendationService
     }
 
     /**
+     * Search detour routes around obstacle collisions using parallel corridor waypoints.
+     *
      * @param array{lat: float, lng: float} $origin
      * @param array{lat: float, lng: float} $destination
-     * @param array<string, mixed> $obstacle
-     * @return array<int, array{lat: float, lng: float}>
+     * @param array<int, array<string, mixed>> $collidingObstacles
+     * @param array<int, array<string, mixed>> $allObstacles
+     * @param float $avoidRadius
+     * @return array<int, array{route: array<string, mixed>, collisions_count: int, collisions: array<int, array<string, mixed>>, distance: float}>
      */
-    private function calculateDetourWaypoints(array $origin, array $destination, array $obstacle): array
-    {
+    private function searchDetourRoutes(
+        array $origin,
+        array $destination,
+        array $collidingObstacles,
+        array $allObstacles,
+        float $avoidRadius
+    ): array {
+        if (empty($collidingObstacles)) {
+            return [];
+        }
+
+        $total = count($collidingObstacles);
+        $centroidLat = array_sum(array_map(fn ($o) => (float) $o['lat'], $collidingObstacles)) / $total;
+        $centroidLng = array_sum(array_map(fn ($o) => (float) $o['lng'], $collidingObstacles)) / $total;
+
         $bearing = $this->bearing($origin, $destination);
         $waypoints = [];
 
-        // Try offsets at 90 and -90 degrees with 70m and 110m radii
-        foreach ([70.0, 110.0] as $offsetDist) {
-            foreach ([$bearing + 90.0, $bearing - 90.0] as $angle) {
-                $rad = deg2rad($angle);
-                $dLat = ($offsetDist / self::EARTH_RADIUS_M) * cos($rad);
-                $dLng = ($offsetDist / (self::EARTH_RADIUS_M * cos(deg2rad($obstacle['lat'])))) * sin($rad);
+        $anchorPoints = [
+            ['lat' => $centroidLat, 'lng' => $centroidLng],
+            ['lat' => (float) $collidingObstacles[0]['lat'], 'lng' => (float) $collidingObstacles[0]['lng']],
+            ['lat' => (float) $collidingObstacles[$total - 1]['lat'], 'lng' => (float) $collidingObstacles[$total - 1]['lng']],
+        ];
 
-                $waypoints[] = [
-                    'lat' => round($obstacle['lat'] + rad2deg($dLat), 6),
-                    'lng' => round($obstacle['lng'] + rad2deg($dLng), 6),
+        $lateralOffsets = [150.0, 240.0, 360.0, 480.0];
+
+        foreach ($anchorPoints as $anchor) {
+            foreach ($lateralOffsets as $dist) {
+                // Perpendicular to origin-destination line (Left and Right)
+                foreach ([$bearing + 90.0, $bearing - 90.0] as $angle) {
+                    $rad = deg2rad($angle);
+                    $dLat = ($dist / self::EARTH_RADIUS_M) * cos($rad);
+                    $dLng = ($dist / (self::EARTH_RADIUS_M * cos(deg2rad($anchor['lat'])))) * sin($rad);
+
+                    $waypoints[] = [
+                        'lat' => round($anchor['lat'] + rad2deg($dLat), 6),
+                        'lng' => round($anchor['lng'] + rad2deg($dLng), 6),
+                    ];
+                }
+
+                // Cardinal offsets (East and West)
+                $dLngEast = ($dist / (self::EARTH_RADIUS_M * cos(deg2rad($anchor['lat']))));
+                $waypoints[] = ['lat' => round($anchor['lat'], 6), 'lng' => round($anchor['lng'] + rad2deg($dLngEast), 6)];
+                $waypoints[] = ['lat' => round($anchor['lat'], 6), 'lng' => round($anchor['lng'] - rad2deg($dLngEast), 6)];
+            }
+        }
+
+        $uniqueWaypoints = [];
+        foreach ($waypoints as $wp) {
+            $duplicate = false;
+            foreach ($uniqueWaypoints as $u) {
+                if ($this->haversine($wp, $u) < 30.0) {
+                    $duplicate = true;
+                    break;
+                }
+            }
+            if (! $duplicate) {
+                $uniqueWaypoints[] = $wp;
+            }
+        }
+
+        $uniqueWaypoints = array_slice($uniqueWaypoints, 0, 10);
+
+        $results = [];
+        foreach ($uniqueWaypoints as $wp) {
+            $routes = $this->fetchOsrmCandidateRoutes($origin, $destination, [$wp], false);
+            if (! empty($routes)) {
+                $cand = $routes[0];
+                $col = $this->findCollidingObstacles($cand['geometry']['coordinates'] ?? [], $allObstacles, $avoidRadius);
+                $results[] = [
+                    'route' => $cand,
+                    'collisions_count' => count($col),
+                    'collisions' => $col,
+                    'distance' => (float) ($cand['distance'] ?? 0.0),
                 ];
             }
         }
 
-        return $waypoints;
+        usort($results, function ($a, $b) {
+            if ($a['collisions_count'] !== $b['collisions_count']) {
+                return $a['collisions_count'] <=> $b['collisions_count'];
+            }
+            return $a['distance'] <=> $b['distance'];
+        });
+
+        return $results;
     }
 
     /**
@@ -1465,9 +1544,13 @@ class RouteRecommendationService
         $warnings = [];
         if (! empty($avoidedObstacles)) {
             $first = $avoidedObstacles[0];
+            $count = count($avoidedObstacles);
+            $desc = $count > 1
+                ? "{$count} titik kerusakan fasilitas di sekitar " . ($first['alamat'] ?? 'jalur')
+                : ($first['repair'] ? 'perbaikan' : 'titik kerusakan') . ' di ' . ($first['alamat'] ?? 'sekitar jalur');
             $warnings[] = [
                 'code' => 'REPORT_AVOIDED',
-                'message' => 'Rute dialihkan untuk menghindari ' . ($first['repair'] ? 'perbaikan' : 'titik kerusakan') . ' di ' . ($first['alamat'] ?? 'sekitar jalur') . '.',
+                'message' => 'Rute dialihkan untuk menghindari ' . $desc . '.',
             ];
         }
 
