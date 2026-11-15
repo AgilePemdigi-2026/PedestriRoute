@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Events\NotifikasiDibuat;
+use Illuminate\Support\Facades\DB;
 use App\Models\Admin;
 use App\Models\Laporan;
 use App\Models\Notifikasi;
@@ -19,15 +21,27 @@ class NotificationService
         string $pesan,
         ?int $laporanId = null
     ): Notifikasi {
-        return Notifikasi::create([
-            'penerima_tipe' => $penerimaTipe,
-            'penerima_id' => $penerimaId,
-            'tipe' => $tipe,
-            'laporan_id' => $laporanId,
-            'pesan' => $pesan,
-            'status_baca' => 'BELUM',
-            'tanggal_kirim' => now(),
-        ]);
+        return DB::transaction(function () use (
+            $penerimaTipe,
+            $penerimaId,
+            $tipe,
+            $pesan,
+            $laporanId
+        ) {
+            $notifikasi = Notifikasi::create([
+                'penerima_tipe' => $penerimaTipe,
+                'penerima_id' => $penerimaId,
+                'tipe' => $tipe,
+                'laporan_id' => $laporanId,
+                'pesan' => $pesan,
+                'status_baca' => 'BELUM',
+                'tanggal_kirim' => now(),
+            ]);
+
+            event(NotifikasiDibuat::fromNotifikasi($notifikasi));
+
+            return $notifikasi;
+        });
     }
 
     /**

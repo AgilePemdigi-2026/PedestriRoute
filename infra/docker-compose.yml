@@ -86,5 +86,28 @@ services:
       cv-service:
         condition: service_started
 
+  reverb:
+    build:
+      context: ../
+      dockerfile: infra/docker/php/Dockerfile
+    container_name: pedestriroute_reverb
+    restart: unless-stopped
+    working_dir: /var/www/backend
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ../backend:/var/www/backend
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: pedestriroute
+      DB_USERNAME: pedestriroute
+      DB_PASSWORD: secretpassword
+    depends_on:
+      db:
+        condition: service_healthy
+        
 volumes:
   pedestriroute_pgdata:
