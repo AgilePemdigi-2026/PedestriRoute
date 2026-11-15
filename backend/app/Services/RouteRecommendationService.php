@@ -1290,11 +1290,10 @@ class RouteRecommendationService
         $isDestInWismaPermai = ($destination['lat'] >= -7.2755 && $destination['lat'] <= -7.2715 && $destination['lng'] >= 112.7845 && $destination['lng'] <= 112.7975);
 
         // 1. Origin in Wisma Permai going West (Kampus C, UNAIR, Merr, Dharmahusada)
-        if ($isOriginInWismaPermai && $destination['lng'] < 112.7915 && empty($waypoints)) {
-            $wpBaratGate = ['lat' => -7.27346, 'lng' => 112.78582];
-            $routesFromGate = $this->queryOsrmApi($wpBaratGate, $destination, [], $alternatives);
-            if (! empty($routesFromGate)) {
-                return $this->stitchWismaPermaiWestCorridor($origin, $wpBaratGate, $routesFromGate);
+        if ($isOriginInWismaPermai && $destination['lng'] < 112.7915) {
+            $routes = $this->fetchWismaPermaiWestRoutes($origin, $destination, $waypoints, $alternatives);
+            if (! empty($routes)) {
+                return $routes;
             }
         }
 
@@ -1311,11 +1310,10 @@ class RouteRecommendationService
         }
 
         // 3. Destination in Wisma Permai coming from West (Kampus C, Merr)
-        if ($isDestInWismaPermai && $origin['lng'] < 112.7915 && empty($waypoints)) {
-            $wpBaratGate = ['lat' => -7.27346, 'lng' => 112.78582];
-            $routesToGate = $this->queryOsrmApi($origin, $wpBaratGate, [], $alternatives);
-            if (! empty($routesToGate)) {
-                return $this->stitchWismaPermaiDestCorridor($destination, $wpBaratGate, $routesToGate);
+        if ($isDestInWismaPermai && $origin['lng'] < 112.7915) {
+            $routes = $this->fetchWismaPermaiInboundRoutes($origin, $destination, $waypoints, $alternatives);
+            if (! empty($routes)) {
+                return $routes;
             }
         }
 
@@ -1336,14 +1334,79 @@ class RouteRecommendationService
 
         // Fallback: If direct query snapped across canal, but origin is in Wisma Permai, force residential corridor
         if ($isOriginInWismaPermai) {
-            $wpBaratGate = ['lat' => -7.27346, 'lng' => 112.78582];
-            $fallbackRoutes = $this->queryOsrmApi($wpBaratGate, $destination, $waypoints, $alternatives);
+            $fallbackRoutes = $this->fetchWismaPermaiWestRoutes($origin, $destination, $waypoints, $alternatives);
             if (! empty($fallbackRoutes)) {
-                return $this->stitchWismaPermaiWestCorridor($origin, $wpBaratGate, $fallbackRoutes);
+                return $fallbackRoutes;
             }
         }
 
         return $rawRoutes;
+    }
+
+    /**
+     * Route westbound from Wisma Permai along real street geometry without synthetic diagonals.
+     *
+     * @param array{lat: float, lng: float} $origin
+     * @param array{lat: float, lng: float} $destination
+     * @param array<int, array{lat: float, lng: float}> $waypoints
+     * @param bool $alternatives
+     * @return array<int, array<string, mixed>>
+     */
+    private function fetchWismaPermaiWestRoutes(array $origin, array $destination, array $waypoints = [], bool $alternatives = true): array
+    {
+        $westGateIn = ['lat' => -7.274404, 'lng' => 112.789818];
+        $westGateOut = ['lat' => -7.274402, 'lng' => 112.789604];
+
+        // Leg 1: Real street from origin along Jalan Wisma Permai II to west end
+        $leg1Coords = [];
+        $leg1Dist = 0.0;
+        $leg1Steps = [];
+
+        if ($origin['lng'] > 112.7905) {
+            $leg1Routes = $this->queryOsrmApi($origin, $westGateIn, [], false);
+            if (! empty($leg1Routes)) {
+                $leg1 = $leg1Routes[0];
+                $leg1Coords = $leg1['geometry']['coordinates'] ?? [];
+                $leg1Dist = (float) ($leg1['distance'] ?? 0.0);
+                $leg1Steps = $leg1['legs'][0]['steps'] ?? [];
+            }
+        }
+
+        if (empty($leg1Coords)) {
+            $leg1Coords = [[(float) $origin['lng'], (float) $origin['lat']], [$westGateIn['lng'], $westGateIn['lat']]];
+            $leg1Dist = $this->haversine($origin, $westGateIn);
+        }
+
+        // Connector 23.6m to Jalan Sutorejo Barat
+        $connectorCoord = [$westGateOut['lng'], $westGateOut['lat']];
+        $connectorDist = 23.6;
+
+        // Leg 2: Real street from Jalan Sutorejo Barat to destination (with waypoints)
+        $leg2Routes = $this->queryOsrmApi($westGateOut, $destination, $waypoints, $alternatives);
+        if (empty($leg2Routes)) {
+            return [];
+        }
+
+        $stitchedRoutes = [];
+        foreach ($leg2Routes as $r2) {
+            $r2Coords = $r2['geometry']['coordinates'] ?? [];
+            $allCoords = array_merge($leg1Coords, [$connectorCoord], array_slice($r2Coords, 1));
+            $r2Dist = (float) ($r2['distance'] ?? 0.0);
+            $totalDist = $leg1Dist + $connectorDist + $r2Dist;
+            $totalDur = (float) ($r2['duration'] ?? 0.0) + (($leg1Dist + $connectorDist) / self::WALK_SPEED_MPS);
+
+            $r2['geometry']['coordinates'] = $allCoords;
+            $r2['distance'] = $totalDist;
+            $r2['duration'] = $totalDur;
+
+            if (! empty($r2['legs'][0]['steps'])) {
+                $r2['legs'][0]['steps'] = array_merge($leg1Steps, $r2['legs'][0]['steps']);
+            }
+
+            $stitchedRoutes[] = $r2;
+        }
+
+        return $stitchedRoutes;
     }
 
     /**
@@ -1403,77 +1466,94 @@ class RouteRecommendationService
      */
     private function routeCrossesCanalToSukolilo(array $route): bool
     {
-        $coords = $route['geometry']['coordinates'] ?? [];
-        foreach ($coords as $c) {
-            // Canal boundary is at latitude -7.2752
-            if ($c[1] < -7.2752) {
+        $steps = $route['legs'][0]['steps'] ?? [];
+        foreach ($steps as $s) {
+            $name = strtolower($s['name'] ?? '');
+            if (str_contains($name, 'raya its') || str_contains($name, 'kertajaya indah') || str_contains($name, 'gebang')) {
                 return true;
             }
         }
+
+        $coords = $route['geometry']['coordinates'] ?? [];
+        foreach ($coords as $c) {
+            $lng = (float) $c[0];
+            $lat = (float) $c[1];
+            // Across canal at east end (Jalan Raya ITS near Mulyosari / ITS)
+            if ($lng > 112.7915 && $lat < -7.2751) {
+                return true;
+            }
+            // Across canal to Sukolilo / ITS southern campus
+            if ($lat < -7.2762) {
+                return true;
+            }
+        }
+
         return false;
     }
 
     /**
-     * Stitch internal Wisma Permai residential corridor westward towards Jalan Wisma Permai Barat.
+     * Route inbound to Wisma Permai from west along real street geometry without synthetic diagonals.
      *
      * @param array{lat: float, lng: float} $origin
-     * @param array{lat: float, lng: float} $gate
-     * @param array<int, array<string, mixed>> $routes
+     * @param array{lat: float, lng: float} $destination
+     * @param array<int, array{lat: float, lng: float}> $waypoints
+     * @param bool $alternatives
      * @return array<int, array<string, mixed>>
      */
-    private function stitchWismaPermaiWestCorridor(array $origin, array $gate, array $routes): array
+    private function fetchWismaPermaiInboundRoutes(array $origin, array $destination, array $waypoints = [], bool $alternatives = true): array
     {
-        $spine = [];
-        $spine[] = [(float) $origin['lng'], (float) $origin['lat']];
-        if ($origin['lng'] > 112.7935) {
-            $spine[] = [112.79300, -7.27420];
-        }
-        if ($origin['lng'] > 112.7910) {
-            $spine[] = [112.79050, -7.27400];
-        }
-        if ($origin['lng'] > 112.7885) {
-            $spine[] = [112.78800, -7.27360];
-        }
-        $spine[] = [(float) $gate['lng'], (float) $gate['lat']];
+        $westGateOut = ['lat' => -7.274402, 'lng' => 112.789604];
+        $westGateIn = ['lat' => -7.274404, 'lng' => 112.789818];
 
-        $connectorDist = 0.0;
-        for ($i = 0; $i < count($spine) - 1; $i++) {
-            $connectorDist += $this->haversine(
-                ['lat' => $spine[$i][1], 'lng' => $spine[$i][0]],
-                ['lat' => $spine[$i + 1][1], 'lng' => $spine[$i + 1][0]]
-            );
+        // Leg 1: Real street from origin to westGateOut (with waypoints)
+        $leg1Routes = $this->queryOsrmApi($origin, $westGateOut, $waypoints, $alternatives);
+        if (empty($leg1Routes)) {
+            return [];
         }
 
-        $stitched = [];
-        foreach ($routes as $route) {
-            $origCoords = $route['geometry']['coordinates'] ?? [];
-            $route['geometry']['coordinates'] = array_merge($spine, array_slice($origCoords, 1));
-            $route['distance'] = (float) ($route['distance'] ?? 0) + $connectorDist;
-            $route['duration'] = (float) ($route['duration'] ?? 0) + ($connectorDist / self::WALK_SPEED_MPS);
+        // Leg 2: Real street from westGateIn along Jalan Wisma Permai II to destination
+        $leg2Coords = [];
+        $leg2Dist = 0.0;
+        $leg2Steps = [];
 
-            $firstStep = [
-                'name' => 'Jalan Wisma Permai',
-                'distance' => round($connectorDist, 1),
-                'duration' => round($connectorDist / self::WALK_SPEED_MPS, 1),
-                'geometry' => $spine,
-                'mode' => 'walking',
-                'maneuver' => [
-                    'type' => 'depart',
-                    'modifier' => 'straight',
-                    'location' => [(float) $origin['lng'], (float) $origin['lat']],
-                    'bearing_before' => 0,
-                    'bearing_after' => 270,
-                ],
-            ];
-
-            $legSteps = $route['legs'][0]['steps'] ?? [];
-            array_unshift($legSteps, $firstStep);
-            $route['legs'][0]['steps'] = $legSteps;
-
-            $stitched[] = $route;
+        if ($destination['lng'] > 112.7905) {
+            $leg2Routes = $this->queryOsrmApi($westGateIn, $destination, [], false);
+            if (! empty($leg2Routes)) {
+                $leg2 = $leg2Routes[0];
+                $leg2Coords = $leg2['geometry']['coordinates'] ?? [];
+                $leg2Dist = (float) ($leg2['distance'] ?? 0.0);
+                $leg2Steps = $leg2['legs'][0]['steps'] ?? [];
+            }
         }
 
-        return $stitched;
+        if (empty($leg2Coords)) {
+            $leg2Coords = [[(float) $westGateIn['lng'], (float) $westGateIn['lat']], [(float) $destination['lng'], (float) $destination['lat']]];
+            $leg2Dist = $this->haversine($westGateIn, $destination);
+        }
+
+        $connectorCoord = [$westGateIn['lng'], $westGateIn['lat']];
+        $connectorDist = 23.6;
+
+        $stitchedRoutes = [];
+        foreach ($leg1Routes as $r1) {
+            $r1Coords = $r1['geometry']['coordinates'] ?? [];
+            $allCoords = array_merge($r1Coords, [$connectorCoord], array_slice($leg2Coords, 1));
+            $r1Dist = (float) ($r1['distance'] ?? 0.0);
+            $totalDist = $r1Dist + $connectorDist + $leg2Dist;
+            $totalDur = (float) ($r1['duration'] ?? 0.0) + (($connectorDist + $leg2Dist) / self::WALK_SPEED_MPS);
+
+            $r1['geometry']['coordinates'] = $allCoords;
+            $r1['distance'] = $totalDist;
+            $r1['duration'] = $totalDur;
+
+            if (! empty($leg2Steps)) {
+                $r1['legs'][0]['steps'] = array_merge($r1['legs'][0]['steps'] ?? [], $leg2Steps);
+            }
+
+            $stitchedRoutes[] = $r1;
+        }
+
+        return $stitchedRoutes;
     }
 
     /**
@@ -1524,68 +1604,7 @@ class RouteRecommendationService
         return $stitched;
     }
 
-    /**
-     * Stitch internal Wisma Permai residential corridor from Jalan Wisma Permai Barat into destination.
-     *
-     * @param array{lat: float, lng: float} $dest
-     * @param array{lat: float, lng: float} $gate
-     * @param array<int, array<string, mixed>> $routes
-     * @return array<int, array<string, mixed>>
-     */
-    private function stitchWismaPermaiDestCorridor(array $dest, array $gate, array $routes): array
-    {
-        $spine = [];
-        $spine[] = [(float) $gate['lng'], (float) $gate['lat']];
-        if ($dest['lng'] > 112.7885) {
-            $spine[] = [112.78800, -7.27360];
-        }
-        if ($dest['lng'] > 112.7910) {
-            $spine[] = [112.79050, -7.27400];
-        }
-        if ($dest['lng'] > 112.7935) {
-            $spine[] = [112.79300, -7.27420];
-        }
-        $spine[] = [(float) $dest['lng'], (float) $dest['lat']];
 
-        $connectorDist = 0.0;
-        for ($i = 0; $i < count($spine) - 1; $i++) {
-            $connectorDist += $this->haversine(
-                ['lat' => $spine[$i][1], 'lng' => $spine[$i][0]],
-                ['lat' => $spine[$i + 1][1], 'lng' => $spine[$i + 1][0]]
-            );
-        }
-
-        $stitched = [];
-        foreach ($routes as $route) {
-            $origCoords = $route['geometry']['coordinates'] ?? [];
-            $route['geometry']['coordinates'] = array_merge($origCoords, array_slice($spine, 1));
-            $route['distance'] = (float) ($route['distance'] ?? 0) + $connectorDist;
-            $route['duration'] = (float) ($route['duration'] ?? 0) + ($connectorDist / self::WALK_SPEED_MPS);
-
-            $lastStep = [
-                'name' => 'Jalan Wisma Permai',
-                'distance' => round($connectorDist, 1),
-                'duration' => round($connectorDist / self::WALK_SPEED_MPS, 1),
-                'geometry' => $spine,
-                'mode' => 'walking',
-                'maneuver' => [
-                    'type' => 'arrive',
-                    'modifier' => 'straight',
-                    'location' => [(float) $dest['lng'], (float) $dest['lat']],
-                    'bearing_before' => 90,
-                    'bearing_after' => 0,
-                ],
-            ];
-
-            $legSteps = $route['legs'][0]['steps'] ?? [];
-            $legSteps[] = $lastStep;
-            $route['legs'][0]['steps'] = $legSteps;
-
-            $stitched[] = $route;
-        }
-
-        return $stitched;
-    }
 
     /**
      * @param array<int, array{0: float, 1: float}> $coordinates
@@ -1669,6 +1688,8 @@ class RouteRecommendationService
             // 4. Wisma Permai Barat / Merr (West residential spine)
             ['lat' => -7.2735, 'lng' => 112.7858, 'name' => 'Jl. Wisma Permai Barat'],
             ['lat' => -7.2710, 'lng' => 112.7845, 'name' => 'Jl. Dharmahusada Permai'],
+            ['lat' => -7.2700, 'lng' => 112.7820, 'name' => 'Jl. Dr. Ir. H. Soekarno (Merr)'],
+            ['lat' => -7.2680, 'lng' => 112.7825, 'name' => 'Jl. Dr. Ir. H. Soekarno (Merr North)'],
         ];
 
         // Sort corridors by proximity to the obstacle centroid
@@ -1731,27 +1752,16 @@ class RouteRecommendationService
         // Limit to top 4 waypoints so the search is blazing fast and responsive (< 1.5s)
         $uniqueWaypoints = array_slice($uniqueWaypoints, 0, 4);
 
-        // Realistic walking detour limit: at most 1.5x direct or +800m extra walking
-        $maxAllowedDistance = max($directDistance * 1.5, $directDistance + 800.0);
+        // Realistic walking detour limit: at most 1.7x direct or +1000m extra walking
+        $maxAllowedDistance = max($directDistance * 1.7, $directDistance + 1000.0);
 
-        // Build parallel queries for blazing fast execution (< 1s)
-        $queries = [];
-        foreach ($uniqueWaypoints as $wp) {
-            $queries[] = [
-                'origin' => $origin,
-                'destination' => $destination,
-                'waypoints' => [$wp],
-            ];
-        }
-
-        $batchRoutes = $this->queryOsrmApiMulti($queries);
+        $candidates = $this->fetchBatchDetourCandidateRoutes($origin, $destination, $uniqueWaypoints);
 
         $results = [];
-        foreach ($batchRoutes as $routes) {
-            if (empty($routes)) {
+        foreach ($candidates as $cand) {
+            if (empty($cand)) {
                 continue;
             }
-            $cand = $routes[0];
             $dist = (float) ($cand['distance'] ?? 0.0);
 
             if ($dist > $maxAllowedDistance) {
@@ -1783,6 +1793,104 @@ class RouteRecommendationService
         });
 
         return $results;
+    }
+
+    /**
+     * Query multiple detour candidates in parallel while strictly respecting residential corridors.
+     *
+     * @param array{lat: float, lng: float} $origin
+     * @param array{lat: float, lng: float} $destination
+     * @param array<int, array{lat: float, lng: float}> $waypointsList
+     * @return array<int, array<string, mixed>>
+     */
+    private function fetchBatchDetourCandidateRoutes(array $origin, array $destination, array $waypointsList): array
+    {
+        $isOriginInWismaPermai = ($origin['lat'] >= -7.2755 && $origin['lat'] <= -7.2715 && $origin['lng'] >= 112.7845 && $origin['lng'] <= 112.7975);
+
+        if ($isOriginInWismaPermai && $destination['lng'] < 112.7915) {
+            $westGateIn = ['lat' => -7.274404, 'lng' => 112.789818];
+            $westGateOut = ['lat' => -7.274402, 'lng' => 112.789604];
+
+            // Leg 1: Real street from origin along Jalan Wisma Permai II
+            $leg1Coords = [];
+            $leg1Dist = 0.0;
+            $leg1Steps = [];
+
+            if ($origin['lng'] > 112.7905) {
+                $leg1Routes = $this->queryOsrmApi($origin, $westGateIn, [], false);
+                if (! empty($leg1Routes)) {
+                    $leg1 = $leg1Routes[0];
+                    $leg1Coords = $leg1['geometry']['coordinates'] ?? [];
+                    $leg1Dist = (float) ($leg1['distance'] ?? 0.0);
+                    $leg1Steps = $leg1['legs'][0]['steps'] ?? [];
+                }
+            }
+
+            if (empty($leg1Coords)) {
+                $leg1Coords = [[(float) $origin['lng'], (float) $origin['lat']], [$westGateIn['lng'], $westGateIn['lat']]];
+                $leg1Dist = $this->haversine($origin, $westGateIn);
+            }
+
+            $connectorCoord = [$westGateOut['lng'], $westGateOut['lat']];
+            $connectorDist = 23.6;
+
+            // Leg 2: Parallel queries from westGateOut to destination via each waypoint
+            $queries = [];
+            foreach ($waypointsList as $wp) {
+                $queries[] = [
+                    'origin' => $westGateOut,
+                    'destination' => $destination,
+                    'waypoints' => [$wp],
+                ];
+            }
+
+            $batchResults = $this->queryOsrmApiMulti($queries);
+
+            $stitchedCandidates = [];
+            foreach ($batchResults as $routes) {
+                if (empty($routes)) {
+                    continue;
+                }
+                $r2 = $routes[0];
+                $r2Coords = $r2['geometry']['coordinates'] ?? [];
+                $allCoords = array_merge($leg1Coords, [$connectorCoord], array_slice($r2Coords, 1));
+                $r2Dist = (float) ($r2['distance'] ?? 0.0);
+                $totalDist = $leg1Dist + $connectorDist + $r2Dist;
+                $totalDur = (float) ($r2['duration'] ?? 0.0) + (($leg1Dist + $connectorDist) / self::WALK_SPEED_MPS);
+
+                $r2['geometry']['coordinates'] = $allCoords;
+                $r2['distance'] = $totalDist;
+                $r2['duration'] = $totalDur;
+
+                if (! empty($r2['legs'][0]['steps'])) {
+                    $r2['legs'][0]['steps'] = array_merge($leg1Steps, $r2['legs'][0]['steps']);
+                }
+
+                $stitchedCandidates[] = $r2;
+            }
+
+            return $stitchedCandidates;
+        }
+
+        // Standard parallel detour query
+        $queries = [];
+        foreach ($waypointsList as $wp) {
+            $queries[] = [
+                'origin' => $origin,
+                'destination' => $destination,
+                'waypoints' => [$wp],
+            ];
+        }
+
+        $batchResults = $this->queryOsrmApiMulti($queries);
+        $candidates = [];
+        foreach ($batchResults as $routes) {
+            if (! empty($routes)) {
+                $candidates[] = $routes[0];
+            }
+        }
+
+        return $candidates;
     }
 
     /**
