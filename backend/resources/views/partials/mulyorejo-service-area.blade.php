@@ -47,24 +47,30 @@
             );
         }
 
-        function attach(map) {
-            if (!map.getPane('serviceAreaPane')) {
-                map.createPane('serviceAreaPane');
-                map.getPane('serviceAreaPane').style.zIndex = '350';
-            }
-            const layer = L.geoJSON(geojson, {
-                pane: 'serviceAreaPane',
-                interactive: false,
-                bubblingMouseEvents: true,
-                style: {
-                    color: '#006257',
-                    weight: 2.5,
-                    opacity: 1,
-                    fillColor: '#008775',
-                    fillOpacity: 0.12,
-                    interactive: false
+        function attach(map, options = {}) {
+            const drawLayer = options.drawLayer !== false;
+            let layer;
+            if (drawLayer) {
+                if (!map.getPane('serviceAreaPane')) {
+                    map.createPane('serviceAreaPane');
+                    map.getPane('serviceAreaPane').style.zIndex = '350';
                 }
-            }).addTo(map);
+                layer = L.geoJSON(geojson, {
+                    pane: 'serviceAreaPane',
+                    interactive: false,
+                    bubblingMouseEvents: true,
+                    style: {
+                        color: '#006257',
+                        weight: 2.5,
+                        opacity: 1,
+                        fillColor: '#008775',
+                        fillOpacity: 0.12,
+                        interactive: false
+                    }
+                }).addTo(map);
+            } else {
+                layer = L.geoJSON(geojson);
+            }
             const bounds = layer.getBounds();
             const navigationBounds = bounds.pad(0.20);
             map.setMaxBounds(navigationBounds);

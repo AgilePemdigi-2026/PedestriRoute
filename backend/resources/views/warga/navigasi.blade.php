@@ -320,7 +320,7 @@
     const map = L.map('navMap', { attributionControl: false, zoomControl: false }).setView([-7.2663, 112.7965], 15);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-    const serviceArea = PedestriRouteServiceArea.attach(map);
+    const serviceArea = PedestriRouteServiceArea.attach(map, { drawLayer: false });
     setTimeout(() => {
         map.invalidateSize();
         map.fitBounds(serviceArea.bounds, { padding: [16, 16], animate: false });

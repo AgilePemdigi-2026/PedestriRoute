@@ -30,26 +30,18 @@
 
     <!-- Floating Top Search Card -->
     <div class="absolute inset-x-0 top-0 z-30 px-3 pt-3 pointer-events-none">
-        <div class="pointer-events-auto bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xl shadow-slate-900/10 p-3 space-y-2.5">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-brand-500 animate-pulse"></span>
-                    <span class="text-xs font-extrabold uppercase tracking-wider text-slate-700">Rute Pejalan Kaki OSRM</span>
-                </div>
-                <span id="mapEngineBadge" class="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">Jalur Nyata</span>
-            </div>
-
+        <div class="pointer-events-auto bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-lg p-2.5 space-y-2">
             <!-- Form Titik Awal & Titik Tujuan with Swap Button -->
-            <div class="relative flex items-center gap-2">
+            <div class="relative flex items-center gap-1.5">
                 <div class="flex-1 space-y-1.5 min-w-0">
                     <!-- Titik Awal -->
-                    <div class="relative flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500">
-                        <span class="w-6 h-6 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center shrink-0 text-xs font-black">A</span>
+                    <div class="relative flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500">
+                        <span class="w-5 h-5 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center shrink-0 text-[10px] font-black">A</span>
                         <input id="originInput" type="text" autocomplete="off" placeholder="Titik awal (Lokasi Saya)"
                             class="w-full bg-transparent ml-2 text-xs font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none">
                         <button type="button" id="btnMyGps" title="Gunakan Lokasi GPS Saya"
                             class="p-1 text-sky-600 hover:text-sky-800 shrink-0 rounded-lg hover:bg-sky-50 transition active:scale-95">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
                                 <circle cx="12" cy="12" r="3" />
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v3m0 14v3M2 12h3m14 0h3" />
                             </svg>
@@ -58,8 +50,8 @@
                     </div>
 
                     <!-- Titik Tujuan -->
-                    <div class="relative flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500">
-                        <span class="w-6 h-6 rounded-full bg-brand-100 text-brand-800 flex items-center justify-center shrink-0 text-xs font-black">B</span>
+                    <div class="relative flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500">
+                        <span class="w-5 h-5 rounded-full bg-brand-100 text-brand-800 flex items-center justify-center shrink-0 text-[10px] font-black">B</span>
                         <input id="destInput" type="text" autocomplete="off" placeholder="Pilih tujuan di Mulyorejo..."
                             class="w-full bg-transparent ml-2 text-xs font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none">
                         <button type="button" id="btnClearDest" title="Hapus Tujuan"
@@ -74,85 +66,100 @@
 
                 <!-- Swap Button -->
                 <button type="button" id="btnSwap" title="Tukar Titik Awal & Tujuan"
-                    class="w-9 h-16 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 flex items-center justify-center shrink-0 active:scale-95 transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+                    class="w-8 h-14 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 flex items-center justify-center shrink-0 active:scale-95 transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4" />
                     </svg>
                 </button>
             </div>
 
             <!-- Preference Toggle Pills -->
-            <div class="grid grid-cols-2 gap-2 pt-0.5">
-                <button type="button" data-pref="safest"
-                    class="pref-chip h-9 px-3 rounded-xl text-xs font-extrabold border transition flex items-center justify-center gap-1.5 shadow-sm">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                    <span>Teraman (Hindari Bahaya)</span>
-                </button>
-                <button type="button" data-pref="fastest"
-                    class="pref-chip h-9 px-3 rounded-xl text-xs font-extrabold border transition flex items-center justify-center gap-1.5 shadow-sm">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    <span>Tercepat</span>
-                </button>
+            <div class="flex items-center gap-1.5 pt-0.5">
+                <div class="grid grid-cols-2 gap-1 flex-1 bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+                    <button type="button" data-pref="safest"
+                        class="pref-chip h-7 px-2 rounded-lg text-[11px] font-extrabold border transition flex items-center justify-center gap-1 shadow-sm">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        <span>Teraman</span>
+                    </button>
+                    <button type="button" data-pref="fastest"
+                        class="pref-chip h-7 px-2 rounded-lg text-[11px] font-extrabold border transition flex items-center justify-center gap-1 shadow-sm">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <span>Tercepat</span>
+                    </button>
+                </div>
+                <span id="mapEngineBadge" class="hidden text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg">OSRM</span>
             </div>
 
             <!-- Quick destination chips -->
-            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px] custom-scrollbar">
+            <div id="quickChipsBar" class="flex items-center gap-1 overflow-x-auto pb-0.5 text-[10px] custom-scrollbar">
                 <span class="text-slate-400 font-bold shrink-0">Cepat:</span>
-                <button type="button" class="quick-chip shrink-0 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-semibold border border-slate-200 transition" data-index="0">Unair C</button>
-                <button type="button" class="quick-chip shrink-0 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-semibold border border-slate-200 transition" data-index="1">RS Unair</button>
-                <button type="button" class="quick-chip shrink-0 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-semibold border border-slate-200 transition" data-index="4">Puskesmas</button>
-                <button type="button" class="quick-chip shrink-0 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-semibold border border-slate-200 transition" data-index="6">Pasar</button>
-                <button type="button" class="quick-chip shrink-0 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-semibold border border-slate-200 transition" data-index="8">Taman</button>
+                <button type="button" class="quick-chip shrink-0 px-2 py-0.5 rounded-md bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-semibold border border-slate-200 transition" data-index="0">Unair C</button>
+                <button type="button" class="quick-chip shrink-0 px-2 py-0.5 rounded-md bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-semibold border border-slate-200 transition" data-index="1">RS Unair</button>
+                <button type="button" class="quick-chip shrink-0 px-2 py-0.5 rounded-md bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-semibold border border-slate-200 transition" data-index="4">Puskesmas</button>
+                <button type="button" class="quick-chip shrink-0 px-2 py-0.5 rounded-md bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-semibold border border-slate-200 transition" data-index="6">Pasar</button>
+                <button type="button" class="quick-chip shrink-0 px-2 py-0.5 rounded-md bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-semibold border border-slate-200 transition" data-index="8">Taman</button>
             </div>
         </div>
     </div>
 
     <!-- Floating Bottom Summary Sheet -->
-    <div id="routeSummary" class="absolute bottom-16 inset-x-3 z-30 transform translate-y-[130%] opacity-0 pointer-events-none bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 p-4">
-        <!-- Top Stats Row -->
-        <div class="flex items-start justify-between gap-3">
-            <div>
+    <div id="routeSummary" class="absolute bottom-16 inset-x-3 z-30 transform translate-y-[130%] opacity-0 pointer-events-none bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/90 p-3">
+        <!-- Compact Main Bar: Stats & Mulai Button -->
+        <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0 flex-1">
                 <div class="flex items-baseline gap-2">
-                    <span id="sumDuration" class="text-2xl font-black text-brand-800 leading-none">-</span>
+                    <span id="sumDuration" class="text-xl font-black text-brand-800 leading-none">-</span>
                     <span class="text-slate-300">•</span>
-                    <span id="sumDistance" class="text-base font-extrabold text-slate-800">-</span>
+                    <span id="sumDistance" class="text-xs font-extrabold text-slate-700 leading-none">-</span>
                 </div>
-                <p id="sumRouteDesc" class="text-[11px] font-semibold text-slate-500 mt-1">Mengikuti jaringan jalan pejalan kaki resmi</p>
+                <div class="flex items-center gap-2 mt-1">
+                    <span id="sumBadge" class="text-[10px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md shrink-0">
+                        Sangat Layak
+                    </span>
+                    <button type="button" id="btnToggleDetails" class="text-[10px] font-bold text-slate-500 hover:text-brand-700 flex items-center gap-0.5">
+                        <span id="toggleDetailsText">Detail</span>
+                        <svg id="toggleDetailsIcon" class="w-3 h-3 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                </div>
             </div>
-            <span id="sumBadge" class="text-[11px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg shrink-0">
-                Sangat Layak
-            </span>
+
+            <!-- Action Button -->
+            <button type="button" id="btnStartNav"
+                class="shrink-0 h-10 px-4 bg-brand-700 hover:bg-brand-800 text-white font-extrabold text-xs rounded-xl shadow-md shadow-brand-900/20 transition active:scale-[0.98] flex items-center gap-1.5">
+                <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m3 11 19-9-9 19-2-8-8-2z" />
+                </svg>
+                <span>Mulai</span>
+            </button>
         </div>
 
-        <!-- Warning / Avoidance Alert Box -->
-        <div id="avoidanceAlert" class="hidden mt-2.5 bg-amber-50 border border-amber-200/80 rounded-xl p-2.5 flex items-start gap-2">
-            <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <p id="avoidanceText" class="text-xs font-semibold text-amber-900 leading-snug">-</p>
-        </div>
-
-        <!-- Condition Status -->
-        <div class="mt-2.5 flex items-center justify-between text-xs text-slate-600 border-t border-slate-100 pt-2">
-            <div class="flex items-center gap-2">
-                <span id="sumConditionDot" class="w-2.5 h-2.5 rounded-full bg-brand-500 shrink-0"></span>
-                <span id="sumCondition" class="font-medium">-</span>
+        <!-- Collapsible Details Drawer -->
+        <div id="summaryDetails" class="hidden mt-2 pt-2 border-t border-slate-100 space-y-2">
+            <!-- Warning / Avoidance Alert Box -->
+            <div id="avoidanceAlert" class="hidden bg-amber-50 border border-amber-200/80 rounded-xl p-2 flex items-start gap-2">
+                <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p id="avoidanceText" class="text-xs font-semibold text-amber-900 leading-snug">-</p>
             </div>
-            <span id="sumStepCount" class="text-[11px] text-slate-400 font-bold shrink-0">0 manuver</span>
-        </div>
 
-        <!-- Action Button -->
-        <button type="button" id="btnStartNav"
-            class="mt-3.5 w-full h-12 bg-brand-700 hover:bg-brand-800 text-white font-extrabold text-sm rounded-xl shadow-lg shadow-brand-900/20 transition active:scale-[0.98] flex items-center justify-center gap-2">
-            <svg class="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m3 11 19-9-9 19-2-8-8-2z" />
-            </svg>
-            Mulai Navigasi Turn-by-Turn
-        </button>
+            <p id="sumRouteDesc" class="text-[11px] font-semibold text-slate-500">Mengikuti jaringan jalan pejalan kaki resmi</p>
+
+            <!-- Condition Status -->
+            <div class="flex items-center justify-between text-xs text-slate-600">
+                <div class="flex items-center gap-2">
+                    <span id="sumConditionDot" class="w-2 h-2 rounded-full bg-brand-500 shrink-0"></span>
+                    <span id="sumCondition" class="font-medium text-[11px]">-</span>
+                </div>
+                <span id="sumStepCount" class="text-[10px] text-slate-400 font-bold shrink-0">0 manuver</span>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -220,7 +227,7 @@
         .setView([-7.2663, 112.7965], 14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-    const serviceArea = PedestriRouteServiceArea.attach(map);
+    const serviceArea = PedestriRouteServiceArea.attach(map, { drawLayer: false });
     setTimeout(() => {
         map.invalidateSize();
         map.fitBounds(serviceArea.bounds, { padding: [16, 16], animate: false });
@@ -335,6 +342,35 @@
         });
     });
 
+    function resetDetailsDrawer() {
+        const drawer = document.getElementById('summaryDetails');
+        const icon = document.getElementById('toggleDetailsIcon');
+        const text = document.getElementById('toggleDetailsText');
+        if (drawer) drawer.classList.add('hidden');
+        if (icon) icon.classList.remove('rotate-180');
+        if (text) text.textContent = 'Detail';
+    }
+
+    const btnToggleDetails = document.getElementById('btnToggleDetails');
+    if (btnToggleDetails) {
+        btnToggleDetails.addEventListener('click', () => {
+            const drawer = document.getElementById('summaryDetails');
+            const icon = document.getElementById('toggleDetailsIcon');
+            const text = document.getElementById('toggleDetailsText');
+            if (!drawer) return;
+            const isHidden = drawer.classList.contains('hidden');
+            if (isHidden) {
+                drawer.classList.remove('hidden');
+                if (icon) icon.classList.add('rotate-180');
+                if (text) text.textContent = 'Tutup';
+            } else {
+                drawer.classList.add('hidden');
+                if (icon) icon.classList.remove('rotate-180');
+                if (text) text.textContent = 'Detail';
+            }
+        });
+    }
+
     // Clear dest
     document.getElementById('btnClearDest').addEventListener('click', () => {
         state.dest = null;
@@ -346,6 +382,7 @@
         const card = document.getElementById('routeSummary');
         card.classList.remove('translate-y-0', 'opacity-100');
         card.classList.add('translate-y-[130%]', 'opacity-0', 'pointer-events-none');
+        resetDetailsDrawer();
     });
 
     // Swap button
@@ -442,31 +479,33 @@
             alertBox.classList.remove('hidden');
             alertText.textContent = avoidedWarn.message;
             badge.textContent = '🛡️ Bahaya Dihindari';
-            badge.className = 'text-[11px] font-extrabold text-brand-800 bg-brand-50 border border-brand-200 px-2.5 py-1 rounded-lg shrink-0';
+            badge.className = 'text-[10px] font-extrabold text-brand-800 bg-brand-50 border border-brand-200 px-2 py-0.5 rounded-md shrink-0';
         } else {
             alertBox.classList.add('hidden');
             if (repairM > 0) {
                 badge.textContent = '⚠️ Ada Perbaikan';
-                badge.className = 'text-[11px] font-extrabold text-orange-800 bg-orange-50 border border-orange-200 px-2.5 py-1 rounded-lg shrink-0';
+                badge.className = 'text-[10px] font-extrabold text-orange-800 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-md shrink-0';
             } else if (avgScore >= 70) {
                 badge.textContent = 'Sangat Layak';
-                badge.className = 'text-[11px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg shrink-0';
+                badge.className = 'text-[10px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md shrink-0';
             } else {
                 badge.textContent = 'Perlu Perhatian';
-                badge.className = 'text-[11px] font-extrabold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg shrink-0';
+                badge.className = 'text-[10px] font-extrabold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md shrink-0';
             }
         }
 
         if (repairM > 0) {
-            dot.className = 'w-2.5 h-2.5 rounded-full bg-orange-500 shrink-0';
+            dot.className = 'w-2 h-2 rounded-full bg-orange-500 shrink-0';
             text.textContent = `Melewati sekitar ${Math.round(repairM)} m jalur perbaikan aktif.`;
         } else if (avgScore >= 70) {
-            dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0';
+            dot.className = 'w-2 h-2 rounded-full bg-emerald-500 shrink-0';
             text.textContent = `Trotoar baik (Kelayakan ${Math.round(avgScore)}%). Rute aman.`;
         } else {
-            dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0';
+            dot.className = 'w-2 h-2 rounded-full bg-amber-500 shrink-0';
             text.textContent = `Kelayakan ${Math.round(avgScore)}%. Berjalanlah dengan hati-hati.`;
         }
+
+        resetDetailsDrawer();
 
         const card = document.getElementById('routeSummary');
         card.classList.remove('translate-y-[130%]', 'opacity-0', 'pointer-events-none');
@@ -537,8 +576,8 @@
                 });
 
                 map.fitBounds(L.latLngBounds(data.polyline), {
-                    paddingTopLeft: [30, 180],
-                    paddingBottomRight: [30, 240],
+                    paddingTopLeft: [20, 100],
+                    paddingBottomRight: [20, 80],
                     maxZoom: 17
                 });
 

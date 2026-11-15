@@ -1148,31 +1148,40 @@ class RouteRecommendationService
         // Direct candidate route collisions
         $fastestRoute = $candidates[0];
         $fastestCollisions = $this->findCollidingObstacles($fastestRoute['geometry']['coordinates'] ?? [], $obstacles, $avoidRadius);
+        $directDistance = (float) ($fastestRoute['distance'] ?? 0.0);
 
         if ($preference === 'safest' && ! empty($obstacles)) {
-            // 1. First check if any direct candidate route from OSRM already has 0 collisions
-            $zeroCollisionDirect = [];
+            // 1. First check all direct candidate routes from OSRM
+            $bestCandidate = null;
+            $minCollisions = count($fastestCollisions);
+            $bestDistance = $directDistance;
+
             foreach ($candidates as $cand) {
                 $candCollisions = $this->findCollidingObstacles($cand['geometry']['coordinates'] ?? [], $obstacles, $avoidRadius);
-                if (empty($candCollisions)) {
-                    $zeroCollisionDirect[] = $cand;
+                $candCount = count($candCollisions);
+                $candDist = (float) ($cand['distance'] ?? 0.0);
+
+                if ($candCount < $minCollisions || ($candCount === $minCollisions && $candCount === 0 && $candDist < $bestDistance)) {
+                    $minCollisions = $candCount;
+                    $bestDistance = $candDist;
+                    $bestCandidate = [
+                        'route' => $cand,
+                        'collisions' => $candCollisions,
+                    ];
                 }
             }
 
-            if (! empty($zeroCollisionDirect)) {
-                // Pick shortest 0-collision direct route
-                usort($zeroCollisionDirect, fn ($a, $b) => ($a['distance'] ?? 0) <=> ($b['distance'] ?? 0));
-                $chosenRoute = $zeroCollisionDirect[0];
+            if ($bestCandidate !== null && $minCollisions === 0) {
+                $chosenRoute = $bestCandidate['route'];
                 $avoidedObstacles = $fastestCollisions;
                 $collidingObstacles = [];
             } else {
                 // Direct routes collide with reported obstacles. Search safe parallel corridor bypasses.
-                $detourCandidates = $this->searchDetourRoutes($origin, $destination, $fastestCollisions, $obstacles, $avoidRadius);
+                $detourCandidates = $this->searchDetourRoutes($origin, $destination, $fastestCollisions, $obstacles, $avoidRadius, $directDistance);
 
                 if (! empty($detourCandidates)) {
                     $bestDetour = $detourCandidates[0];
-                    // If detour reduces collisions compared to fastest direct route
-                    if ($bestDetour['collisions_count'] < count($fastestCollisions)) {
+                    if ($bestDetour['collisions_count'] < $minCollisions) {
                         $chosenRoute = $bestDetour['route'];
                         $collidingObstacles = $bestDetour['collisions'];
 
@@ -1181,6 +1190,18 @@ class RouteRecommendationService
                             if (! isset($detourObsIds[(int) $fc['laporan_id']])) {
                                 $avoidedObstacles[] = $fc;
                             }
+                        }
+                    }
+                }
+
+                // If no waypoint detour improved safety, but a direct alternative reduced collisions:
+                if ($chosenRoute === null && $bestCandidate !== null && $minCollisions < count($fastestCollisions)) {
+                    $chosenRoute = $bestCandidate['route'];
+                    $collidingObstacles = $bestCandidate['collisions'];
+                    $candObsIds = array_flip(array_map(fn ($o) => (int) $o['laporan_id'], $collidingObstacles));
+                    foreach ($fastestCollisions as $fc) {
+                        if (! isset($candObsIds[(int) $fc['laporan_id']])) {
+                            $avoidedObstacles[] = $fc;
                         }
                     }
                 }
@@ -1337,6 +1358,7 @@ class RouteRecommendationService
      * @param array<int, array<string, mixed>> $collidingObstacles
      * @param array<int, array<string, mixed>> $allObstacles
      * @param float $avoidRadius
+     * @param float $directDistance
      * @return array<int, array{route: array<string, mixed>, collisions_count: int, collisions: array<int, array<string, mixed>>, distance: float}>
      */
     private function searchDetourRoutes(
@@ -1344,7 +1366,8 @@ class RouteRecommendationService
         array $destination,
         array $collidingObstacles,
         array $allObstacles,
-        float $avoidRadius
+        float $avoidRadius,
+        float $directDistance
     ): array {
         if (empty($collidingObstacles)) {
             return [];
@@ -1363,7 +1386,8 @@ class RouteRecommendationService
             ['lat' => (float) $collidingObstacles[$total - 1]['lat'], 'lng' => (float) $collidingObstacles[$total - 1]['lng']],
         ];
 
-        $lateralOffsets = [150.0, 240.0, 360.0, 480.0];
+        // Lateral offsets for pedestrian parallel streets
+        $lateralOffsets = [90.0, 160.0, 240.0];
 
         foreach ($anchorPoints as $anchor) {
             foreach ($lateralOffsets as $dist) {
@@ -1400,19 +1424,34 @@ class RouteRecommendationService
             }
         }
 
-        $uniqueWaypoints = array_slice($uniqueWaypoints, 0, 10);
+        $uniqueWaypoints = array_slice($uniqueWaypoints, 0, 8);
+
+        // Maximum reasonable detour distance overhead (max 25% extra or 450m extra)
+        $maxAllowedDistance = min($directDistance * 1.25, $directDistance + 450.0);
 
         $results = [];
         foreach ($uniqueWaypoints as $wp) {
             $routes = $this->fetchOsrmCandidateRoutes($origin, $destination, [$wp], false);
             if (! empty($routes)) {
                 $cand = $routes[0];
+                $dist = (float) ($cand['distance'] ?? 0.0);
+
+                // Reject if excessive detour distance
+                if ($dist > $maxAllowedDistance) {
+                    continue;
+                }
+
+                // Reject if waypoint creates a dead-end doubling back loop
+                if ($this->hasDeadEndLoop($cand)) {
+                    continue;
+                }
+
                 $col = $this->findCollidingObstacles($cand['geometry']['coordinates'] ?? [], $allObstacles, $avoidRadius);
                 $results[] = [
                     'route' => $cand,
                     'collisions_count' => count($col),
                     'collisions' => $col,
-                    'distance' => (float) ($cand['distance'] ?? 0.0),
+                    'distance' => $dist,
                 ];
             }
         }
@@ -1425,6 +1464,52 @@ class RouteRecommendationService
         });
 
         return $results;
+    }
+
+    /**
+     * Check if a multi-leg route enters a dead-end street at a waypoint and walks back out.
+     *
+     * @param array<string, mixed> $route
+     * @return bool
+     */
+    private function hasDeadEndLoop(array $route): bool
+    {
+        $legs = $route['legs'] ?? [];
+        if (count($legs) < 2) {
+            return false;
+        }
+
+        for ($i = 0; $i < count($legs) - 1; $i++) {
+            $legA = $legs[$i]['steps'] ?? [];
+            $legB = $legs[$i + 1]['steps'] ?? [];
+            if (empty($legA) || empty($legB)) {
+                continue;
+            }
+
+            $lastStep = null;
+            for ($k = count($legA) - 1; $k >= 0; $k--) {
+                if (($legA[$k]['distance'] ?? 0) > 1.0) {
+                    $lastStep = $legA[$k];
+                    break;
+                }
+            }
+
+            $firstStep = null;
+            for ($k = 0; $k < count($legB); $k++) {
+                if (($legB[$k]['distance'] ?? 0) > 1.0) {
+                    $firstStep = $legB[$k];
+                    break;
+                }
+            }
+
+            if ($lastStep !== null && $firstStep !== null) {
+                if (! empty($lastStep['name']) && ! empty($firstStep['name']) && $lastStep['name'] === $firstStep['name']) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
