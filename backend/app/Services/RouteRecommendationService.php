@@ -32,6 +32,13 @@ class RouteRecommendationService
 
     private const MAX_SNAP_DISTANCE_M = 900.0;
 
+    private readonly TurnInstructionService $instructions;
+
+    public function __construct(?TurnInstructionService $instructions = null)
+    {
+        $this->instructions = $instructions ?? new TurnInstructionService();
+    }
+
     /**
      * @param  array{lat: float, lng: float}  $origin
      * @param  array{lat: float, lng: float}  $destination
@@ -960,6 +967,7 @@ class RouteRecommendationService
 
         $averageScore = $distance > 0 ? round($weightedScore / $distance, 1) : 100.0;
         $minimumScore = $minimumScore === 100.0 && $distance === 0.0 ? 100.0 : round($minimumScore, 1);
+        $steps = $this->instructions->build($legs, $origin, $destination);
 
         return [
             'route_id' => 'RTE-'.strtoupper(bin2hex(random_bytes(4))),
@@ -973,6 +981,7 @@ class RouteRecommendationService
             'walk_speed_mps' => self::WALK_SPEED_MPS,
             'polyline' => $polyline,
             'segments' => $grouped,
+            'steps' => $steps,
             'summary' => [
                 'average_score' => $averageScore,
                 'minimum_score' => $minimumScore,

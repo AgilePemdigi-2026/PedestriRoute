@@ -36,10 +36,19 @@ class MessageCatalog
 
     // Route Recommendation Messages (SRS Section 2.4 / F7)
     public const ROUTE_INVALID_PARAMETERS = 'Koordinat atau preferensi rute tidak valid.';
+    public const ROUTE_INVALID_COORDINATES = 'Koordinat atau preferensi rute tidak valid.';
     public const ROUTE_ENGINE_ERROR = 'Rute tidak dapat dihitung saat ini. Silakan coba lagi.';
     public const ROUTE_ACTIVE_REPAIR = 'Rute melewati segmen yang sedang diperbaiki. Berhati-hatilah saat melintas.';
     public const ROUTE_LOW_FEASIBILITY = 'Sebagian rute memiliki skor kelayakan rendah. Pertimbangkan rute lain bila memungkinkan.';
     public const ROUTE_NETWORK_FALLBACK = 'Jaringan jalur belum lengkap di area ini, sehingga rute mengikuti perkiraan koridor jalan.';
+
+    // Navigation Messages (F8)
+    public const NAV_GPS_REQUIRED = 'Aktifkan GPS perangkat untuk memulai navigasi.';
+    public const NAV_OFF_ROUTE = 'Anda keluar dari jalur. Menghitung ulang rute...';
+    public const NAV_REROUTE_SUCCESS = 'Rute baru ditemukan. Lanjutkan perjalanan.';
+    public const NAV_ARRIVED = 'Anda telah tiba di tujuan.';
+    public const NAV_VOICE_MUTED = 'Panduan suara dinonaktifkan.';
+    public const NAV_VOICE_ENABLED = 'Panduan suara diaktifkan.';
 
     // Notification Templates
     public const NOTIF_AUTO_VALIDATED = 'Laporan Anda di {jalan} telah tervalidasi.';

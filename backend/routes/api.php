@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\HeatmapController;
 use App\Http\Controllers\Api\RegisterOtpController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\RouteRecommendationController;
+use App\Http\Controllers\Api\RouteNavigationController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -56,7 +57,7 @@ Route::prefix('v1')->group(function () {
         // Heatmap endpoint (F6 - accessible by warga and admin)
         Route::get('/heatmap', [HeatmapController::class, 'index']);
 
-        // Walking route recommendation (F7 - accessible by warga and admin)
+        // Walking route recommendation & turn-by-turn instructions (F7/F8 - accessible by warga and admin)
         Route::post('/routes/recommend', [RouteRecommendationController::class, 'recommend']);
 
         // Admin specific validation & repair routes (F5, F9)
