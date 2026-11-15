@@ -573,23 +573,30 @@
     function drawRouteOnMap(route, fit = true) {
         routeLayer.clearLayers();
 
-        (route.segments || []).forEach((segment) => {
-            if (!Array.isArray(segment.polyline) || segment.polyline.length < 2) return;
-
-            L.polyline(segment.polyline, {
+        // 1. Draw base polyline following OSRM road network
+        if (Array.isArray(route.polyline) && route.polyline.length >= 2) {
+            L.polyline(route.polyline, {
                 color: '#ffffff', weight: 10, opacity: 0.95, lineCap: 'round', lineJoin: 'round', interactive: false,
             }).addTo(routeLayer);
 
-            const color = segment.repair ? '#ea580c' : (segment.score < 70 ? '#f59e0b' : '#008775');
-            L.polyline(segment.polyline, {
-                color,
-                weight: 6,
-                opacity: 1,
-                lineCap: 'round',
-                lineJoin: 'round',
-                dashArray: segment.repair ? '2 12' : null,
-                interactive: false,
+            L.polyline(route.polyline, {
+                color: '#008775', weight: 6, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false,
             }).addTo(routeLayer);
+        }
+
+        // 2. Overlay active repair segments
+        (route.segments || []).forEach((segment) => {
+            if (segment.repair && Array.isArray(segment.polyline) && segment.polyline.length >= 2) {
+                L.polyline(segment.polyline, {
+                    color: '#ea580c',
+                    weight: 6,
+                    opacity: 1,
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                    dashArray: '3 10',
+                    interactive: false,
+                }).addTo(routeLayer);
+            }
         });
 
         if (state.startMarker && markerLayer.hasLayer(state.startMarker)) markerLayer.removeLayer(state.startMarker);
@@ -605,6 +612,15 @@
                 icon: makePin('B', '#004f46'), interactive: false,
             }).addTo(markerLayer);
         }
+
+        // 3. Mark avoided obstacle points
+        (route.avoided_points || []).forEach((obs) => {
+            if (obs.lat && obs.lng) {
+                L.marker([obs.lat, obs.lng], {
+                    icon: makePin('⚠️', '#ea580c'),
+                }).addTo(markerLayer).bindPopup(`<div class="text-xs p-1 font-bold">⚠️ Titik Bahaya Dihindari:<br><span class="font-normal">${obs.alamat || 'Area Laporan'}</span></div>`);
+            }
+        });
 
         if (fit && route.polyline && route.polyline.length > 1) {
             map.fitBounds(L.latLngBounds(route.polyline), {
