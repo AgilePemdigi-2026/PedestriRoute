@@ -62,27 +62,81 @@
     </button>
 </div>
 
-<nav id="notificationNavigation"
-     class="hidden fixed bottom-0 w-full max-w-md bg-white
-            border-t border-slate-200 px-3 py-3 z-40"
-     aria-label="Navigasi utama">
-    <div class="flex items-center justify-around gap-2">
-        <a id="notificationHome"
-           class="text-xs font-semibold text-slate-500"></a>
+<!-- Bottom Navigation for Citizen (Default) -->
+<nav id="wargaBottomNav" class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-200 py-2 px-6 flex items-center justify-between z-40" aria-label="Navigasi Warga">
+    <a href="/beranda-warga" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z"/>
+        </svg>
+        <span class="text-[10px] tracking-tight">Peta</span>
+    </a>
+    <a href="/rute-pejalan-kaki" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+        <span class="text-[10px] tracking-tight">Rute</span>
+    </a>
+    <a href="/lapor-kondisi" class="flex flex-col items-center gap-1 text-slate-700 hover:text-brand-600 transition">
+        <div class="w-10 h-10 -mt-5 bg-brand-600 hover:bg-brand-700 rounded-full flex items-center justify-center text-white shadow-md shadow-teal-900/20 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+            </svg>
+        </div>
+        <span class="text-[10px] tracking-tight font-bold mt-0.5">Lapor</span>
+    </a>
+    <a href="/riwayat-laporan" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-[10px] tracking-tight">Riwayat</span>
+    </a>
+    <a href="/notifikasi" aria-current="page" class="flex flex-col items-center gap-1 text-brand-600 font-bold transition">
+        <span class="relative">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span data-notification-count aria-hidden="true" class="hidden absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-rose-600 text-white text-[9px] font-bold flex items-center justify-center"></span>
+        </span>
+        <span class="text-[10px] tracking-tight">Notifikasi</span>
+    </a>
+</nav>
 
-        <a id="notificationSecondary"
-           class="text-xs font-semibold text-slate-500"></a>
-
-        <a id="notificationHistory"
-           class="text-xs font-semibold text-slate-500">
-            Riwayat
-        </a>
-
-        <a href="/notifikasi" aria-current="page"
-           class="text-xs font-bold text-brand-600">
-            Notifikasi
-        </a>
-    </div>
+<!-- Bottom Navigation for Admin -->
+<nav id="adminBottomNav" class="hidden fixed bottom-0 max-w-md w-full bg-white border-t border-slate-200 px-2 pt-1.5 pb-2 flex items-stretch justify-around z-40" aria-label="Navigasi Admin">
+    <a href="/admin/validasi" class="relative flex-1 flex flex-col items-center gap-0.5 pt-1.5 pb-0.5 text-slate-400 hover:text-slate-600 transition">
+        <span class="w-9 h-6 flex items-center justify-center rounded-full">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </span>
+        <span class="text-[10px] tracking-tight">Validasi</span>
+    </a>
+    <a href="/admin/riwayat" class="relative flex-1 flex flex-col items-center gap-0.5 pt-1.5 pb-0.5 text-slate-400 hover:text-slate-600 transition">
+        <span class="w-9 h-6 flex items-center justify-center rounded-full">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </span>
+        <span class="text-[10px] tracking-tight">Riwayat</span>
+    </a>
+    <a href="/admin/statistik" class="relative flex-1 flex flex-col items-center gap-0.5 pt-1.5 pb-0.5 text-slate-400 hover:text-slate-600 transition">
+        <span class="w-9 h-6 flex items-center justify-center rounded-full">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+        </span>
+        <span class="text-[10px] tracking-tight">Statistik</span>
+    </a>
+    <a href="/notifikasi" aria-current="page" class="relative flex-1 flex flex-col items-center gap-0.5 pt-1.5 pb-0.5 text-brand-600 font-bold transition">
+        <span class="absolute -top-1.5 h-0.5 w-8 rounded-full bg-brand-600"></span>
+        <span class="w-9 h-6 flex items-center justify-center rounded-full bg-brand-50">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+        </span>
+        <span class="text-[10px] tracking-tight">Notifikasi</span>
+        <span data-notification-count aria-hidden="true" class="hidden absolute top-0 right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[9px] font-bold flex items-center justify-center"></span>
+    </a>
 </nav>
 @endsection
 
@@ -95,6 +149,22 @@
         window.location.replace('/login');
         return;
     }
+
+    function syncNavigationRole(role) {
+        const isAdmin = role === 'admin';
+        const wargaNav = document.getElementById('wargaBottomNav');
+        const adminNav = document.getElementById('adminBottomNav');
+        if (isAdmin) {
+            wargaNav?.classList.add('hidden');
+            adminNav?.classList.remove('hidden');
+        } else {
+            wargaNav?.classList.remove('hidden');
+            adminNav?.classList.add('hidden');
+        }
+    }
+
+    // Immediately reflect cached role so navigation bar is never blank
+    syncNavigationRole(localStorage.getItem('role'));
 
     const list = document.getElementById('notificationList');
     const summary = document.getElementById('notificationSummary');
@@ -142,65 +212,65 @@
         refreshButton.disabled = value;
         moreButton.disabled = value;
         allReadButton.disabled = value || unreadCount === 0;
-        list.setAttribute('aria-busy', String(value));
-
-        list.querySelectorAll('button').forEach(button => {
-            button.disabled = value;
-        });
     }
 
     function showMessage(text) {
-        message.textContent = text;
-        message.classList.toggle('hidden', !text);
-    }
-
-    function formatDate(value) {
-        const date = new Date(value);
-
-        if (!value || Number.isNaN(date.getTime())) {
-            return '';
+        if (!text) {
+            message.textContent = '';
+            message.classList.add('hidden');
+            return;
         }
 
-        return new Intl.DateTimeFormat('id-ID', {
-            dateStyle: 'medium',
-            timeStyle: 'short',
-        }).format(date);
+        message.textContent = text;
+        message.classList.remove('hidden');
+    }
+
+    function formatDate(raw) {
+        if (!raw) return '-';
+
+        const parsed = new Date(raw);
+        if (Number.isNaN(parsed.getTime())) return raw;
+
+        return parsed.toLocaleString('id-ID', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
     }
 
     function renderItem(item) {
-        const unread = item.status_baca === 'BELUM';
-
         const card = document.createElement('article');
-        card.className = unread
-            ? 'rounded-2xl border border-teal-200 bg-brand-50 p-4'
-            : 'rounded-2xl border border-slate-200 bg-white p-4';
+        const unread = !item.dibaca;
+
+        card.className = 'rounded-2xl border p-4 transition '
+            + (unread
+                ? 'border-brand-200 bg-brand-50/50 shadow-sm'
+                : 'border-slate-200 bg-white');
 
         const heading = document.createElement('div');
         heading.className = 'flex items-start justify-between gap-3';
 
-        const title = document.createElement('p');
-        title.className = 'text-xs font-bold text-brand-600';
+        const title = document.createElement('h2');
+        title.className = 'text-sm font-bold text-slate-900';
+        title.textContent = item.judul;
 
-        const titles = {
-            STATUS_LAPORAN: 'Pembaruan laporan',
-            ANTREAN_VALIDASI: 'Antrean validasi',
-            KONDISI_JALUR: 'Kondisi jalur',
-        };
+        heading.append(title);
 
-        title.textContent = titles[item.tipe] || 'Notifikasi';
-
-        const badge = document.createElement('span');
-        badge.className = 'shrink-0 text-[10px] font-bold text-slate-500';
-        badge.textContent = unread ? 'Baru' : 'Dibaca';
-
-        heading.append(title, badge);
+        if (unread) {
+            const badge = document.createElement('span');
+            badge.className = 'inline-flex items-center rounded-full bg-brand-600 px-2 py-0.5 text-[10px] font-bold text-white shrink-0';
+            badge.textContent = 'Baru';
+            heading.append(badge);
+        }
 
         const text = document.createElement('p');
-        text.className = 'mt-2 text-sm leading-relaxed text-slate-800 break-words';
+        text.className = 'mt-2 text-xs leading-relaxed text-slate-600';
         text.textContent = item.pesan;
 
-        const time = document.createElement('time');
-        time.className = 'block mt-3 text-xs text-slate-500';
+        const time = document.createElement('p');
+        time.className = 'mt-3 text-xs text-slate-500';
         time.textContent = formatDate(item.tanggal_kirim);
 
         card.append(heading, text, time);
@@ -319,7 +389,7 @@
         setBusy(false);
         await loadNotifications(true);
     });
-    
+
     window.addEventListener('notifications:changed', () => {
         if (busy) {
             pendingLiveRefresh = true;
@@ -331,23 +401,10 @@
 
     try {
         const result = await api('/auth/me');
-        const isAdmin = result.data.role === 'admin';
-
-        const home = document.getElementById('notificationHome');
-        home.href = isAdmin ? '/admin/validasi' : '/beranda-warga';
-        home.textContent = isAdmin ? 'Validasi' : 'Peta';
-
-        const secondary = document.getElementById('notificationSecondary');
-        secondary.href = isAdmin ? '/admin/statistik' : '/lapor-kondisi';
-        secondary.textContent = isAdmin ? 'Statistik' : 'Lapor';
-
-        document.getElementById('notificationHistory').href = isAdmin
-            ? '/admin/riwayat'
-            : '/riwayat-laporan';
-
-        document.getElementById('notificationNavigation')
-            .classList.remove('hidden');
-
+        if (result?.data?.role) {
+            localStorage.setItem('role', result.data.role);
+            syncNavigationRole(result.data.role);
+        }
         await loadNotifications(true);
     } catch (error) {
         summary.textContent = 'Gagal memuat akun';

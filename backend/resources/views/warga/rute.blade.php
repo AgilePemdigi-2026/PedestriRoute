@@ -62,7 +62,7 @@
                     <span class="text-slate-300">•</span>
                     <span id="sumDuration" class="text-sm font-bold text-slate-600">-</span>
                 </div>
-                <span class="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-200 px-1.5 py-0.5 rounded-md shrink-0">Data contoh</span>
+                <span id="sumBadge" class="text-[10px] font-bold text-brand-800 bg-brand-50 border border-brand-200 px-1.5 py-0.5 rounded-md shrink-0">Rute Optimal</span>
             </div>
 
             <div class="mt-2 flex items-start gap-2">
@@ -76,7 +76,10 @@
             </div>
 
             <button type="button" id="btnStartNav"
-                class="mt-3 w-full h-12 bg-brand-700 hover:bg-brand-800 text-white font-bold text-sm rounded-2xl shadow-sm transition active:scale-[0.98]">
+                class="mt-3 w-full h-12 bg-brand-700 hover:bg-brand-800 text-white font-bold text-sm rounded-2xl shadow-sm transition active:scale-[0.98] flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m3 11 19-9-9 19-2-8-8-2z" />
+                </svg>
                 Mulai Navigasi
             </button>
         </div>
@@ -91,7 +94,7 @@
         </svg>
         <span class="text-[10px] tracking-tight">Peta</span>
     </a>
-    <a href="/rute-pejalan-kaki" class="flex flex-col items-center gap-1 text-brand-600 font-bold">
+    <a href="/rute-pejalan-kaki" aria-current="page" class="flex flex-col items-center gap-1 text-brand-600 font-bold">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
         </svg>
@@ -111,11 +114,14 @@
         </svg>
         <span class="text-[10px] tracking-tight">Riwayat</span>
     </a>
-    <a href="/beranda-warga" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-        <span class="text-[10px] tracking-tight">Profil</span>
+    <a href="/notifikasi" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition">
+        <span class="relative">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span data-notification-count aria-hidden="true" class="hidden absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-rose-600 text-white text-[9px] font-bold flex items-center justify-center"></span>
+        </span>
+        <span class="text-[10px] tracking-tight">Notifikasi</span>
     </a>
 </div>
 @endsection
@@ -127,29 +133,8 @@
     const token = localStorage.getItem('token');
     if (!token) window.location.href = '/login';
 
-    // ---------------------------------------------------------------
-    // Peta
-    // ---------------------------------------------------------------
-    const map = L.map('routeMap', { attributionControl: false }).setView([-7.2663, 112.7965], 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-    const serviceArea = PedestriRouteServiceArea.attach(map);
-    setTimeout(() => {
-        map.invalidateSize();
-        map.fitBounds(serviceArea.bounds, { padding: [16, 16], animate: false });
-    }, 200);
+    const WALK_SPEED_MPS = 1.25;
 
-    const pinLayer = L.layerGroup().addTo(map);
-    const routeLayer = L.layerGroup().addTo(map);
-    let originMarker = null;
-    let destMarker = null;
-    let lastRoute = null;
-
-    const WALK_SPEED_MPS = 1.25; // sekitar 4,5 km/jam
-
-    // ---------------------------------------------------------------
-    // Data contoh tempat (koordinat masih perkiraan, ganti nanti
-    // dengan data/endpoint pencarian tempat yang sebenarnya)
-    // ---------------------------------------------------------------
     const SAMPLE_PLACES = [
         { name: 'Kampus C Universitas Airlangga', type: 'Kampus',      lat: -7.2672, lng: 112.7846 },
         { name: 'RS Universitas Airlangga',       type: 'Rumah Sakit', lat: -7.2651, lng: 112.7897 },
@@ -157,71 +142,89 @@
         { name: 'Taman Kertajaya Indah',          type: 'Taman',       lat: -7.2688, lng: 112.7992 },
         { name: 'Puskesmas Mulyorejo',            type: 'Faskes',      lat: -7.2625, lng: 112.7958 },
         { name: 'Halte Bus Mulyosari',            type: 'Halte Bus',   lat: -7.2598, lng: 112.8029 },
+        { name: 'Pasar Mulyosari',                type: 'Pasar',       lat: -7.2605, lng: 112.7950 },
+        { name: 'Masjid Agung Mulyorejo',         type: 'Ibadah',      lat: -7.2660, lng: 112.7965 },
+        { name: 'Taman Mulyorejo',                type: 'Taman',       lat: -7.2680, lng: 112.8050 },
+        { name: 'Gedung Kuliah Bersama Unair C',  type: 'Kampus',      lat: -7.2657, lng: 112.7862 },
     ];
 
-    // ---------------------------------------------------------------
-    // Hitung jarak & format teks
-    // ---------------------------------------------------------------
+    const map = L.map('routeMap', { attributionControl: false, zoomControl: false })
+        .setView([-7.2663, 112.7965], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+    const serviceArea = PedestriRouteServiceArea.attach(map);
+    setTimeout(() => {
+        map.invalidateSize();
+        map.fitBounds(serviceArea.bounds, { padding: [12, 12], animate: false });
+    }, 200);
+
+    const routeLayer  = L.layerGroup().addTo(map);
+    const pinLayer    = L.layerGroup().addTo(map);
+
+    let originMarker = null;
+    let destMarker   = null;
+    let lastRoute    = null;
+
+    const state = {
+        origin: null,
+        dest: null,
+        preference: 'safest',
+    };
+
     function haversine(a, b) {
         const R = 6371000;
         const rad = (d) => d * Math.PI / 180;
         const dLat = rad(b[0] - a[0]);
         const dLng = rad(b[1] - a[1]);
-        const s = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a[0])) * Math.cos(rad(b[0])) * Math.sin(dLng / 2) ** 2;
-        return 2 * R * Math.asin(Math.sqrt(s));
+        const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a[0])) * Math.cos(rad(b[0])) * Math.sin(dLng / 2) ** 2;
+        return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
     }
 
     function pathLength(pts) {
-        let total = 0;
-        for (let i = 1; i < pts.length; i++) total += haversine(pts[i - 1], pts[i]);
-        return total;
+        let sum = 0;
+        for (let i = 1; i < pts.length; i++) sum += haversine(pts[i - 1], pts[i]);
+        return sum;
     }
 
-    function formatDistance(m) {
-        if (m < 1000) return `${Math.round(m)} m`;
-        return `${(m / 1000).toFixed(1).replace('.', ',')} km`;
+    function formatDistance(meters) {
+        const value = Math.max(0, meters);
+        if (value < 1000) return `${Math.round(value)} m`;
+        return `${(value / 1000).toFixed(1).replace('.', ',')} km`;
     }
 
-    function formatDuration(min) {
-        if (min < 1) return '<1 menit';
-        if (min < 60) return `${Math.round(min)} menit`;
-        const h = Math.floor(min / 60);
-        const m = Math.round(min % 60);
-        return m === 0 ? `${h} jam` : `${h} jam ${m} menit`;
+    function formatDuration(minutes) {
+        const value = Math.max(0, minutes);
+        if (value < 1) return '< 1 menit';
+        if (value < 60) return `${Math.round(value)} menit`;
+        const h = Math.floor(value / 60);
+        const m = Math.round(value % 60);
+        return m === 0 ? `${h} jam` : `${h} jam ${m} mnt`;
     }
-
-    // ---------------------------------------------------------------
-    // State & chip aman vs tercepat
-    // ---------------------------------------------------------------
-    const state = { origin: null, dest: null, preference: 'safest' };
 
     const CHIP_ON = {
-        safest:  ['bg-brand-700', 'text-white', 'border-brand-700'],
+        safest: ['bg-brand-700', 'text-white', 'border-brand-700'],
         fastest: ['bg-amber-400', 'text-slate-900', 'border-amber-400'],
     };
     const CHIP_OFF = ['bg-white', 'text-slate-600', 'border-slate-200'];
 
     function paintChips() {
-        document.querySelectorAll('.pref-chip').forEach((chip) => {
-            const pref = chip.dataset.pref;
-            const on = pref === state.preference;
-            chip.classList.remove(...CHIP_OFF, ...CHIP_ON.safest, ...CHIP_ON.fastest);
-            chip.classList.add(...(on ? CHIP_ON[pref] : CHIP_OFF));
+        document.querySelectorAll('.pref-chip').forEach((c) => {
+            const p = c.dataset.pref;
+            const on = p === state.preference;
+            c.classList.remove(...CHIP_OFF, ...CHIP_ON.safest, ...CHIP_ON.fastest);
+            c.classList.add(...(on ? CHIP_ON[p] : CHIP_OFF));
         });
     }
 
-    document.querySelectorAll('.pref-chip').forEach((chip) => {
-        chip.addEventListener('click', () => {
-            state.preference = chip.dataset.pref;
+    document.querySelectorAll('.pref-chip').forEach((c) => {
+        c.addEventListener('click', () => {
+            state.preference = c.dataset.pref;
             paintChips();
             drawRoute();
         });
     });
     paintChips();
 
-    // ---------------------------------------------------------------
-    // Pin A / B
-    // ---------------------------------------------------------------
     function makePin(letter, color) {
         return L.divIcon({
             className: 'route-pin',
@@ -253,24 +256,24 @@
         drawRoute();
     }
 
-    // ---------------------------------------------------------------
-    // Kartu ringkasan
-    // ---------------------------------------------------------------
-    function showSummary(segments) {
-        const total = segments.reduce((sum, s) => sum + pathLength(s.pts), 0);
-        const repairM = segments.filter((s) => s.repair).reduce((sum, s) => sum + pathLength(s.pts), 0);
+    function showSummary(distanceM, durationMin, summaryData = {}) {
+        document.getElementById('sumDistance').textContent = formatDistance(distanceM);
+        document.getElementById('sumDuration').textContent = formatDuration(durationMin);
 
-        document.getElementById('sumDistance').textContent = formatDistance(total);
-        document.getElementById('sumDuration').textContent = formatDuration(total / WALK_SPEED_MPS / 60);
-
+        const repairM = summaryData.repair_distance_m || 0;
+        const avgScore = Number(summaryData.average_score ?? 100);
         const dot = document.getElementById('sumConditionDot');
         const text = document.getElementById('sumCondition');
+
         if (repairM > 0) {
             dot.className = 'w-2.5 h-2.5 rounded-full bg-orange-500 mt-1 shrink-0';
             text.textContent = `Melewati segmen yang sedang diperbaiki (sekitar ${Math.round(repairM)} m). Hati-hati di bagian bergaris putus.`;
-        } else {
+        } else if (avgScore >= 70) {
             dot.className = 'w-2.5 h-2.5 rounded-full bg-brand-500 mt-1 shrink-0';
-            text.textContent = 'Seluruh jalur berupa trotoar dalam kondisi baik.';
+            text.textContent = `Jalur trotoar dalam kondisi baik (Skor kelayakan ${Math.round(avgScore)}).`;
+        } else {
+            dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 mt-1 shrink-0';
+            text.textContent = `Sebagian jalur perlu perhatian (Skor kelayakan ${Math.round(avgScore)}).`;
         }
 
         const card = document.getElementById('routeSummary');
@@ -279,26 +282,76 @@
     }
 
     document.getElementById('btnStartNav').addEventListener('click', () => {
-        if (!lastRoute) return;
-        // Titik sambung untuk mode turn-by-turn (issue #49): halaman navigasi
-        // bisa mendengarkan event ini dan membaca detail rutenya.
-        const handled = !window.dispatchEvent(new CustomEvent('pedestriroute:start-navigation', {
-            cancelable: true,
-            detail: { origin: state.origin, dest: state.dest, preference: state.preference, segments: lastRoute },
+        if (!state.origin || !state.dest) return;
+        
+        sessionStorage.setItem('pedestriroute:navigation', JSON.stringify({
+            origin: state.origin,
+            dest: state.dest,
+            preference: state.preference,
         }));
-        if (!handled) showToast('Mode navigasi turn-by-turn segera hadir.', 'info');
+
+        const q = new URLSearchParams({
+            origin_lat: state.origin.lat,
+            origin_lng: state.origin.lng,
+            dest_lat: state.dest.lat,
+            dest_lng: state.dest.lng,
+            dest_label: state.dest.label || 'Tujuan',
+            preference: state.preference,
+            start: '1'
+        });
+
+        window.location.href = '/navigasi?' + q.toString();
     });
 
-    // ---------------------------------------------------------------
-    // Rute dummy (nanti diganti respons API /api/v1/routes/recommend)
-    // ---------------------------------------------------------------
-    function buildDummyRoute(o, d, preference) {
-        const safest = preference !== 'fastest';
-        const k = safest ? 0.45 : -0.06; // aman: memutar, tercepat: hampir lurus
+    async function drawRoute() {
+        if (!state.origin || !state.dest) return;
+        routeLayer.clearLayers();
+
+        try {
+            const res = await fetch('/api/v1/routes/recommend', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': 'Bearer ' + token,
+                },
+                body: JSON.stringify({
+                    origin: { lat: state.origin.lat, lng: state.origin.lng },
+                    destination: { lat: state.dest.lat, lng: state.dest.lng },
+                    preference: state.preference,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.success && Array.isArray(data.polyline) && data.polyline.length > 1) {
+                lastRoute = data;
+
+                (data.segments || []).forEach((seg) => {
+                    if (!Array.isArray(seg.polyline) || seg.polyline.length < 2) return;
+                    L.polyline(seg.polyline, { color: '#ffffff', weight: 10, opacity: 0.9, lineCap: 'round' }).addTo(routeLayer);
+                    L.polyline(seg.polyline, {
+                        color: seg.repair ? '#ea580c' : '#008775',
+                        weight: 6,
+                        lineCap: 'round',
+                        dashArray: seg.repair ? '2 12' : null,
+                    }).addTo(routeLayer);
+                });
+
+                map.fitBounds(L.latLngBounds(data.polyline), { paddingTopLeft: [28, 28], paddingBottomRight: [28, 230], maxZoom: 18 });
+                showSummary(data.distance_m || 0, data.duration_min || 0, data.summary || {});
+                return;
+            }
+        } catch (_) {}
+
+        // Fallback calculation if server engine is offline
+        const o = state.origin;
+        const d = state.dest;
+        const safest = state.preference !== 'fastest';
+        const k = safest ? 0.45 : -0.06;
         const dx = d.lng - o.lng;
         const dy = d.lat - o.lat;
         const ctrl = [(o.lat + d.lat) / 2 - dx * k, (o.lng + d.lng) / 2 + dy * k];
-
         const pts = [];
         for (let i = 0; i <= 16; i++) {
             const t = i / 16;
@@ -308,46 +361,13 @@
                 u * u * o.lng + 2 * u * t * ctrl[1] + t * t * d.lng,
             ]);
         }
-
-        if (!safest) {
-            // rute tercepat melewati satu segmen yang sedang diperbaiki
-            return [
-                { pts: pts.slice(0, 6),  repair: false },
-                { pts: pts.slice(5, 11), repair: true },
-                { pts: pts.slice(10),    repair: false },
-            ];
-        }
-        return [{ pts, repair: false }];
+        const total = pathLength(pts);
+        L.polyline(pts, { color: '#ffffff', weight: 10, opacity: 0.9, lineCap: 'round' }).addTo(routeLayer);
+        L.polyline(pts, { color: '#008775', weight: 6, lineCap: 'round' }).addTo(routeLayer);
+        map.fitBounds(L.latLngBounds(pts), { paddingTopLeft: [28, 28], paddingBottomRight: [28, 230], maxZoom: 18 });
+        showSummary(total, total / WALK_SPEED_MPS / 60);
     }
 
-    function drawRoute() {
-        if (!state.origin || !state.dest) return;
-        routeLayer.clearLayers();
-
-        const segments = buildDummyRoute(state.origin, state.dest, state.preference);
-        lastRoute = segments;
-
-        segments.forEach((seg) => {
-            // garis putih tebal di bawah, supaya rute tetap terbaca di atas peta
-            L.polyline(seg.pts, { color: '#ffffff', weight: 10, opacity: 0.9, lineCap: 'round' }).addTo(routeLayer);
-            L.polyline(seg.pts, {
-                color: seg.repair ? '#ea580c' : '#008775',
-                weight: 6,
-                lineCap: 'round',
-                dashArray: seg.repair ? '2 12' : null,
-            }).addTo(routeLayer);
-        });
-
-        const all = segments.flatMap((s) => s.pts);
-        // ruang kosong di bawah supaya rute tidak tertutup kartu ringkasan
-        map.fitBounds(L.latLngBounds(all), { paddingTopLeft: [28, 28], paddingBottomRight: [28, 230], maxZoom: 18 });
-
-        showSummary(segments);
-    }
-
-    // ---------------------------------------------------------------
-    // Autocomplete (dipakai untuk titik awal dan tujuan)
-    // ---------------------------------------------------------------
     function setupAutocomplete(kind, input, list) {
         function close() {
             list.classList.add('hidden');
@@ -379,7 +399,7 @@
                     type.textContent = p.type;
 
                     li.append(name, type);
-                    li.addEventListener('mousedown', (e) => e.preventDefault()); // jaga fokus input
+                    li.addEventListener('mousedown', (e) => e.preventDefault());
                     li.addEventListener('click', () => {
                         close();
                         setPoint(kind, { lat: p.lat, lng: p.lng, label: p.name });
@@ -392,8 +412,8 @@
         }
 
         input.addEventListener('focus', () => {
-            input.select();   // seluruh teks langsung terblok, tinggal ketik untuk menggantinya
-            render(true);     // saat diklik, tampilkan semua tempat dulu
+            input.select();
+            render(true);
         });
         input.addEventListener('input', () => render(false));
         input.addEventListener('blur', () => setTimeout(close, 120));
@@ -405,14 +425,26 @@
     setupAutocomplete('origin', document.getElementById('originInput'), document.getElementById('originList'));
     setupAutocomplete('dest', document.getElementById('destInput'), document.getElementById('destList'));
 
-    // ---------------------------------------------------------------
-    // Titik awal default: lokasi GPS (hanya kalau di dalam Mulyorejo)
-    // ---------------------------------------------------------------
-    navigator.geolocation?.getCurrentPosition((pos) => {
-        const { latitude, longitude } = pos.coords;
-        if (serviceArea.contains(latitude, longitude)) {
-            setPoint('origin', { lat: latitude, lng: longitude, label: 'Lokasi Saya Saat Ini' });
-        }
-    }, () => {}, { enableHighAccuracy: true, timeout: 8000 });
+    // Default GPS location or Mulyorejo default sample point
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const { latitude, longitude } = pos.coords;
+                if (serviceArea.contains(latitude, longitude)) {
+                    setPoint('origin', { lat: latitude, lng: longitude, label: 'Lokasi Saya Saat Ini' });
+                } else if (!state.origin) {
+                    setPoint('origin', { lat: SAMPLE_PLACES[0].lat, lng: SAMPLE_PLACES[0].lng, label: SAMPLE_PLACES[0].name });
+                }
+            },
+            () => {
+                if (!state.origin) {
+                    setPoint('origin', { lat: SAMPLE_PLACES[0].lat, lng: SAMPLE_PLACES[0].lng, label: SAMPLE_PLACES[0].name });
+                }
+            },
+            { enableHighAccuracy: true, timeout: 6000 }
+        );
+    } else if (!state.origin) {
+        setPoint('origin', { lat: SAMPLE_PLACES[0].lat, lng: SAMPLE_PLACES[0].lng, label: SAMPLE_PLACES[0].name });
+    }
 </script>
 @endpush

@@ -292,6 +292,7 @@
     const token = localStorage.getItem('token');
     if (!token) {
         window.location.href = '/login';
+        return;
     }
 
     const WALK_SPEED_MPS = 1.25;
@@ -314,7 +315,7 @@
     ];
 
     // -----------------------------------------------------------------
-    // Map
+    // Map Setup
     // -----------------------------------------------------------------
     const map = L.map('navMap', { attributionControl: false, zoomControl: false }).setView([-7.2663, 112.7965], 15);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
@@ -347,7 +348,6 @@
         gpsHeading: null,
         compassHeading: null,
         offRouteSince: null,
-        offRouteTimer: null,
         rerouteController: null,
         rerouteTimeout: null,
         announced: {},
@@ -415,7 +415,7 @@
     };
 
     // -----------------------------------------------------------------
-    // Formatting helpers
+    // Helpers
     // -----------------------------------------------------------------
     function haversine(aLat, aLng, bLat, bLng) {
         const R = 6371000;
@@ -439,18 +439,9 @@
         const value = Math.max(0, minutes);
         if (value < 1) return '< 1 menit';
         if (value < 60) return `${Math.round(value)} menit`;
-        const hours = Math.floor(value / 60);
-        const mins = Math.round(value % 60);
-        return mins === 0 ? `${hours} jam` : `${hours} jam ${mins} menit`;
-    }
-
-    function bearingBetween(a, b) {
-        const lat1 = a.lat * Math.PI / 180;
-        const lat2 = b.lat * Math.PI / 180;
-        const dLng = (b.lng - a.lng) * Math.PI / 180;
-        const y = Math.sin(dLng) * Math.cos(lat2);
-        const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
-        return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+        const h = Math.floor(value / 60);
+        const m = Math.round(value % 60);
+        return m === 0 ? `${h} jam` : `${h} jam ${m} mnt`;
     }
 
     function compassLabel(bearing) {
@@ -528,13 +519,11 @@
             utterance.pitch = 1;
             utterance.volume = 1;
             window.speechSynthesis.speak(utterance);
-        } catch (_) {
-            // Speech synthesis is a progressive enhancement.
-        }
+        } catch (_) {}
     }
 
     // -----------------------------------------------------------------
-    // Markers
+    // Markers & User Puck
     // -----------------------------------------------------------------
     function makePin(letter, background) {
         return L.divIcon({
@@ -555,7 +544,7 @@
                     <div class="pulse"></div>
                     <div id="userArrow" style="position:relative;width:34px;height:34px;border-radius:9999px;
                         background:#008775;border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.3);
-                        display:flex;align-items:center;justify-content:center;color:#fff">
+                        display:flex;align-items:center;justify-content:center;color:#fff;transform:rotate(${state.currentBearing}deg);transition:transform 0.18s linear">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                             <path d="M12 2 19 21 12 17 5 21 12 2z" />
                         </svg>
@@ -571,11 +560,14 @@
     }
 
     function updateUserHeading(heading) {
-        if (heading !== null && !Number.isNaN(heading)) {
+        if (heading !== null && Number.isFinite(heading)) {
             state.currentBearing = heading;
         }
         const arrow = document.getElementById('userArrow');
-        if (arrow) arrow.style.transform = `rotate(${state.currentBearing}deg)`;
+        if (arrow) {
+            arrow.style.transform = `rotate(${Math.round(state.currentBearing)}deg)`;
+        }
+        setText(els.navHeading, `Arah: ${compassLabel(state.currentBearing)} (${Math.round(state.currentBearing)}°)`);
     }
 
     function drawRouteOnMap(route, fit = true) {
@@ -600,8 +592,8 @@
             }).addTo(routeLayer);
         });
 
-        if (markerLayer.getLayers().includes(state.startMarker)) markerLayer.removeLayer(state.startMarker);
-        if (markerLayer.getLayers().includes(state.endMarker)) markerLayer.removeLayer(state.endMarker);
+        if (state.startMarker && markerLayer.hasLayer(state.startMarker)) markerLayer.removeLayer(state.startMarker);
+        if (state.endMarker && markerLayer.hasLayer(state.endMarker)) markerLayer.removeLayer(state.endMarker);
 
         if (route.origin) {
             state.startMarker = L.marker([route.origin.lat, route.origin.lng], {
@@ -625,7 +617,7 @@
     }
 
     // -----------------------------------------------------------------
-    // Geometry helpers
+    // Geometry & Projection
     // -----------------------------------------------------------------
     function prepareGeometry(polyline) {
         if (!Array.isArray(polyline) || polyline.length < 2) {
@@ -682,7 +674,7 @@
                     along: g.cumulative[i] + t * segmentLength,
                     lat: a.lat + t * (b.lat - a.lat),
                     lng: a.lng + t * (b.lng - a.lng),
-                    bearing: Math.atan2(dx, dy) * 180 / Math.PI,
+                    bearing: (Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360,
                 };
             }
         }
@@ -704,7 +696,7 @@
                 return {
                     lat: a.lat + t * (b.lat - a.lat),
                     lng: a.lng + t * (b.lng - a.lng),
-                    bearing: Math.atan2(b.x - a.x, b.y - a.y) * 180 / Math.PI,
+                    bearing: (Math.atan2(b.x - a.x, b.y - a.y) * 180 / Math.PI + 360) % 360,
                 };
             }
         }
@@ -713,7 +705,7 @@
     }
 
     // -----------------------------------------------------------------
-    // Destination autocomplete
+    // Destination Autocomplete
     // -----------------------------------------------------------------
     function renderSuggestions(showAll = false) {
         const query = showAll ? '' : els.destInput.value.trim().toLowerCase();
@@ -746,10 +738,7 @@
 
                 li.append(name, type);
                 li.addEventListener('mousedown', (event) => event.preventDefault());
-                li.addEventListener('click', () => {
-                    selectDestination(place);
-                    closeSuggestions();
-                });
+                li.addEventListener('click', () => selectDestination(place));
                 els.destSuggestions.appendChild(li);
             });
         }
@@ -757,31 +746,20 @@
         els.destSuggestions.classList.remove('hidden');
     }
 
-    function closeSuggestions() {
+    function selectDestination(place) {
+        state.destination = { lat: place.lat, lng: place.lng, label: place.name };
+        els.destInput.value = place.name;
+        els.btnClearDest.classList.remove('hidden');
         els.destSuggestions.classList.add('hidden');
+        setText(els.headerSubtitle, place.name);
+        findRoute({ silent: true });
     }
 
-    els.destInput.addEventListener('focus', () => {
-        els.destInput.select();
-        renderSuggestions(true);
-    });
-    els.destInput.addEventListener('input', () => {
-        els.btnClearDest.classList.toggle('hidden', els.destInput.value.trim() === '');
-        renderSuggestions(false);
-    });
-    els.destInput.addEventListener('blur', () => setTimeout(closeSuggestions, 140));
-    els.destInput.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') closeSuggestions();
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            const first = SAMPLE_PLACES.find((place) =>
-                place.name.toLowerCase().includes(els.destInput.value.trim().toLowerCase())
-            );
-            if (first) {
-                selectDestination(first);
-                closeSuggestions();
-            }
-        }
+    els.destInput.addEventListener('focus', () => renderSuggestions(true));
+    els.destInput.addEventListener('input', () => renderSuggestions(false));
+    els.destInput.addEventListener('blur', () => setTimeout(() => els.destSuggestions.classList.add('hidden'), 150));
+    els.destInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') els.destSuggestions.classList.add('hidden');
     });
 
     els.btnClearDest.addEventListener('click', () => {
@@ -791,33 +769,16 @@
         els.routeSummary.classList.add('hidden');
         els.btnStartNav.disabled = true;
         routeLayer.clearLayers();
-        if (state.startMarker) markerLayer.removeLayer(state.startMarker);
-        if (state.endMarker) markerLayer.removeLayer(state.endMarker);
-        state.startMarker = null;
-        state.endMarker = null;
-        state.route = null;
-        state.geometry = null;
+        if (state.endMarker && markerLayer.hasLayer(state.endMarker)) markerLayer.removeLayer(state.endMarker);
         setText(els.headerSubtitle, 'Tentukan tujuan Anda');
     });
 
-    function selectDestination(place) {
-        if (!serviceArea.contains(place.lat, place.lng)) {
-            showToast('Tempat berada di luar area layanan Kecamatan Mulyorejo.', 'error');
-            return;
-        }
-
-        state.destination = { lat: place.lat, lng: place.lng, label: place.name };
-        els.destInput.value = place.name;
-        els.btnClearDest.classList.remove('hidden');
-        setText(els.headerSubtitle, place.name);
-        findRoute();
-    }
-
     // -----------------------------------------------------------------
-    // Origin
+    // Origin & GPS Locating
     // -----------------------------------------------------------------
-    function setOrigin(lat, lng, label, accuracy = null) {
+    function setOrigin(lat, lng, label = 'Lokasi Saya Saat Ini', accuracy = null) {
         state.origin = { lat, lng, label };
+        createUserMarker(lat, lng);
         setText(els.originLabel, label);
         setText(
             els.gpsStatus,
@@ -830,7 +791,7 @@
     function useFallbackOrigin() {
         const fallback = SAMPLE_PLACES[0];
         setOrigin(fallback.lat, fallback.lng, `${fallback.name} (contoh)`, null);
-        showToast('GPS tidak tersedia. Menggunakan titik awal contoh.', 'info');
+        showToast('Menggunakan titik awal awal contoh di Kecamatan Mulyorejo.', 'info');
     }
 
     function locateUser(showFeedback = false) {
@@ -842,14 +803,25 @@
         els.btnLocate.classList.add('animate-pulse');
         setText(els.gpsStatus, 'Mendeteksi lokasi Anda...');
 
+        let resolved = false;
+        const fallbackTimer = setTimeout(() => {
+            if (!resolved && !state.origin) {
+                resolved = true;
+                els.btnLocate.classList.remove('animate-pulse');
+                useFallbackOrigin();
+            }
+        }, 2000);
+
         navigator.geolocation.getCurrentPosition(
             (position) => {
+                resolved = true;
+                clearTimeout(fallbackTimer);
                 els.btnLocate.classList.remove('animate-pulse');
                 const { latitude, longitude, accuracy } = position.coords;
 
                 if (!serviceArea.contains(latitude, longitude)) {
-                    showToast('Lokasi Anda berada di luar area layanan Kecamatan Mulyorejo.', 'error');
-                    setText(els.gpsStatus, 'Lokasi di luar area layanan');
+                    if (showFeedback) showToast('Lokasi fisik di luar Kecamatan Mulyorejo. Titik contoh digunakan.', 'info');
+                    setText(els.gpsStatus, 'Lokasi di luar area layanan Mulyorejo');
                     if (!state.origin) useFallbackOrigin();
                     return;
                 }
@@ -859,18 +831,20 @@
                 if (state.destination && !state.navigating) findRoute({ silent: true });
             },
             () => {
+                resolved = true;
+                clearTimeout(fallbackTimer);
                 els.btnLocate.classList.remove('animate-pulse');
                 if (!state.origin) useFallbackOrigin();
-                if (showFeedback) showToast('Izin lokasi ditolak. Aktifkan GPS untuk navigasi real-time.', 'error');
+                if (showFeedback) showToast('Izin lokasi ditolak. Titik contoh digunakan.', 'info');
             },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 10000 }
         );
     }
 
     els.btnLocate.addEventListener('click', () => locateUser(true));
 
     // -----------------------------------------------------------------
-    // Route request
+    // Route Request
     // -----------------------------------------------------------------
     async function requestRoute(from, to, preference, signal = null) {
         const response = await fetch('/api/v1/routes/recommend', {
@@ -905,8 +879,7 @@
 
     async function findRoute({ silent = false, autostart = false } = {}) {
         if (!state.origin) {
-            if (!silent) showToast('Menunggu lokasi GPS Anda...', 'info');
-            return;
+            useFallbackOrigin();
         }
         if (!state.destination) {
             if (!silent) showToast('Pilih titik tujuan terlebih dahulu.', 'error');
@@ -978,7 +951,7 @@
     els.btnStartNav.addEventListener('click', () => startNavigation());
 
     // -----------------------------------------------------------------
-    // Navigation lifecycle
+    // Heading Compass & Sensors (Issue #49)
     // -----------------------------------------------------------------
     function requestCompassPermission() {
         if (typeof DeviceOrientationEvent === 'undefined') {
@@ -1005,21 +978,23 @@
 
             if (typeof event.webkitCompassHeading === 'number') {
                 heading = event.webkitCompassHeading;
-            } else if (event.absolute && typeof event.alpha === 'number') {
-                heading = (360 - event.alpha) % 360;
             } else if (typeof event.alpha === 'number' && event.alpha !== null) {
                 heading = (360 - event.alpha) % 360;
             }
 
             if (heading !== null && Number.isFinite(heading)) {
                 state.compassHeading = heading;
-                if (!state.gpsHeading) updateUserHeading(heading);
-                setText(els.navHeading, `Arah: ${compassLabel(heading)}`);
+                if (state.gpsHeading === null) {
+                    updateUserHeading(heading);
+                }
             }
         };
 
-        window.addEventListener('deviceorientationabsolute', state.orientationHandler, true);
-        window.addEventListener('deviceorientation', state.orientationHandler, true);
+        if ('ondeviceorientationabsolute' in window) {
+            window.addEventListener('deviceorientationabsolute', state.orientationHandler, true);
+        } else {
+            window.addEventListener('deviceorientation', state.orientationHandler, true);
+        }
     }
 
     function detachCompass() {
@@ -1042,12 +1017,13 @@
     async function releaseWakeLock() {
         try {
             if (state.wakeLock) await state.wakeLock.release();
-        } catch (_) {
-            // ignore
-        }
+        } catch (_) {}
         state.wakeLock = null;
     }
 
+    // -----------------------------------------------------------------
+    // Navigation Lifecycle & Tracking
+    // -----------------------------------------------------------------
     async function startNavigation() {
         if (!state.route) {
             await findRoute({ autostart: true });
@@ -1083,8 +1059,6 @@
                 onPositionError,
                 { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 }
             );
-        } else {
-            showToast('Perangkat tidak mendukung GPS. Gunakan mode simulasi.', 'error');
         }
 
         const startStep = state.steps[0];
@@ -1103,7 +1077,7 @@
         const point = { lat: coords.latitude, lng: coords.longitude };
 
         state.lastPosition = point;
-        state.gpsHeading = (typeof coords.heading === 'number' && Number.isFinite(coords.heading)) ? coords.heading : null;
+        state.gpsHeading = (typeof coords.heading === 'number' && Number.isFinite(coords.heading) && coords.heading >= 0) ? coords.heading : null;
 
         setText(els.gpsStatus, `Akurasi GPS sekitar ${Math.round(coords.accuracy || 0)} meter`);
         handleLocation(point, {
@@ -1117,9 +1091,9 @@
 
         if (error.code === error.PERMISSION_DENIED) {
             setText(els.navStatus, 'Izin GPS ditolak. Gunakan mode simulasi.');
-            showToast('Izin lokasi ditolak. Aktifkan GPS untuk navigasi real-time.', 'error');
+            showToast('Izin lokasi ditolak. Mode simulasi tersedia.', 'info');
         } else {
-            setText(els.navStatus, 'Sinyal GPS lemah. Mencari lokasi...');
+            setText(els.navStatus, 'Sinyal GPS lemah. Mencari posisi...');
         }
     }
 
@@ -1132,15 +1106,7 @@
         updateUserHeading(heading);
         createUserMarker(point.lat, point.lng);
 
-        if (!state.demoActive) {
-            map.panTo([point.lat, point.lng], { animate: true, duration: 0.35 });
-        } else {
-            map.panTo([point.lat, point.lng], { animate: true, duration: 0.2 });
-        }
-
-        if (Number.isFinite(options.heading)) {
-            setText(els.navHeading, `Arah: ${compassLabel(options.heading)}`);
-        }
+        map.panTo([point.lat, point.lng], { animate: true, duration: state.demoActive ? 0.2 : 0.35 });
 
         updateNavigationUI(projection);
 
@@ -1275,15 +1241,23 @@
         }
     }
 
+    // -----------------------------------------------------------------
+    // Off-Route Detection & Automatic Rerouting (Issue #49)
+    // -----------------------------------------------------------------
     function detectOffRoute(point, deviation, options = {}) {
         if (state.demoActive || state.arrived || state.rerouting) return;
 
-        if (deviation > OFF_ROUTE_METERS) {
-            setText(els.navStatus, `Anda ${Math.round(deviation)} m dari jalur. Kembali ke rute atau tunggu rute baru.`);
+        // Ignore inaccurate GPS jitter (> 30m accuracy) per SRS FR-F8-12
+        if (options.accuracy !== null && options.accuracy !== undefined && options.accuracy > 30) {
+            return;
+        }
+
+        if (deviation >= OFF_ROUTE_METERS) {
+            setText(els.navStatus, `Keluar jalur (${Math.round(deviation)} m). Menghitung ulang rute...`);
 
             if (state.offRouteSince === null) {
                 state.offRouteSince = Date.now();
-                showToast('Anda keluar dari jalur. Mencari rute baru...', 'info');
+                showToast('Anda keluar dari jalur. Menghitung ulang rute...', 'info');
             }
 
             if (Date.now() - state.offRouteSince >= OFF_ROUTE_SECONDS * 1000 && !state.rerouteController) {
@@ -1309,7 +1283,7 @@
 
         const controller = new AbortController();
         state.rerouteController = controller;
-        state.rerouteTimeout = setTimeout(() => controller.abort(), 8000);
+        state.rerouteTimeout = setTimeout(() => controller.abort(), 6000);
 
         try {
             const route = await requestRoute(from, state.destination, state.preference, controller.signal);
@@ -1378,11 +1352,6 @@
             state.demoTimer = null;
         }
 
-        if (state.offRouteTimer) {
-            clearTimeout(state.offRouteTimer);
-            state.offRouteTimer = null;
-        }
-
         if (state.rerouteController) {
             state.rerouteController.abort();
             state.rerouteController = null;
@@ -1430,7 +1399,7 @@
     });
 
     // -----------------------------------------------------------------
-    // Demo mode
+    // Simulation / Demo Mode
     // -----------------------------------------------------------------
     els.btnDemo.addEventListener('click', () => {
         if (!state.navigating) return;
@@ -1455,7 +1424,7 @@
         state.demoTimer = setInterval(() => {
             if (!state.demoActive || !state.geometry) return;
 
-            state.demoAlong = Math.min(state.geometry.total, state.demoAlong + 6);
+            state.demoAlong = Math.min(state.geometry.total, state.demoAlong + 8);
             const point = pointAtAlong(state.demoAlong);
 
             if (point) {
@@ -1468,7 +1437,7 @@
             if (state.demoAlong >= state.geometry.total) {
                 stopDemo();
             }
-        }, 400);
+        }, 500);
     });
 
     function stopDemo() {
@@ -1491,16 +1460,19 @@
     }
 
     els.btnDemoReroute.addEventListener('click', () => {
-        if (!state.demoActive) return;
-        const point = pointAtAlong(state.along);
-        if (point) {
-            showToast('Mensimulasikan deviasi 35 meter...', 'info');
-            reroute({ lat: point.lat + 0.0003, lng: point.lng + 0.0003 });
+        if (!state.navigating) return;
+        const currentPos = state.lastPosition || (state.origin ? { lat: state.origin.lat, lng: state.origin.lng } : null);
+        if (currentPos) {
+            showToast('Mensimulasikan deviasi 35 meter keluar jalur...', 'info');
+            // Offset roughly 35 meters perpendicular
+            const offLat = currentPos.lat + 0.00032;
+            const offLng = currentPos.lng + 0.00032;
+            handleLocation({ lat: offLat, lng: offLng }, { heading: state.currentBearing, accuracy: 5 });
         }
     });
 
     // -----------------------------------------------------------------
-    // Handoff from the route search page (F7 UI)
+    // Handoff from Rute page
     // -----------------------------------------------------------------
     function readIncomingRoute() {
         const params = new URLSearchParams(window.location.search);
@@ -1566,23 +1538,13 @@
     locateUser(false);
 
     if (!incoming.hasDestination) {
-        window.setTimeout(() => {
-            if (!state.destination) {
-                // Keep the sheet usable; the user may still type a destination.
-                setText(els.headerSubtitle, 'Tentukan tujuan Anda');
-            }
-        }, 300);
+        setText(els.headerSubtitle, 'Tentukan tujuan Anda');
     } else {
-        const waitForOrigin = setInterval(() => {
-            if (!state.origin) return;
-            clearInterval(waitForOrigin);
+        // Fast start: if destination is set, calculate route immediately
+        setTimeout(() => {
+            if (!state.origin) useFallbackOrigin();
             findRoute({ autostart: incoming.autostart });
-        }, 250);
-
-        window.setTimeout(() => {
-            clearInterval(waitForOrigin);
-            if (state.origin) findRoute({ autostart: incoming.autostart });
-        }, 6000);
+        }, 500);
     }
 })();
 </script>

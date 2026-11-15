@@ -34,7 +34,7 @@ MESSAGE_CATALOG = {
     "NAV_REROUTE_SUCCESS": "Rute baru ditemukan. Lanjutkan perjalanan.",
     "NAV_ARRIVED": "Anda telah tiba di tujuan.",
     "NAV_VOICE_MUTED": "Panduan suara dinonaktifkan.",
-    "NAV_VOICE_ENABLED": "Panduan suara diaktifkan."
+    "NAV_VOICE_ENABLED": "Panduan suara diaktifkan.",
     "REPAIR_STATUS_REQUIRED": "Mohon pilih status perbaikan terlebih dahulu",
     "REPAIR_STATUS_SAVED": "Notifikasi Status Berhasil Diperbarui",
     "REPAIR_SAVE_FAILED": "Pembaruan status gagal disimpan. Silakan coba lagi.",
