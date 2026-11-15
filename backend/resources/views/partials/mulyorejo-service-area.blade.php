@@ -60,11 +60,12 @@
                     interactive: false,
                     bubblingMouseEvents: true,
                     style: {
-                        color: '#006257',
-                        weight: 2.5,
-                        opacity: 1,
-                        fillColor: '#008775',
-                        fillOpacity: 0.12,
+                        color: '#0f766e',
+                        weight: 2,
+                        dashArray: '6, 6',
+                        opacity: 0.85,
+                        fillColor: '#0d9488',
+                        fillOpacity: 0.08,
                         interactive: false
                     }
                 }).addTo(map);

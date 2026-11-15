@@ -28,6 +28,22 @@
     <!-- Peta Full Screen -->
     <div id="routeMap" aria-label="Peta rute pejalan kaki"></div>
 
+    <!-- Loading Screen Overlay -->
+    <div id="routeLoading" class="hidden absolute inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 pointer-events-auto">
+        <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 max-w-xs w-full text-center space-y-3">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-brand-50 border border-brand-100 flex items-center justify-center shadow-inner">
+                <svg class="w-7 h-7 text-brand-700 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+            <div>
+                <p class="text-sm font-black text-slate-900">Mencari Rute Pejalan Kaki...</p>
+                <p class="text-[11px] font-semibold text-slate-500 mt-1">Menganalisis trotoar aman & memetakan area laporan</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Floating Top Search Card -->
     <div class="absolute inset-x-0 top-0 z-30 px-3 pt-3 pointer-events-none">
         <div class="pointer-events-auto bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-lg p-2.5 space-y-2">
@@ -93,6 +109,15 @@
                 </div>
                 <span id="mapEngineBadge" class="hidden text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg">OSRM</span>
             </div>
+
+            <!-- Confirm / Cari Rute Button -->
+            <button type="button" id="btnFindRoute"
+                class="w-full h-8 bg-brand-700 hover:bg-brand-800 text-white font-extrabold text-xs rounded-xl shadow-sm transition active:scale-[0.98] flex items-center justify-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                </svg>
+                <span id="btnFindRouteText">Cari Rute Pejalan Kaki</span>
+            </button>
 
             <!-- Quick destination chips -->
             <div id="quickChipsBar" class="flex items-center gap-1 overflow-x-auto pb-0.5 text-[10px] custom-scrollbar">
@@ -227,7 +252,7 @@
         .setView([-7.2663, 112.7965], 14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-    const serviceArea = PedestriRouteServiceArea.attach(map, { drawLayer: false });
+    const serviceArea = PedestriRouteServiceArea.attach(map);
     setTimeout(() => {
         map.invalidateSize();
         map.fitBounds(serviceArea.bounds, { padding: [16, 16], animate: false });
@@ -308,7 +333,25 @@
         });
     }
 
-    function setPoint(kind, point) {
+    function showLoading() {
+        const overlay = document.getElementById('routeLoading');
+        if (overlay) overlay.classList.remove('hidden');
+        const btnText = document.getElementById('btnFindRouteText');
+        const btn = document.getElementById('btnFindRoute');
+        if (btn) btn.disabled = true;
+        if (btnText) btnText.textContent = 'Mencari Rute...';
+    }
+
+    function hideLoading() {
+        const overlay = document.getElementById('routeLoading');
+        if (overlay) overlay.classList.add('hidden');
+        const btnText = document.getElementById('btnFindRouteText');
+        const btn = document.getElementById('btnFindRoute');
+        if (btn) btn.disabled = false;
+        if (btnText) btnText.textContent = 'Cari Rute Pejalan Kaki';
+    }
+
+    function setPoint(kind, point, autoDraw = true) {
         if (!serviceArea.contains(point.lat, point.lng)) {
             showToast('Titik berada di luar area layanan Kecamatan Mulyorejo.', 'error');
             return;
@@ -330,7 +373,22 @@
 
         if (kind === 'origin') originMarker = marker; else destMarker = marker;
 
-        drawRoute();
+        if (autoDraw && state.origin && state.dest) {
+            drawRoute();
+        }
+    }
+
+    // Confirm button "Cari Rute"
+    const btnFindRoute = document.getElementById('btnFindRoute');
+    if (btnFindRoute) {
+        btnFindRoute.addEventListener('click', () => {
+            if (!state.dest) {
+                showToast('Silakan pilih titik tujuan terlebih dahulu.', 'info');
+                document.getElementById('destInput').focus();
+                return;
+            }
+            drawRoute();
+        });
     }
 
     // Quick chips
@@ -415,7 +473,7 @@
     // GPS Origin
     document.getElementById('btnMyGps').addEventListener('click', () => {
         if (!navigator.geolocation) {
-            setPoint('origin', { lat: SAMPLE_PLACES[0].lat, lng: SAMPLE_PLACES[0].lng, label: 'Kampus C UNAIR (Default)' });
+            setPoint('origin', { lat: -7.2663, lng: 112.7965, label: 'Lokasi Anda' }, !!state.dest);
             return;
         }
         navigator.geolocation.getCurrentPosition(
@@ -423,15 +481,15 @@
                 const lat = pos.coords.latitude;
                 const lng = pos.coords.longitude;
                 if (!serviceArea.contains(lat, lng)) {
-                    showToast('GPS Anda di luar Mulyorejo. Menggunakan titik awal Kampus C UNAIR.', 'info');
-                    setPoint('origin', { lat: SAMPLE_PLACES[0].lat, lng: SAMPLE_PLACES[0].lng, label: 'Kampus C UNAIR (Default)' });
+                    showToast('GPS Anda di luar Mulyorejo. Menggunakan titik pusat Mulyorejo.', 'info');
+                    setPoint('origin', { lat: -7.2663, lng: 112.7965, label: 'Lokasi Anda (Pusat Mulyorejo)' }, !!state.dest);
                 } else {
-                    setPoint('origin', { lat, lng, label: 'Lokasi Saya Saat Ini' });
+                    setPoint('origin', { lat, lng, label: 'Lokasi Anda' }, !!state.dest);
                 }
             },
             () => {
-                showToast('Akses GPS ditolak. Menggunakan titik awal Kampus C UNAIR.', 'info');
-                setPoint('origin', { lat: SAMPLE_PLACES[0].lat, lng: SAMPLE_PLACES[0].lng, label: 'Kampus C UNAIR (Default)' });
+                showToast('Akses GPS tidak diizinkan. Menggunakan lokasi default.', 'info');
+                setPoint('origin', { lat: -7.2663, lng: 112.7965, label: 'Lokasi Anda' }, !!state.dest);
             },
             { enableHighAccuracy: true, timeout: 5000 }
         );
@@ -516,6 +574,7 @@
         if (!state.origin || !state.dest) return;
         routeLayer.clearLayers();
         obstacleLayer.clearLayers();
+        showLoading();
 
         try {
             const res = await fetch('/api/v1/routes/recommend', {
@@ -565,14 +624,47 @@
                     }
                 });
 
-                // 3. Mark avoided report obstacles
-                (data.avoided_points || []).forEach((obs) => {
-                    if (obs.lat && obs.lng) {
-                        const m = L.marker([obs.lat, obs.lng], {
-                            icon: makeObstaclePin(),
-                        }).addTo(obstacleLayer);
-                        m.bindPopup(`<div class="text-xs p-1 font-bold text-slate-800">⚠️ Titik Dihindari:<br><span class="font-normal">${obs.alamat || 'Area Laporan'}</span></div>`);
+                // 3. Mark obstacle warning pins on BOTH safest and fastest routes
+                const seenObstacles = new Set();
+                const allObstacles = [];
+
+                const collect = (list, kind) => {
+                    (list || []).forEach(o => {
+                        if (!o.lat || !o.lng) return;
+                        const key = `${Number(o.lat).toFixed(5)},${Number(o.lng).toFixed(5)}`;
+                        if (seenObstacles.has(key)) return;
+                        seenObstacles.add(key);
+                        allObstacles.push({ ...o, kind });
+                    });
+                };
+
+                collect(data.avoided_points, 'avoided');
+                collect(data.colliding_points, 'colliding');
+                collect(data.obstacles, 'area');
+
+                allObstacles.forEach((obs) => {
+                    const m = L.marker([obs.lat, obs.lng], {
+                        icon: makeObstaclePin(),
+                    }).addTo(obstacleLayer);
+
+                    let header = '⚠️ Laporan Masalah Fasilitas';
+                    let statusNote = 'Titik laporan kondisi pejalan kaki di area ini.';
+                    if (obs.kind === 'avoided') {
+                        header = '🛡️ Bahaya Dihindari';
+                        statusNote = 'Rute teraman berhasil dialihkan menjauhi titik kerusakan ini.';
+                    } else if (obs.kind === 'colliding') {
+                        header = '⚠️ Jalur Melintasi Titik Masalah';
+                        statusNote = 'Rute ini melintasi area laporan kerusakan fasilitas.';
                     }
+
+                    m.bindPopup(`
+                        <div class="text-xs p-1 font-sans">
+                            <p class="font-extrabold text-slate-900">${header}</p>
+                            <p class="font-bold text-amber-800 text-[11px] mt-0.5">${obs.kategori || 'Kerusakan Jalur'}</p>
+                            <p class="text-[10px] text-slate-500 mt-0.5">${obs.alamat || 'Area Mulyorejo'}</p>
+                            <p class="text-[10px] text-slate-600 mt-1 italic border-t border-slate-100 pt-1">${statusNote}</p>
+                        </div>
+                    `);
                 });
 
                 map.fitBounds(L.latLngBounds(data.polyline), {
@@ -583,8 +675,14 @@
 
                 showSummary(data.distance_m || 0, data.duration_min || 0, data.summary || {}, data.warnings || [], data.steps || []);
                 return;
+            } else {
+                showToast(data.message || 'Rute tidak ditemukan untuk titik yang dipilih.', 'error');
             }
-        } catch (_) {}
+        } catch (_) {
+            showToast('Gagal memuat rute pejalan kaki. Coba beberapa saat lagi.', 'error');
+        } finally {
+            hideLoading();
+        }
     }
 
     function setupAutocomplete(kind, input, list) {
@@ -633,8 +731,24 @@
     setupAutocomplete('origin', document.getElementById('originInput'), document.getElementById('originList'));
     setupAutocomplete('dest',   document.getElementById('destInput'),   document.getElementById('destList'));
 
-    // Default origin: Kampus C UNAIR
-    setPoint('origin', { lat: SAMPLE_PLACES[0].lat, lng: SAMPLE_PLACES[0].lng, label: SAMPLE_PLACES[0].name });
+    // Default origin: Lokasi Anda (Current User Location)
+    const defaultOrigin = { lat: -7.2663, lng: 112.7965, label: 'Lokasi Anda' };
+    setPoint('origin', defaultOrigin, false);
+
+    // Auto-detect GPS location on startup
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                if (serviceArea.contains(lat, lng)) {
+                    setPoint('origin', { lat, lng, label: 'Lokasi Anda' }, false);
+                }
+            },
+            () => {},
+            { enableHighAccuracy: true, timeout: 5000 }
+        );
+    }
 
     // Check query params if redirected from elsewhere
     const urlParams = new URLSearchParams(window.location.search);

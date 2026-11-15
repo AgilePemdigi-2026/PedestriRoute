@@ -1010,6 +1010,9 @@ class RouteRecommendationService
                 'total_segments' => count($grouped),
                 'fallback' => $engine !== 'postgis_astar',
             ],
+            'avoided_points' => [],
+            'colliding_points' => [],
+            'obstacles' => [],
             'warnings' => $this->warnings($engine, $averageScore, $repairDistance),
             'meta' => [
                 'considered_segments' => count($segments),
@@ -1221,7 +1224,8 @@ class RouteRecommendationService
             $chosenRoute,
             $segments,
             $avoidedObstacles,
-            $collidingObstacles
+            $collidingObstacles,
+            $obstacles
         );
     }
 
@@ -1530,6 +1534,7 @@ class RouteRecommendationService
         array $segments,
         array $avoidedObstacles,
         array $collidingObstacles,
+        array $allObstacles = [],
     ): array {
         $rawCoords = $route['geometry']['coordinates'] ?? [];
         $polyline = [];
@@ -1676,6 +1681,8 @@ class RouteRecommendationService
                 'avoided_count' => count($avoidedObstacles),
             ],
             'avoided_points' => $avoidedObstacles,
+            'colliding_points' => $collidingObstacles,
+            'obstacles' => $allObstacles,
             'warnings' => $warnings,
             'meta' => [
                 'considered_segments' => count($segments),
