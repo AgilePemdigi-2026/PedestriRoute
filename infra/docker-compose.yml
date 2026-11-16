@@ -22,8 +22,6 @@ services:
     container_name: pedestriroute_app
     restart: unless-stopped
     working_dir: /var/www/backend
-    volumes:
-      - ../backend:/var/www/backend
     environment:
       APP_NAME: PedestriRoute
       APP_ENV: production
@@ -53,8 +51,6 @@ services:
       dockerfile: infra/docker/nginx/Dockerfile
     container_name: pedestriroute_nginx
     restart: unless-stopped
-    volumes:
-      - ../backend:/var/www/backend
     depends_on:
       - app
 
@@ -67,8 +63,6 @@ services:
     environment:
       - CV_MOCK=false
       - CV_MODEL_PATH=/app/models/pedestriroute_classifier.onnx
-    volumes:
-      - ../cv-service:/app
 
   queue:
     build:
@@ -78,8 +72,6 @@ services:
     restart: unless-stopped
     working_dir: /var/www/backend
     command: php artisan queue:work --sleep=1 --tries=3 --timeout=30
-    volumes:
-      - ../backend:/var/www/backend
     environment:
       APP_NAME: PedestriRoute
       APP_ENV: production
@@ -113,8 +105,6 @@ services:
     restart: unless-stopped
     working_dir: /var/www/backend
     command: php artisan reverb:start --host=0.0.0.0 --port=8080
-    volumes:
-      - ../backend:/var/www/backend
     environment:
       APP_NAME: PedestriRoute
       APP_ENV: production

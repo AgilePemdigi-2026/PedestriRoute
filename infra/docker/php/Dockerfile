@@ -32,11 +32,12 @@ RUN echo "upload_max_filesize = 20M" > /usr/local/etc/php/conf.d/uploads.ini \
 
 WORKDIR /var/www/backend
 
-# Copy source code into container
-COPY backend /var/www/backend
+# Copy entire backend source code
+COPY backend/ .
 
-# Install production dependencies and set permissions
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts \
+# Ensure .env exists, install dependencies, and set permissions
+RUN cp -n .env.example .env 2>/dev/null || true \
+    && composer install --no-dev --optimize-autoloader --no-interaction --no-scripts \
     && chmod -R 777 /var/www/backend/storage /var/www/backend/bootstrap/cache
 
 EXPOSE 9000
