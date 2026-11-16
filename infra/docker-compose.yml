@@ -41,6 +41,8 @@ services:
       CFG_CV_ENABLED: "true"
       CFG_CV_THRESHOLD: "0.80"
       CV_SERVICE_URL: http://cv-service:8000
+      GOOGLE_OAUTH_MOCK: "true"
+      FACEBOOK_OAUTH_MOCK: "true"
     depends_on:
       db:
         condition: service_healthy
@@ -91,6 +93,8 @@ services:
       CFG_CV_ENABLED: "true"
       CFG_CV_THRESHOLD: "0.80"
       CV_SERVICE_URL: http://cv-service:8000
+      GOOGLE_OAUTH_MOCK: "true"
+      FACEBOOK_OAUTH_MOCK: "true"
     depends_on:
       db:
         condition: service_healthy
