@@ -32,5 +32,12 @@ RUN echo "upload_max_filesize = 20M" > /usr/local/etc/php/conf.d/uploads.ini \
 
 WORKDIR /var/www/backend
 
+# Copy source code into container
+COPY backend /var/www/backend
+
+# Install production dependencies and set permissions
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts \
+    && chmod -R 777 /var/www/backend/storage /var/www/backend/bootstrap/cache
+
 EXPOSE 9000
 CMD ["php-fpm"]

@@ -1,0 +1,18 @@
+.git
+.github
+.vscode
+.agents
+Datasets
+datasets_per_category
+pedestriroute_classification_data
+runs
+computer vision planning
+graphify-out
+Project_Context
+*.pt
+*.cache
+bdd/.venv
+.venv
+__pycache__
+backend/node_modules
+backend/storage/logs/*.log
