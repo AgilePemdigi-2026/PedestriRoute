@@ -1,9 +1,10 @@
 @extends('layouts.app')
 
 @section('title', 'Detail Status Perbaikan - PedestriRoute Admin')
+@section('admin_shell', '1')
 
 @section('content')
-<div class="px-5 pt-6 pb-24 flex flex-col flex-1">
+<div class="px-5 pt-6 pb-24 md:px-6 lg:px-8 lg:pt-8 lg:pb-10 flex flex-col flex-1 w-full">
     <!-- Header with Back Button -->
     <div class="flex items-center gap-2.5 mb-4">
         <a href="/admin/status-laporan" class="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition shadow-sm">
@@ -28,7 +29,9 @@
     </div>
 
     <!-- Main Content Container (hidden until loaded) -->
-    <div id="mainContent" class="hidden space-y-3">
+    <div id="mainContent" class="hidden">
+        <div class="lg:grid lg:grid-cols-2 lg:gap-5 lg:items-start">
+        <div class="space-y-3 min-w-0">
         <!-- Photo Preview Card -->
         <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm overflow-hidden">
             <div id="photoGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-3">
@@ -36,7 +39,7 @@
                     <div class="h-5 flex items-center mb-1.5">
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Foto Aduan</span>
                     </div>
-                    <div id="reportPhotoWrapper" class="w-full h-44 bg-slate-100 rounded-2xl overflow-hidden relative border border-slate-200/80 shadow-inner">
+                    <div id="reportPhotoWrapper" class="w-full h-44 lg:h-72 xl:h-80 bg-slate-100 rounded-2xl overflow-hidden relative border border-slate-200/80 shadow-inner">
                         <img id="reportPhoto" src="" alt="Bukti Laporan" class="w-full h-full object-cover">
                         <div class="absolute top-2.5 left-2.5 px-2 py-0.5 bg-black/60 backdrop-blur-md rounded-md text-white text-[9px] font-bold" id="badgeCategory">
                             Kategori
@@ -47,7 +50,7 @@
                     <div class="h-5 flex items-center mb-1.5">
                         <span id="repairPhotoTitle" class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider truncate">Foto Sesudah</span>
                     </div>
-                    <div id="repairPhotoWrapper" class="w-full h-44 bg-emerald-50 rounded-2xl overflow-hidden relative border border-emerald-200 shadow-inner">
+                    <div id="repairPhotoWrapper" class="w-full h-44 lg:h-72 xl:h-80 bg-emerald-50 rounded-2xl overflow-hidden relative border border-emerald-200 shadow-inner">
                         <img id="repairPhoto" src="" alt="Bukti Selesai Perbaikan" class="w-full h-full object-cover">
                         <div id="repairPhotoBadge" class="absolute top-2.5 left-2.5 px-2 py-0.5 bg-emerald-600/90 backdrop-blur-md rounded-md text-white text-[9px] font-bold">
                             ✓ Selesai
@@ -97,6 +100,9 @@
             </div>
         </div>
 
+        </div>
+
+        <div class="space-y-3 min-w-0">
         <!-- Repair Action Form -->
         <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm" id="formCard">
             <h3 class="text-xs font-bold text-slate-800 mb-3">Perbarui Status</h3>
@@ -161,6 +167,8 @@
             <div id="timelineContainer" class="space-y-3">
                 <!-- Timeline items injected via JS -->
             </div>
+        </div>
+        </div>
         </div>
     </div>
 </div>
@@ -338,7 +346,7 @@
                     photoGrid.className = 'grid grid-cols-2 gap-2.5 mb-3';
                 }
                 if (reportPhotoWrapper) {
-                    reportPhotoWrapper.className = 'w-full h-44 bg-slate-100 rounded-2xl overflow-hidden relative border border-slate-200/80 shadow-inner';
+                    reportPhotoWrapper.className = 'w-full h-44 lg:h-72 xl:h-80 bg-slate-100 rounded-2xl overflow-hidden relative border border-slate-200/80 shadow-inner';
                 }
 
                 const photoTitle = document.getElementById('repairPhotoTitle');
@@ -354,7 +362,7 @@
                         photoBadge.className = 'absolute top-2.5 left-2.5 px-2 py-0.5 bg-sky-600/90 backdrop-blur-md rounded-md text-white text-[9px] font-bold';
                     }
                     if (photoWrapper) {
-                        photoWrapper.className = 'w-full h-44 bg-sky-50 rounded-2xl overflow-hidden relative border border-sky-200 shadow-inner';
+                        photoWrapper.className = 'w-full h-44 lg:h-72 xl:h-80 bg-sky-50 rounded-2xl overflow-hidden relative border border-sky-200 shadow-inner';
                     }
                 } else {
                     if (photoTitle) {
@@ -366,7 +374,7 @@
                         photoBadge.className = 'absolute top-2.5 left-2.5 px-2 py-0.5 bg-emerald-600/90 backdrop-blur-md rounded-md text-white text-[9px] font-bold';
                     }
                     if (photoWrapper) {
-                        photoWrapper.className = 'w-full h-44 bg-emerald-50 rounded-2xl overflow-hidden relative border border-emerald-200 shadow-inner';
+                        photoWrapper.className = 'w-full h-44 lg:h-72 xl:h-80 bg-emerald-50 rounded-2xl overflow-hidden relative border border-emerald-200 shadow-inner';
                     }
                 }
             } else {
@@ -376,7 +384,7 @@
                     photoGrid.className = 'grid grid-cols-1 gap-2.5 mb-3';
                 }
                 if (reportPhotoWrapper) {
-                    reportPhotoWrapper.className = 'w-full h-52 bg-slate-100 rounded-2xl overflow-hidden relative border border-slate-200/80 shadow-inner';
+                    reportPhotoWrapper.className = 'w-full h-52 lg:h-80 xl:h-96 bg-slate-100 rounded-2xl overflow-hidden relative border border-slate-200/80 shadow-inner';
                 }
             }
 

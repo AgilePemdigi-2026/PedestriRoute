@@ -10,7 +10,7 @@
 @endphp
 
 <!-- Bottom Navigation for Admin -->
-<div class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-200 px-2 pt-1.5 pb-2 flex items-stretch justify-around z-40">
+<div class="fixed bottom-0 max-w-md md:max-w-2xl w-full bg-white border-t border-slate-200 px-2 pt-1.5 pb-2 flex items-stretch justify-around z-40 lg:hidden">
     @foreach ($adminTabs as $tab)
         @php $active = request()->is(...$tab['patterns']); @endphp
         <a href="{{ $tab['href'] }}" @if($active) aria-current="page" @endif

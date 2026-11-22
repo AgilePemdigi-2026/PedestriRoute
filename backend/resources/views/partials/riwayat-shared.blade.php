@@ -56,6 +56,10 @@
     }
     #detailModal button:focus-visible,
     #detailScroll:focus-visible { outline: 2px solid #008775; outline-offset: -2px; }
+    @media (min-width: 768px) {
+        #detailModal { align-items: center; padding: 24px; }
+        #detailModal .detail-dialog { max-width: 44rem; max-height: 85vh; border-radius: 1.5rem; }
+    }
 </style>
 <div id="detailModal" class="hidden bg-slate-900/60 backdrop-blur-sm" aria-hidden="true" onclick="if(event.target===this)closeDetail()">
     <div class="detail-dialog" role="dialog" aria-modal="true" aria-labelledby="detailTitle" tabindex="-1">
