@@ -40,13 +40,40 @@
     </style>
     @stack('styles')
 </head>
+@php
+    $isWargaShell = request()->routeIs('warga.*');
+@endphp
 <body class="min-h-screen bg-slate-50 text-slate-800 antialiased flex flex-col items-center justify-start">
-    <div class="w-full max-w-md min-h-screen bg-white shadow-xl flex flex-col relative pb-16">
+    @if($isWargaShell)
+        <header class="hidden md:flex fixed top-0 left-0 right-0 md:left-60 lg:left-64 h-16 z-30 items-center justify-between gap-4 bg-white/95 backdrop-blur border-b border-slate-200 px-6">
+            <div class="flex items-center gap-3 min-w-0">
+                <a href="{{ route('warga.beranda') }}" class="flex items-center gap-2.5 shrink-0">
+                    <span class="w-8 h-8 rounded-xl bg-brand-600 text-white flex items-center justify-center font-extrabold text-sm">P</span>
+                    <span class="font-extrabold text-slate-900 tracking-tight">PedestriRoute</span>
+                </a>
+                <span class="hidden lg:block w-px h-5 bg-slate-200"></span>
+                <span class="hidden lg:block text-xs font-semibold text-slate-500 truncate">@yield('title')</span>
+            </div>
+            <a href="{{ route('notifikasi.index') }}" data-notification-link
+                class="relative w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition shrink-0"
+                aria-label="Notifikasi">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                <span data-notification-count aria-hidden="true"
+                    class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[9px] font-bold flex items-center justify-center"></span>
+            </a>
+        </header>
+    @endif
+    <div class="w-full {{ $isWargaShell ? 'md:max-w-none md:shadow-none md:pb-0 md:pt-16 md:pl-60 lg:pl-64' : 'max-w-md' }} min-h-screen bg-white shadow-xl flex flex-col relative pb-16">
         @yield('content')
+        @if($isWargaShell)
+            @include('partials.warga-bottom-nav', ['navMobileVisibility' => request()->is('navigasi', 'riwayat-laporan', 'lapor-kondisi') ? 'hidden' : 'flex'])
+        @endif
     </div>
 
     <!-- Notification Toast Container -->
-    <div id="toast" class="fixed top-5 z-50 transform -translate-x-1/2 left-1/2 transition-all duration-300 opacity-0 pointer-events-none max-w-xs w-full px-4">
+    <div id="toast" class="fixed top-5 {{ $isWargaShell ? 'md:top-20' : '' }} z-50 transform -translate-x-1/2 left-1/2 transition-all duration-300 opacity-0 pointer-events-none max-w-xs w-full px-4">
         <div id="toast-body" class="bg-slate-900 text-white text-sm px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
             <span id="toast-icon" class="flex items-center justify-center shrink-0">
                 <svg class="w-5 h-5 text-teal-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

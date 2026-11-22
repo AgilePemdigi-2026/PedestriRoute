@@ -185,7 +185,7 @@
 @endpush
 
 @section('content')
-<div class="px-5 pt-5 pb-24 flex flex-col flex-1">
+<div class="px-5 pt-5 pb-24 flex flex-col flex-1 w-full md:px-8 md:pt-8 md:pb-10 md:max-w-7xl md:mx-auto">
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
         <a href="/beranda-warga" class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition" aria-label="Kembali">
@@ -216,9 +216,9 @@
         </div>
     </div>
 
-    <form id="reportForm" class="space-y-3">
+    <form id="reportForm" class="space-y-3 md:grid md:grid-cols-2 md:gap-5 md:items-start md:space-y-0">
         <!-- 1. Lokasi Kejadian Card -->
-        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm md:col-span-2 lg:col-span-1 lg:row-span-3">
             <div class="flex items-center justify-end mb-2">
                 <!-- Toggle Heatmap Button -->
                 <button type="button" id="btnToggleHeatmap" onclick="toggleLaporHeatmap()"
@@ -262,7 +262,7 @@
 
             <!-- Map container with relative overlay -->
             <div class="relative mb-2.5">
-                <div id="laporMap" class="border border-slate-100"></div>
+                <div id="laporMap" class="border border-slate-100 md:!h-[520px] xl:!h-[600px]"></div>
 
                 <!-- Heatmap loading spinner indicator -->
                 <div id="heatmapLoading" class="hidden absolute top-2.5 right-2.5 z-20 bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg shadow-sm border border-slate-100 flex items-center gap-1.5">
@@ -312,7 +312,7 @@
         </div>
 
         <!-- 2. Foto Bukti Card -->
-        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm lg:col-span-1">
             <div class="flex items-center justify-between mb-3">
                 <span class="text-xs font-bold text-slate-800">Foto Bukti</span>
                 <span id="photoBadge" class="text-xs font-medium text-slate-400">Maks. 15MB</span>
@@ -355,7 +355,7 @@
         </div>
 
         <!-- 3. Kategori Masalah Card -->
-        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm lg:col-span-1">
             <div class="mb-3">
                 <span class="text-xs font-bold text-slate-800">Kategori Masalah</span>
             </div>
@@ -426,7 +426,7 @@
         </div>
 
         <!-- 4. Deskripsi Card -->
-        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm md:col-span-2 lg:col-span-1">
             <div class="flex items-center justify-between mb-2">
                 <span class="text-xs font-bold text-slate-800">Deskripsi</span>
                 <span class="text-[10px] font-mono text-slate-400"><span id="charCount">0</span>/200</span>
@@ -438,14 +438,14 @@
 
         <!-- Submit Button -->
         <button type="submit" id="btnSubmitReport"
-            class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition mt-2">
+            class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition mt-2 md:col-span-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
             <span>Kirim Laporan</span>
         </button>
 
-        <p class="text-[11px] text-slate-400 text-center pt-1">
+        <p class="text-[11px] text-slate-400 text-center pt-1 md:col-span-2">
             Laporan diverifikasi dalam 1x24 jam kerja
         </p>
     </form>
@@ -459,7 +459,7 @@
 </div>
 
 <!-- Bottom Navigation Bar -->
-<div class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-200 py-2 px-6 flex items-center justify-between z-40">
+<div class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-200 py-2 px-6 flex items-center justify-between z-40 md:hidden">
     <a href="/beranda-warga" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z"/>
@@ -616,6 +616,8 @@
     }).addTo(map);
 
     const serviceArea = PedestriRouteServiceArea.attach(map);
+
+    window.addEventListener('resize', () => map.invalidateSize());
 
     // Marker Pinpoint - Bebas ditaruh di mana saja oleh pengguna
     let marker = L.marker([selectedLat, selectedLon], { draggable: true, zIndexOffset: 1000 }).addTo(map);

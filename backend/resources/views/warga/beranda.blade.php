@@ -222,11 +222,12 @@
 @endpush
 
 @section('content')
-<div class="px-5 pt-6 pb-20 flex flex-col flex-1">
+<div class="px-5 pt-6 pb-20 flex flex-col flex-1 w-full md:px-8 md:pt-8 md:pb-10 md:max-w-7xl md:mx-auto lg:grid lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[400px_minmax(0,1fr)] lg:gap-8 lg:items-start">
+    <div class="lg:col-start-1">
     <!-- Top Header -->
     <div class="flex items-center justify-between mb-4">
         <div>
-            <h1 class="text-base font-extrabold text-slate-900 tracking-tight">PedestriRoute</h1>
+            <h1 class="text-base font-extrabold text-slate-900 tracking-tight md:hidden">PedestriRoute</h1>
         </div>
 
         <div class="flex items-center gap-2">
@@ -235,7 +236,7 @@
                 data-notification-link
                 onclick="window.location.href='/notifikasi'"
                 class="relative w-8 h-8 rounded-xl bg-slate-100 flex items-center
-                    justify-center text-slate-600 hover:bg-slate-200 transition"
+                    justify-center text-slate-600 hover:bg-slate-200 transition md:hidden"
                 aria-label="Notifikasi">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -324,7 +325,8 @@
             </div>
         </div>
     </div>
-
+    </div>
+    <div class="lg:col-start-2 lg:sticky lg:top-20">
     <!-- Map Section (Toggleable: Heatmap / Normal Map) -->
     <div class="mb-4">
         <div class="flex items-center justify-between mb-2.5">
@@ -388,9 +390,11 @@
             <span>Wilayah Layanan Aktif: <span class="font-medium text-slate-700">Kecamatan Mulyorejo, Surabaya</span></span>
         </div>
 
+    </div>
+
         <!-- Map Container with Relative Overlay -->
         <div class="relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
-            <div id="map"></div>
+            <div id="map" class="lg:!h-[calc(100vh-16rem)] lg:!min-h-[480px] lg:!max-h-none"></div>
 
             <!-- Heatmap Loading Spinner Indicator -->
             <div id="mapLoading" class="hidden absolute top-3 left-12 z-20 bg-white/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl shadow-md border border-slate-100 flex items-center gap-2">
@@ -448,7 +452,7 @@
                 <div id="sheetHeader" class="px-4 py-2 border-b border-slate-100 flex items-center justify-between"></div>
 
                 <!-- Sheet Dynamic Scrollable Body -->
-                <div id="sheetBody" class="p-4 overflow-y-auto max-h-[calc(640px*0.52)] scrollbar-thin"></div>
+                <div id="sheetBody" class="p-4 overflow-y-auto max-h-[calc(640px*0.52)] md:max-h-[60vh] scrollbar-thin"></div>
             </div>
         </div>
 
@@ -524,7 +528,6 @@
     </div>
 </div>
 
-@include('partials.warga-bottom-nav')
 @endsection
 
 @push('scripts')
@@ -717,6 +720,7 @@
 
     const serviceArea = PedestriRouteServiceArea.attach(map);
     setTimeout(() => { map.invalidateSize(); }, 200);
+    window.addEventListener('resize', () => map.invalidateSize());
 
     // Map Mode & Layer Groups (Heatmap, User Location)
     let currentMapMode = 'heatmap';
