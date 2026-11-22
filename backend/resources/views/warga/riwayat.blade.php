@@ -3,8 +3,8 @@
 @section('title', 'Riwayat Laporan - PedestriRoute')
 
 @section('content')
-<div class="px-5 pt-6 pb-20 flex flex-col flex-1">
-    <div class="flex items-center gap-2.5 mb-4">
+<div class="px-5 pt-6 pb-20 flex flex-col flex-1 w-full md:px-8 md:pt-8 md:pb-10 md:max-w-7xl md:mx-auto">
+    <div class="flex items-center gap-2.5 mb-4 md:mb-6">
         <a href="/beranda-warga" class="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition shadow-sm" aria-label="Kembali">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" /></svg>
         </a>
@@ -14,8 +14,9 @@
         </div>
     </div>
 
+    <div class="md:grid md:grid-cols-[minmax(240px,300px)_minmax(0,1fr)] md:gap-6 md:items-start">
     <!-- Search & Filter Controls -->
-    <div class="space-y-2 mb-3">
+    <div class="space-y-2 mb-3 md:sticky md:top-20">
         <!-- Text Search -->
         <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -60,10 +61,11 @@
         </div>
     </div>
 
-    <div id="reportsList" class="space-y-3"></div>
+    <div id="reportsList" class="space-y-3 md:space-y-0 md:grid md:grid-cols-2 xl:grid-cols-3 md:gap-4"></div>
+    </div>
 </div>
 <!-- Navigasi Warga: konsisten dengan Beranda; Riwayat aktif. -->
-<div class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-200 py-2 px-6 flex items-center justify-between z-40">
+<div class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-200 py-2 px-6 flex items-center justify-between z-40 md:hidden">
     <a href="/beranda-warga" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition">
         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z"/>

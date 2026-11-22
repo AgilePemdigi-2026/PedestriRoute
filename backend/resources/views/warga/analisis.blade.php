@@ -140,6 +140,19 @@
         li { padding: 10px 0; border-top: 1px solid #f1f5f9; font-size: 12px; }
         li p { margin: 3px 0; } time { font-size: 10px; color: #64748b; }
         :focus-visible { outline: 2px solid #008775; outline-offset: 3px; }
+        @media (min-width: 768px) {
+            .app { max-width: 1024px; box-shadow: 0 4px 32px #0f172a12; }
+            header { padding: 22px 28px; }
+            main { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 20px; padding: 28px; }
+            #statusCard, #requestNotice, .actions { grid-column: 1 / -1; }
+            #resultCard { grid-column: 1; }
+            #reportDetails { grid-column: 2; }
+            .actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (min-width: 1280px) {
+            .app { max-width: 1200px; }
+            main { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
+        }
         @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
     </style>
 </head>
