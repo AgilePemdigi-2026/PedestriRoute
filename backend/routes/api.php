@@ -1,14 +1,14 @@
 <?php
 
-use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\AdminRepairController;
 use App\Http\Controllers\Api\AdminValidationController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HeatmapController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\PlaceSearchController;
 use App\Http\Controllers\Api\RegisterOtpController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\RouteRecommendationController;
-use App\Http\Controllers\Api\RouteNavigationController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -60,6 +60,7 @@ Route::prefix('v1')->group(function () {
 
         // Walking route recommendation & turn-by-turn instructions (F7/F8 - accessible by warga and admin)
         Route::post('/routes/recommend', [RouteRecommendationController::class, 'recommend']);
+        Route::get('/places/search', PlaceSearchController::class)->middleware('throttle:60,1');
 
         // Notifikasi milik akun yang sedang login (F10)
         Route::get('/notifications', [NotificationController::class, 'index']);

@@ -2,6 +2,24 @@
 
 return [
 
+    'places' => [
+        'url' => env('PLACE_SEARCH_URL', 'https://photon.komoot.io/api/'),
+    ],
+
+    'osrm' => [
+        'url' => env('OSRM_BASE_URL', 'https://routing.openstreetmap.de/routed-foot/route/v1/foot'),
+        // Set only after extracting a self-hosted dataset with OSRM's foot.lua.
+        'foot_profile_verified' => (bool) env('OSRM_FOOT_PROFILE_VERIFIED', false),
+        'max_snap_m' => 500.0,
+        'waypoint_snap_m' => 40.0,
+        'avoid_radius_m' => 25.0,
+        'search_requests' => 48,
+        'public_search_requests' => 16,
+        'cache_seconds' => 1800,
+        'residential_detours' => true,
+        'map_data_url' => 'https://api.openstreetmap.org/api/0.6',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

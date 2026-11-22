@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\RouteUnavailableException;
 use App\Http\Controllers\Controller;
 use App\Services\RouteRecommendationService;
 use App\Support\MessageCatalog;
@@ -88,6 +89,11 @@ class RouteRecommendationController extends Controller
             );
 
             return response()->json(['success' => true] + $route);
+        } catch (RouteUnavailableException $exception) {
+            return response()->json([
+                'success' => false,
+                'error' => ['code' => $exception->reason, 'message' => $exception->getMessage()],
+            ], $exception->httpStatus);
         } catch (Throwable $exception) {
             report($exception);
 

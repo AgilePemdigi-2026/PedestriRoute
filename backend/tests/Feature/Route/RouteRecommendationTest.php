@@ -7,6 +7,8 @@ use App\Models\Warga;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Sleep;
 use Tests\TestCase;
 
 class RouteRecommendationTest extends TestCase
@@ -78,6 +80,27 @@ class RouteRecommendationTest extends TestCase
             96.00,
             $unique + 2,
         );
+
+        config(['services.osrm.url' => 'https://routing.openstreetmap.de/routed-foot/route/v1/foot', 'services.osrm.residential_detours' => false]);
+        Http::preventStrayRequests();
+        Sleep::fake();
+        Http::fake(['https://routing.openstreetmap.de/routed-foot/route/v1/foot/*' => function ($request) use ($unique) {
+            if (! str_contains($request->url(), '112.8070000,-7.2700000')) {
+                return Http::response(['code' => 'NoRoute', 'routes' => []]);
+            }
+            $route = function (array $coordinates, string $name, float $distance): array {
+                return [
+                    'distance' => $distance, 'duration' => $distance / 1.25,
+                    'geometry' => ['type' => 'LineString', 'coordinates' => $coordinates],
+                    'legs' => [['steps' => [['name' => $name, 'distance' => $distance, 'geometry' => ['coordinates' => $coordinates]]]]],
+                ];
+            };
+
+            return Http::response(['code' => 'Ok', 'routes' => [
+                $route([[112.8070, -7.2700], [112.8079, -7.2700]], 'Jl. Rute Langsung '.$unique, 99.3),
+                $route([[112.8070, -7.2700], [112.80745, -7.2696], [112.8079, -7.2700]], 'Jl. Rute Aman '.$unique, 133.0),
+            ]]);
+        }]);
     }
 
     private function insertSegment(string $name, string $lineWkt, float $score, int $unique): int
@@ -185,6 +208,15 @@ class RouteRecommendationTest extends TestCase
 
     public function test_safest_route_avoids_damaged_segment_and_fastest_uses_it(): void
     {
+        $locationId = DB::table('lokasi')->insertGetId([
+            'latitude' => -7.2700, 'longitude' => 112.80745,
+            'geom' => DB::raw('ST_SetSRID(ST_Point(112.80745, -7.2700), 4326)'),
+            'alamat' => 'Kerusakan pada jalur langsung', 'segmen_id' => $this->directSegmentId,
+        ], 'lokasi_id');
+        DB::table('laporan')->insert([
+            'warga_id' => $this->warga->warga_id, 'kategori_id' => 1, 'lokasi_id' => $locationId,
+            'deskripsi' => 'Jalur rusak', 'status' => 'TERVALIDASI', 'tanggal_lapor' => now(),
+        ]);
         $safest = $this->requestRoute([
             'origin' => $this->origin,
             'destination' => $this->destination,
@@ -238,7 +270,7 @@ class RouteRecommendationTest extends TestCase
         $response = $this->requestRoute([
             'origin' => $this->origin,
             'destination' => $this->destination,
-            'preference' => 'safest',
+            'preference' => 'fastest',
         ]);
 
         $response->assertStatus(200);
@@ -268,23 +300,19 @@ class RouteRecommendationTest extends TestCase
         $this->assertEqualsWithDelta($this->destination['lng'], $response->json('destination.lng'), 0.000001);
     }
 
-    public function test_route_falls_back_gracefully_when_network_is_unavailable(): void
+    public function test_route_returns_unavailable_without_inventing_a_straight_line_when_network_is_unavailable(): void
     {
         $response = $this->requestRoute([
             'origin' => ['lat' => -7.0000, 'lng' => 112.0000],
             'destination' => ['lat' => -7.0010, 'lng' => 112.0010],
         ]);
 
-        $response->assertStatus(200)
+        $response->assertStatus(503)
             ->assertJson([
-                'success' => true,
-                'engine' => 'direct_fallback',
-                'summary' => [
-                    'fallback' => true,
-                ],
+                'success' => false,
+                'error' => ['code' => 'PEDESTRIAN_ROUTE_UNAVAILABLE'],
             ]);
 
-        $this->assertGreaterThanOrEqual(2, count($response->json('polyline')));
-        $this->assertContains('NETWORK_FALLBACK', array_column($response->json('warnings'), 'code'));
+        $response->assertJsonMissingPath('polyline');
     }
 }

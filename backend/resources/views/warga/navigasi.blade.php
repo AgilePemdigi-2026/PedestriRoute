@@ -285,6 +285,7 @@
 @push('scripts')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 @include('partials.mulyorejo-service-area')
+@include('partials.route-hazards')
 <script>
 (() => {
     'use strict';
@@ -328,6 +329,10 @@
 
     const routeLayer = L.layerGroup().addTo(map);
     const markerLayer = L.layerGroup().addTo(map);
+    const hazardLineLayer = L.layerGroup().addTo(map);
+    const hazardMarkerLayer = L.layerGroup().addTo(map);
+    let routeRequestController = null;
+    let routeRequestVersion = 0;
 
     // -----------------------------------------------------------------
     // State
@@ -475,10 +480,9 @@
 
     document.querySelectorAll('.pref-chip').forEach((chip) => {
         chip.addEventListener('click', () => {
-            if (state.busy) return;
             state.preference = chip.dataset.pref;
             paintChips();
-            if (state.origin && state.destination) findRoute({ silent: true });
+            if (state.origin && state.destination) findRoute();
         });
     });
     paintChips();
@@ -584,43 +588,23 @@
             }).addTo(routeLayer);
         }
 
-        // 2. Overlay active repair segments
-        (route.segments || []).forEach((segment) => {
-            if (segment.repair && Array.isArray(segment.polyline) && segment.polyline.length >= 2) {
-                L.polyline(segment.polyline, {
-                    color: '#ea580c',
-                    weight: 6,
-                    opacity: 1,
-                    lineCap: 'round',
-                    lineJoin: 'round',
-                    dashArray: '3 10',
-                    interactive: false,
-                }).addTo(routeLayer);
-            }
-        });
+        PedestriRouteHazards.render(route, hazardLineLayer, hazardMarkerLayer);
 
         if (state.startMarker && markerLayer.hasLayer(state.startMarker)) markerLayer.removeLayer(state.startMarker);
         if (state.endMarker && markerLayer.hasLayer(state.endMarker)) markerLayer.removeLayer(state.endMarker);
 
-        if (route.origin) {
-            state.startMarker = L.marker([route.origin.lat, route.origin.lng], {
+        const routeStart = route.snapped_origin || route.origin;
+        const routeEnd = route.snapped_destination || route.destination;
+        if (routeStart) {
+            state.startMarker = L.marker([routeStart.lat, routeStart.lng], {
                 icon: makePin('A', '#0284c7'), interactive: false,
             }).addTo(markerLayer);
         }
-        if (route.destination) {
-            state.endMarker = L.marker([route.destination.lat, route.destination.lng], {
+        if (routeEnd) {
+            state.endMarker = L.marker([routeEnd.lat, routeEnd.lng], {
                 icon: makePin('B', '#004f46'), interactive: false,
             }).addTo(markerLayer);
         }
-
-        // 3. Mark avoided obstacle points
-        (route.avoided_points || []).forEach((obs) => {
-            if (obs.lat && obs.lng) {
-                L.marker([obs.lat, obs.lng], {
-                    icon: makePin('⚠️', '#ea580c'),
-                }).addTo(markerLayer).bindPopup(`<div class="text-xs p-1 font-bold">⚠️ Titik Bahaya Dihindari:<br><span class="font-normal">${obs.alamat || 'Area Laporan'}</span></div>`);
-            }
-        });
 
         if (fit && route.polyline && route.polyline.length > 1) {
             map.fitBounds(L.latLngBounds(route.polyline), {
@@ -779,12 +763,23 @@
     });
 
     els.btnClearDest.addEventListener('click', () => {
+        routeRequestVersion++;
+        if (routeRequestController) routeRequestController.abort();
+        state.busy = false;
+        state.route = null;
+        state.geometry = null;
+        state.steps = [];
+        els.btnFindRoute.disabled = false;
+        els.findRouteSpinner.classList.add('hidden');
+        els.findRouteLabel.textContent = 'Cari Rute';
         state.destination = null;
         els.destInput.value = '';
         els.btnClearDest.classList.add('hidden');
         els.routeSummary.classList.add('hidden');
         els.btnStartNav.disabled = true;
         routeLayer.clearLayers();
+        hazardLineLayer.clearLayers();
+        hazardMarkerLayer.clearLayers();
         if (state.endMarker && markerLayer.hasLayer(state.endMarker)) markerLayer.removeLayer(state.endMarker);
         setText(els.headerSubtitle, 'Tentukan tujuan Anda');
     });
@@ -887,7 +882,9 @@
 
         if (!response.ok) {
             const message = payload?.error?.message || 'Rute tidak dapat dihitung. Silakan coba lagi.';
-            throw new Error(message);
+            const error = new Error(message);
+            error.code = payload?.error?.code;
+            throw error;
         }
 
         return payload;
@@ -901,7 +898,16 @@
             if (!silent) showToast('Pilih titik tujuan terlebih dahulu.', 'error');
             return;
         }
-        if (state.busy) return;
+        if (routeRequestController) routeRequestController.abort();
+        routeRequestController = new AbortController();
+        const version = ++routeRequestVersion;
+        state.route = null;
+        state.steps = [];
+        state.geometry = null;
+        routeLayer.clearLayers();
+        hazardLineLayer.clearLayers();
+        hazardMarkerLayer.clearLayers();
+        els.routeSummary.classList.add('hidden');
 
         state.busy = true;
         els.btnFindRoute.disabled = true;
@@ -910,16 +916,20 @@
         els.btnStartNav.disabled = true;
 
         try {
-            const route = await requestRoute(state.origin, state.destination, state.preference);
+            const route = await requestRoute(state.origin, state.destination, state.preference, routeRequestController.signal);
+            if (version !== routeRequestVersion) return;
             applyRoute(route);
             if (autostart) startNavigation();
         } catch (error) {
-            if (!silent) showToast(error.message || 'Gagal menghitung rute.', 'error');
+            if (error.name === 'AbortError' || version !== routeRequestVersion) return;
+            showToast(error.message || 'Gagal menghitung rute.', 'error');
         } finally {
-            state.busy = false;
-            els.btnFindRoute.disabled = false;
-            els.findRouteSpinner.classList.add('hidden');
-            els.findRouteLabel.textContent = 'Cari Rute';
+            if (version === routeRequestVersion) {
+                state.busy = false;
+                els.btnFindRoute.disabled = false;
+                els.findRouteSpinner.classList.add('hidden');
+                els.findRouteLabel.textContent = 'Cari Rute';
+            }
         }
     }
 
@@ -945,22 +955,31 @@
         setText(els.sumDuration, formatDuration(route.duration_min || 0));
 
         const summary = route.summary || {};
-        const score = Number(summary.average_score ?? 100);
-        setText(els.sumScore, `Skor ${score.toFixed(0)}`);
+        const score = summary.average_score == null ? null : Number(summary.average_score);
+        setText(els.sumScore, score === null ? 'Belum dinilai' : `Skor ${score.toFixed(0)}`);
 
-        if ((summary.repair_distance_m || 0) > 0) {
+        if ((summary.report_count || 0) > 0) {
+            els.sumConditionDot.className = 'w-2.5 h-2.5 rounded-full bg-orange-500 mt-1 shrink-0';
+            setText(els.sumCondition, summary.safer_fallback
+                ? `Rute teraman yang ditemukan masih melewati ${summary.remaining_report_count} titik masalah. Perhatikan bagian bergaris oranye putus-putus.`
+                : summary.endpoint_report_count === summary.report_count
+                ? 'Laporan berada di area awal/tujuan. Bagian keluar/masuk yang tidak dapat dihindari ditandai garis putus-putus.'
+                : `Melewati ${summary.report_count} laporan aktif. Area terdampak bergaris oranye putus-putus.`);
+        } else if ((summary.repair_distance_m || 0) > 0) {
             els.sumConditionDot.className = 'w-2.5 h-2.5 rounded-full bg-orange-500 mt-1 shrink-0';
             setText(
                 els.sumCondition,
                 `Melewati sekitar ${formatDistance(summary.repair_distance_m)} segmen yang sedang diperbaiki. Hati-hati pada bagian bergaris putus-putus.`
             );
-        } else if (score >= 70) {
+        } else if (score !== null && score >= 70 && summary.score_coverage >= 0.8) {
             els.sumConditionDot.className = 'w-2.5 h-2.5 rounded-full bg-brand-500 mt-1 shrink-0';
-            setText(els.sumCondition, 'Sebagian besar jalur berupa trotoar dengan kondisi baik dan aman untuk pejalan kaki.');
+            setText(els.sumCondition, 'Tidak melewati area laporan aktif. Sebagian besar jalur memiliki skor kelayakan baik.');
         } else {
             els.sumConditionDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 mt-1 shrink-0';
-            setText(els.sumCondition, 'Sebagian jalur perlu perhatian. Tetap waspada terhadap kondisi trotoar.');
+            setText(els.sumCondition, 'Tidak melewati area laporan aktif. Tetap perhatikan kondisi jalur; data kelayakan belum lengkap atau memerlukan perhatian.');
         }
+        const snapWarning = (route.warnings || []).find(warning => warning.code === 'ENDPOINT_SNAPPED');
+        if (snapWarning) setText(els.sumCondition, `${els.sumCondition.textContent} ${snapWarning.message}`);
     }
 
     els.btnFindRoute.addEventListener('click', () => findRoute());
@@ -1299,7 +1318,7 @@
 
         const controller = new AbortController();
         state.rerouteController = controller;
-        state.rerouteTimeout = setTimeout(() => controller.abort(), 6000);
+        state.rerouteTimeout = setTimeout(() => controller.abort(), 55000);
 
         try {
             const route = await requestRoute(from, state.destination, state.preference, controller.signal);
@@ -1318,10 +1337,21 @@
             if (next) speak(next.instruction);
             setTimeout(() => els.rerouteOverlay.classList.add('hidden'), 900);
         } catch (error) {
+            if (state.preference === 'safest' && ['NO_REPORT_FREE_ROUTE', 'ENDPOINT_IN_REPORT_ZONE', 'REPORT_DATA_UNAVAILABLE'].includes(error.code)) {
+                endNavigation();
+                state.route = null;
+                state.geometry = null;
+                state.steps = [];
+                routeLayer.clearLayers();
+                hazardLineLayer.clearLayers();
+                hazardMarkerLayer.clearLayers();
+                els.routeSummary.classList.add('hidden');
+                els.btnStartNav.disabled = true;
+            }
             showToast(
                 error.name === 'AbortError'
                     ? 'Perhitungan rute terlalu lama. Mencoba lagi saat Anda bergerak.'
-                    : 'Gagal menghitung ulang rute. Periksa koneksi Anda.',
+                    : (error.message || 'Gagal menghitung ulang rute. Periksa koneksi Anda.'),
                 'error'
             );
             els.rerouteOverlay.classList.add('hidden');
@@ -1551,7 +1581,7 @@
     window.addEventListener('beforeunload', stopTracking);
 
     const incoming = readIncomingRoute();
-    locateUser(false);
+    if (!state.origin) locateUser(false);
 
     if (!incoming.hasDestination) {
         setText(els.headerSubtitle, 'Tentukan tujuan Anda');
