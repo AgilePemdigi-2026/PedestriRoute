@@ -1,11 +1,14 @@
 @extends('layouts.app')
 
 @section('title', 'Status Laporan & Perbaikan - PedestriRoute Admin')
+@section('admin_shell', '1')
 
 @section('content')
-<div class="px-5 pt-6 pb-24 flex flex-col flex-1">
+<div class="px-5 pt-6 pb-24 md:px-6 lg:px-8 lg:pt-8 lg:pb-10 flex flex-col flex-1 w-full">
     @include('partials.admin-header', ['title' => 'Status Perbaikan', 'subtitle' => 'Memuat laporan...', 'subtitleId' => 'queueSubtitle', 'badgeId' => 'queueBadge'])
 
+    <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_24rem] xl:grid-cols-[minmax(0,1fr)_28rem] lg:gap-6 lg:items-start">
+    <div class="min-w-0">
     <!-- Search & Filter Controls -->
     <div class="space-y-2 mb-3">
         <!-- Text Search -->
@@ -53,13 +56,26 @@
     </div>
 
     <!-- Report List Container -->
-    <div id="reportsList" class="space-y-3">
-        <div class="text-center py-10 text-slate-400 text-xs">
+    <div id="reportsList" class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-1">
+        <div class="text-center py-10 text-slate-400 text-xs md:col-span-2 xl:col-span-1">
             <svg class="w-8 h-8 mx-auto mb-2 animate-spin text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
             Memuat daftar laporan...
         </div>
+    </div>
+    </div>
+
+    <!-- Panel pratinjau detail (desktop) -->
+    <aside id="detailPanel" class="hidden xl:flex xl:flex-col bg-white rounded-2xl border border-slate-100 shadow-sm sticky top-6 max-h-[calc(100vh-3rem)] overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between gap-2">
+            <h2 class="text-xs font-extrabold text-slate-800">Pratinjau Laporan</h2>
+            <span id="detailPanelHint" class="text-[10px] font-semibold text-slate-400 truncate">Pilih laporan</span>
+        </div>
+        <div id="detailPanelBody" class="flex-1 overflow-y-auto p-4 text-xs text-slate-500">
+            Pilih salah satu laporan untuk melihat detailnya di sini.
+        </div>
+    </aside>
     </div>
 </div>
 
@@ -216,6 +232,7 @@
                     <p class="text-xs text-slate-500 mt-1">Belum ada laporan yang tervalidasi saat ini.</p>
                 </div>
             `;
+            resetDetailPanel();
             return;
         }
 
@@ -230,11 +247,13 @@
                     </button>
                 </div>
             `;
+            resetDetailPanel();
             return;
         }
 
         container.innerHTML = filtered.map(r => `
-            <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:border-brand-500/40 transition flex flex-col gap-2.5">
+            <div data-report-id="${r.laporan_id}" onclick="selectReport(${r.laporan_id})"
+                class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:border-brand-500/40 transition flex flex-col gap-2.5 cursor-pointer">
                 <div class="flex items-start justify-between gap-2">
                     <div class="flex items-center gap-1.5 min-w-0">
                         <span class="text-xs font-bold text-slate-800 tracking-tight tabular-nums shrink-0">${r.kode_laporan}</span>
@@ -262,6 +281,127 @@
                 </div>
             </div>
         `).join('');
+
+        syncDetailPanel(filtered);
+    }
+
+    function esc(v) {
+        return String(v ?? '').replace(/[&<>"']/g, c => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[c]));
+    }
+
+    let selectedReportId = null;
+
+    function selectReport(id) {
+        if (!window.matchMedia('(min-width: 1280px)').matches) return;
+        selectedReportId = String(id);
+        applySelection();
+        loadDetailPreview(id);
+    }
+
+    function applySelection() {
+        document.querySelectorAll('[data-report-id]').forEach(el => {
+            const active = el.dataset.reportId === String(selectedReportId);
+            el.classList.toggle('ring-2', active);
+            el.classList.toggle('ring-brand-500/40', active);
+            el.classList.toggle('border-brand-500/40', active);
+        });
+    }
+
+    function resetDetailPanel() {
+        const body = document.getElementById('detailPanelBody');
+        const hint = document.getElementById('detailPanelHint');
+        if (body) body.innerHTML = 'Pilih salah satu laporan untuk melihat detailnya di sini.';
+        if (hint) hint.innerText = 'Pilih laporan';
+        selectedReportId = null;
+    }
+
+    function syncDetailPanel(filtered) {
+        if (!window.matchMedia('(min-width: 1280px)').matches) return;
+        const stillVisible = filtered.some(r => String(r.laporan_id) === String(selectedReportId));
+        if (stillVisible) {
+            applySelection();
+            return;
+        }
+        if (filtered.length > 0) {
+            selectReport(filtered[0].laporan_id);
+        } else {
+            resetDetailPanel();
+        }
+    }
+
+    async function loadDetailPreview(id) {
+        const body = document.getElementById('detailPanelBody');
+        const hint = document.getElementById('detailPanelHint');
+        if (!body) return;
+        body.innerHTML = '<p class="py-8 text-center text-slate-400">Memuat detail laporan...</p>';
+        try {
+            const res = await fetch(`/api/v1/reports/${id}`, {
+                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
+            });
+            if (String(selectedReportId) !== String(id)) return;
+            if (!res.ok) throw new Error('failed');
+            const report = (await res.json()).data;
+            renderDetailPreview(report);
+            if (hint) hint.innerText = `#LAP-${String(report.laporan_id).padStart(4, '0')}`;
+        } catch (e) {
+            if (String(selectedReportId) !== String(id)) return;
+            body.innerHTML = `
+                <div class="py-8 text-center">
+                    <p class="text-rose-500 font-bold mb-2">Gagal memuat detail laporan</p>
+                    <button type="button" onclick="selectReport(${id})" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">Coba Lagi</button>
+                </div>`;
+        }
+    }
+
+    function renderDetailPreview(report) {
+        const body = document.getElementById('detailPanelBody');
+        if (!body) return;
+        const item = allReports.find(r => String(r.laporan_id) === String(report.laporan_id)) || {};
+        const photo = report.foto_url
+            ? `<img src="${esc(report.foto_url)}" alt="Foto laporan" class="w-full h-52 object-cover rounded-xl border border-slate-200 bg-slate-100">`
+            : `<div class="w-full h-52 rounded-xl border border-slate-200 bg-slate-100 flex items-center justify-center text-slate-400">Foto tidak tersedia</div>`;
+        const repairPhoto = report.foto_perbaikan_url
+            ? `<div><p class="text-[10px] font-bold uppercase tracking-wider ${report.status_perbaikan === 'SUDAH_DIPERBAIKI' ? 'text-emerald-700' : 'text-sky-700'} mb-1">Foto Perbaikan</p><img src="${esc(report.foto_perbaikan_url)}" alt="Foto perbaikan" class="w-full h-40 object-cover rounded-xl border border-slate-200"></div>`
+            : '';
+        const note = report.catatan_perbaikan
+            ? `<div class="rounded-xl border border-slate-200 bg-slate-50 p-2.5"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-0.5">Catatan Perbaikan</p><p class="text-slate-700 leading-relaxed">${esc(report.catatan_perbaikan)}</p></div>`
+            : '';
+        const ml = (report.confidence_score !== null && report.confidence_score !== undefined && report.cv_label)
+            ? `<div class="rounded-xl border border-slate-200 bg-slate-50 p-2.5 flex items-center justify-between gap-2"><span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Verifikasi ML</span><span class="text-[10.5px] font-bold text-slate-700">${esc(String(report.cv_label).toUpperCase())} · ${Math.round(Number(report.confidence_score) * 100)}%</span></div>`
+            : '';
+
+        body.innerHTML = `
+            <div class="space-y-3">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0">
+                        <p class="text-sm font-extrabold text-slate-800 tracking-tight tabular-nums">#LAP-${String(report.laporan_id).padStart(4, '0')}</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">${esc(report.kategori?.nama || '-')}</p>
+                    </div>
+                    <div class="shrink-0">${getRepairBadge(report.status_perbaikan)}</div>
+                </div>
+                ${photo}
+                <div>
+                    <p class="text-xs font-bold text-slate-800 leading-snug">${esc(report.lokasi?.alamat || report.lokasi?.nama_jalan || 'Alamat tidak tersedia')}</p>
+                    <p class="text-xs text-slate-600 mt-1 leading-relaxed">${esc(report.deskripsi || '-')}</p>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-[10.5px]">
+                    <div class="rounded-lg bg-slate-50 border border-slate-100 p-2"><span class="block text-slate-400 font-semibold">Pelapor</span><span class="font-bold text-slate-700">${esc(item.pelapor_nama || 'Warga')}</span></div>
+                    <div class="rounded-lg bg-slate-50 border border-slate-100 p-2"><span class="block text-slate-400 font-semibold">Tanggal Lapor</span><span class="font-bold text-slate-700">${report.tanggal_lapor ? new Date(report.tanggal_lapor).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'}) : '-'}</span></div>
+                </div>
+                ${ml}
+                ${note}
+                ${repairPhoto}
+                <a href="/admin/status-laporan/${report.laporan_id}" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
+                    <span>Kelola Perbaikan</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                </a>
+            </div>`;
     }
 
     async function loadReports() {

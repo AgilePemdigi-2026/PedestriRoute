@@ -1,9 +1,10 @@
 @extends('layouts.app')
 
 @section('title', 'Riwayat Validasi - PedestriRoute Admin')
+@section('admin_shell', '1')
 
 @section('content')
-<div class="px-5 pt-6 pb-24 flex flex-col flex-1">
+<div class="px-5 pt-6 pb-24 md:px-6 lg:px-8 lg:pt-8 lg:pb-10 flex flex-col flex-1 w-full">
     @include('partials.admin-header', ['title' => 'Riwayat Validasi', 'subtitle' => 'Memuat...', 'subtitleId' => 'riwayatSubtitle'])
 
     <!-- Search & Filter Controls -->
@@ -51,7 +52,7 @@
         </div>
     </div>
 
-    <div id="reportsList" class="space-y-3"></div>
+    <div id="reportsList" class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3"></div>
 </div>
 
 @include('partials.admin-bottom-nav')
@@ -152,7 +153,7 @@
 
         if (allReports.length === 0) {
             container.innerHTML = `
-                <div class="text-center py-12 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+                <div class="text-center py-12 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm md:col-span-2 xl:col-span-3">
                     <span class="text-3xl mb-2 block">📋</span>
                     <h3 class="text-sm font-bold text-slate-800">Belum ada riwayat</h3>
                     <p class="text-xs text-slate-500 mt-1">Laporan yang telah diproses akan muncul di sini.</p>
@@ -162,7 +163,7 @@
 
         if (filtered.length === 0) {
             container.innerHTML = `
-                <div class="text-center py-10 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+                <div class="text-center py-10 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm md:col-span-2 xl:col-span-3">
                     <span class="text-2xl mb-1.5 block">🔍</span>
                     <h3 class="text-sm font-bold text-slate-800">Tidak Ada Hasil</h3>
                     <p class="text-xs text-slate-500 mt-1">Tidak ada laporan yang cocok dengan filter atau pencarian.</p>
@@ -240,7 +241,7 @@
 
     async function loadReports() {
         const container = document.getElementById('reportsList');
-        container.innerHTML = '<p class="text-center py-10 text-slate-400 text-xs">Memuat laporan...</p>';
+        container.innerHTML = '<p class="text-center py-10 text-slate-400 text-xs md:col-span-2 xl:col-span-3">Memuat laporan...</p>';
         try {
             const res = await fetch('/api/v1/admin/reports?status=' + encodeURIComponent(activeFilter), {
                 headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }

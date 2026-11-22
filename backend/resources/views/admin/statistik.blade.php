@@ -1,9 +1,10 @@
 @extends('layouts.app')
 
 @section('title', 'Statistik Laporan - PedestriRoute Admin')
+@section('admin_shell', '1')
 
 @section('content')
-<div class="px-5 pt-6 pb-24 flex flex-col flex-1">
+<div class="px-5 pt-6 pb-24 md:px-6 lg:px-8 lg:pt-8 lg:pb-10 flex flex-col flex-1 w-full">
     @include('partials.admin-header', ['title' => 'Ringkasan Statistik', 'subtitle' => 'Kecamatan Mulyorejo, Surabaya'])
 
     <!-- Info pembaruan + tombol segarkan -->
@@ -27,7 +28,7 @@
 
     <div id="statsContent" class="hidden space-y-4">
         <!-- 1. Kartu KPI -->
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
             <div class="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Aduan</span>
@@ -85,6 +86,7 @@
             </a>
         </div>
 
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3 items-start">
         <!-- 3. Rasio validasi -->
         <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
             <div class="flex items-center justify-between mb-3">
@@ -116,6 +118,7 @@
             </div>
             <div id="segmenList" class="space-y-2"></div>
             <button type="button" id="btnToggleSegmen" class="hidden w-full mt-3 py-2 text-xs font-bold text-brand-600 bg-teal-50 hover:bg-teal-100 rounded-xl transition"></button>
+        </div>
         </div>
     </div>
 </div>

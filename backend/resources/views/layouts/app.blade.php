@@ -40,10 +40,21 @@
     </style>
     @stack('styles')
 </head>
+@php($isAdminShell = trim($__env->yieldContent('admin_shell')) === '1')
 <body class="min-h-screen bg-slate-50 text-slate-800 antialiased flex flex-col items-center justify-start">
-    <div class="w-full max-w-md min-h-screen bg-white shadow-xl flex flex-col relative pb-16">
-        @yield('content')
-    </div>
+    @if ($isAdminShell)
+        <div class="w-full min-h-screen bg-white lg:flex lg:items-stretch lg:bg-slate-100">
+            @include('partials.admin-sidebar')
+
+            <div class="w-full max-w-md md:max-w-2xl lg:max-w-none mx-auto lg:mx-0 min-h-screen bg-white lg:bg-slate-50 shadow-xl lg:shadow-none flex flex-col relative pb-16 lg:pb-0 lg:flex-1 lg:min-w-0">
+                @yield('content')
+            </div>
+        </div>
+    @else
+        <div class="w-full max-w-md min-h-screen bg-white shadow-xl flex flex-col relative pb-16">
+            @yield('content')
+        </div>
+    @endif
 
     <!-- Notification Toast Container -->
     <div id="toast" class="fixed top-5 z-50 transform -translate-x-1/2 left-1/2 transition-all duration-300 opacity-0 pointer-events-none max-w-xs w-full px-4">

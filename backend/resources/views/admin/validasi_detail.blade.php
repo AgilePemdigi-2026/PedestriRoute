@@ -1,16 +1,20 @@
 @extends('layouts.app')
 
 @section('title', 'Validasi Laporan - PedestriRoute Admin')
+@section('admin_shell', '1')
 
 @push('styles')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
     #reportMap { height: 240px; width: 100%; z-index: 0; }
+    @media (min-width: 1024px) {
+        #reportMap { height: 320px; }
+    }
 </style>
 @endpush
 
 @section('content')
-<div class="px-5 pt-5 pb-20 flex flex-col flex-1">
+<div class="px-5 pt-5 pb-20 md:px-6 lg:px-8 lg:pt-8 lg:pb-10 flex flex-col flex-1 w-full">
     <!-- Header with Back Button -->
     <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2.5">
@@ -41,8 +45,10 @@
         </div>
     </div>
 
+    <div class="lg:grid lg:grid-cols-2 lg:gap-5 lg:items-start">
+    <div class="min-w-0">
     <!-- Photo Container -->
-    <div class="w-full h-52 bg-slate-100 rounded-2xl relative overflow-hidden mb-3 border border-slate-200 shadow-sm">
+    <div class="w-full h-52 lg:h-80 xl:h-96 bg-slate-100 rounded-2xl relative overflow-hidden mb-3 border border-slate-200 shadow-sm">
         <img id="reportPhoto" src="" class="w-full h-full object-cover hidden" alt="Foto Laporan" />
         <div id="photoSkeleton" class="w-full h-full flex items-center justify-center text-xs text-slate-400">
             Memuat foto...
@@ -89,9 +95,12 @@
         </div>
     </section>
 
+    </div>
+
+    <div class="min-w-0">
     <!-- Machine Learning Verification Section -->
     <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm mb-3">
-        <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center justify-between gap-2 flex-wrap mb-3">
             <div class="flex items-center gap-2">
                 <span class="w-6 h-6 rounded-lg bg-teal-50 border border-teal-200 text-brand-600 flex items-center justify-center text-xs">
                     <i class="fa-solid fa-robot"></i>
@@ -196,14 +205,16 @@
             <span>Kembali ke Antrean</span>
         </a>
     </div>
+    </div>
+    </div>
 </div>
 
 <!-- Lightbox Modal for Photo Zoom -->
-<div id="photoLightbox" class="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4 hidden">
-    <button type="button" id="btnCloseLightbox" class="absolute top-4 right-4 text-white p-2 text-2xl font-bold">
+<div id="photoLightbox" class="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4 lg:p-10 hidden">
+    <button type="button" id="btnCloseLightbox" class="absolute top-4 right-4 lg:top-6 lg:right-6 text-white p-2 text-2xl font-bold">
         ✕
     </button>
-    <img id="lightboxImg" src="" class="max-w-full max-h-[85vh] rounded-xl object-contain shadow-2xl" />
+    <img id="lightboxImg" src="" class="max-w-full max-h-[85vh] lg:max-h-[90vh] rounded-xl object-contain shadow-2xl" />
 </div>
 
 @include('partials.admin-bottom-nav')
