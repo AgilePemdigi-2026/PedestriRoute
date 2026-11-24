@@ -301,7 +301,10 @@
     const WALK_SPEED_MPS = 1.25;
     const OFF_ROUTE_METERS = 20;
     const OFF_ROUTE_SECONDS = 3;
-    const VOICE_THRESHOLDS = [120, 50, 15];
+    const ON_ROUTE_METERS = 12;
+    const REROUTE_COOLDOWN_MS = 15000;
+    const MANEUVER_VOICE_METERS = 10;
+    const SAME_MANEUVER_RADIUS_M = 8;
     const ARRIVAL_RADIUS_M = 15;
 
     const SAMPLE_PLACES = [
@@ -356,10 +359,15 @@
         gpsHeading: null,
         compassHeading: null,
         offRouteSince: null,
+        offRouteLatched: false,
+        cooldownUntil: 0,
+        demoOffPoint: null,
+        session: 0,
+        stepCursor: 0,
         rerouteController: null,
         rerouteTimeout: null,
         announced: {},
-        spokenNow: {},
+        spokenTurns: [],
         demoActive: false,
         demoTimer: null,
         demoAlong: 0,
@@ -511,22 +519,22 @@
             showToast('Panduan suara dinonaktifkan.', 'info');
         } else {
             showToast('Panduan suara diaktifkan.', 'success');
-            speak('Panduan suara diaktifkan.');
+            if (state.navigating && !state.rerouting) updateNavigationUI({ along: state.along });
         }
     });
 
-    function speak(text, force = false) {
-        if (state.muted && !force) return;
+    function speak(text) {
+        if (state.muted) return;
         if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') return;
         try {
-            window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'id-ID';
-            utterance.rate = 1;
+            utterance.rate = 0.95;
             utterance.pitch = 1;
             utterance.volume = 1;
             window.speechSynthesis.speak(utterance);
-        } catch (_) {}
+            return true;
+        } catch (_) { return false; }
     }
 
     // -----------------------------------------------------------------
@@ -941,7 +949,7 @@
         state.steps = Array.isArray(route.steps) ? route.steps : [];
         state.along = 0;
         state.announced = {};
-        state.spokenNow = {};
+        state.stepCursor = 0;
         state.lastNextStepIndex = null;
         state.offRouteSince = null;
 
@@ -991,7 +999,7 @@
     // -----------------------------------------------------------------
     // Heading Compass & Sensors (Issue #49)
     // -----------------------------------------------------------------
-    function requestCompassPermission() {
+    function requestCompassPermission(session) {
         if (typeof DeviceOrientationEvent === 'undefined') {
             return Promise.resolve();
         }
@@ -999,7 +1007,7 @@
         if (typeof DeviceOrientationEvent.requestPermission === 'function') {
             return DeviceOrientationEvent.requestPermission()
                 .then((result) => {
-                    if (result === 'granted') attachCompass();
+                    if (result === 'granted' && session === state.session && state.navigating) attachCompass();
                 })
                 .catch(() => {});
         }
@@ -1042,37 +1050,47 @@
         state.orientationHandler = null;
     }
 
-    async function requestWakeLock() {
+    async function requestWakeLock(session) {
         try {
             if ('wakeLock' in navigator) {
-                state.wakeLock = await navigator.wakeLock.request('screen');
+                const lock = await navigator.wakeLock.request('screen');
+                if (session !== state.session || !state.navigating) await lock.release();
+                else state.wakeLock = lock;
             }
-        } catch (_) {
-            state.wakeLock = null;
-        }
+        } catch (_) {}
     }
 
     async function releaseWakeLock() {
-        try {
-            if (state.wakeLock) await state.wakeLock.release();
-        } catch (_) {}
+        const lock = state.wakeLock;
         state.wakeLock = null;
+        try { await lock?.release(); } catch (_) {}
     }
 
     // -----------------------------------------------------------------
     // Navigation Lifecycle & Tracking
     // -----------------------------------------------------------------
     async function startNavigation() {
+        if (state.navigating) return;
         if (!state.route) {
             await findRoute({ autostart: true });
             return;
         }
 
+        const session = ++state.session;
         state.navigating = true;
+        window.addEventListener('pagehide', stopTracking, { once: true });
+        state.along = 0;
+        state.offRouteLatched = false;
+        state.cooldownUntil = 0;
         state.arrived = false;
         state.offRouteSince = null;
         state.announced = {};
-        state.spokenNow = {};
+        state.spokenTurns = [];
+        state.stepCursor = 0;
+        state.lastNextStepIndex = null;
+        state.lastPosition = null;
+        state.gpsHeading = null;
+        state.compassHeading = null;
 
         els.setupHeader.classList.add('hidden');
         els.setupSheet.classList.add('hidden');
@@ -1088,24 +1106,24 @@
         prepareGeometry(state.route.polyline);
         drawRouteOnMap(state.route, false);
 
-        await requestCompassPermission();
-        await requestWakeLock();
+        void requestCompassPermission(session);
+        void requestWakeLock(session);
 
-        if (navigator.geolocation) {
-            state.watchId = navigator.geolocation.watchPosition(
-                onPosition,
-                onPositionError,
-                { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 }
-            );
-        }
+        startGpsWatch();
 
-        const startStep = state.steps[0];
-        if (startStep) {
-            setText(els.navStatus, 'Navigasi aktif. Ikuti instruksi di layar.');
-            speak(startStep.instruction);
-        }
+        setText(els.navStatus, 'Navigasi aktif. Ikuti instruksi di layar.');
+        updateNavigationUI({ along: 0 }, false);
+    }
 
-        updateNavigationUI(projectOnRoute(state.origin?.lat ?? 0, state.origin?.lng ?? 0));
+    function startGpsWatch() {
+        if (!navigator.geolocation || !state.navigating || state.watchId !== null) return;
+        const session = state.session;
+        const id = navigator.geolocation.watchPosition(
+            position => { if (state.session === session && state.watchId === id) onPosition(position); },
+            error => { if (state.session === session && state.watchId === id) onPositionError(error); },
+            { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 }
+        );
+        state.watchId = id;
     }
 
     function onPosition(position) {
@@ -1125,7 +1143,8 @@
     }
 
     function onPositionError(error) {
-        if (state.arrived) return;
+        if (!state.navigating || state.arrived || state.demoActive) return;
+        state.offRouteSince = null;
 
         if (error.code === error.PERMISSION_DENIED) {
             setText(els.navStatus, 'Izin GPS ditolak. Gunakan mode simulasi.');
@@ -1136,8 +1155,11 @@
     }
 
     function handleLocation(point, options = {}) {
+        if (!state.navigating || !state.geometry) return;
         const projection = projectOnRoute(point.lat, point.lng);
-        state.along = projection.along;
+        const accurate = Number.isFinite(options.accuracy) && options.accuracy > 0 && options.accuracy <= 30;
+        const onRoute = accurate && projection.distance <= OFF_ROUTE_METERS;
+        if (onRoute) state.along = Math.max(state.along, projection.along);
         state.lastPosition = point;
 
         const heading = options.heading ?? (Number.isFinite(projection.bearing) ? projection.bearing : state.currentBearing);
@@ -1146,11 +1168,19 @@
 
         map.panTo([point.lat, point.lng], { animate: true, duration: state.demoActive ? 0.2 : 0.35 });
 
-        updateNavigationUI(projection);
+        if (onRoute && !state.rerouting) {
+            if (hasArrived(point, projection, options.accuracy)) {
+                completeNavigation();
+                return;
+            }
+            updateNavigationUI({ ...projection, along: state.along });
+        }
 
         if (!state.arrived) {
             detectOffRoute(point, projection.distance, options);
         }
+
+        if (state.rerouting || state.offRouteLatched) return;
 
         if (options.accuracy) {
             setText(
@@ -1164,7 +1194,32 @@
         }
     }
 
-    function updateNavigationUI(projection) {
+    function hasArrived(point, projection, accuracy) {
+        const destination = state.destination;
+        return Boolean(destination && state.geometry
+            && Number.isFinite(accuracy) && accuracy > 0 && accuracy <= ARRIVAL_RADIUS_M
+            && state.geometry.total - projection.along <= ARRIVAL_RADIUS_M
+            && haversine(point.lat, point.lng, destination.lat, destination.lng) <= ARRIVAL_RADIUS_M);
+    }
+
+    function maneuverAlong(step) {
+        const total = state.geometry?.total || 0;
+        const distance = Number(state.route?.distance_m) || total;
+        const estimate = (Number(step.distance_from_start_m) || 0)
+            * (distance > 0 ? total / distance : 1);
+        const location = step.location;
+
+        if (location && Number.isFinite(location.lat) && Number.isFinite(location.lng)) {
+            const projected = projectOnRoute(location.lat, location.lng);
+            // At crossings, keep the API offset if the projection picks another pass.
+            if (projected.distance <= 8 && Math.abs(projected.along - estimate) <= 20) {
+                return projected.along;
+            }
+        }
+        return estimate;
+    }
+
+    function updateNavigationUI(projection, allowVoice = true) {
         if (!state.route) return;
 
         const total = state.geometry?.total || state.route.distance_m || 0;
@@ -1178,83 +1233,59 @@
         const nextStep = findNextStep(along);
         if (!nextStep) return;
 
-        const distanceToNext = Math.max(0, (nextStep.distance_from_start_m || 0) - along);
+        const distanceToNext = Math.max(0, maneuverAlong(nextStep) - along);
         const isArrival = nextStep.maneuver === 'arrive';
 
         setText(els.maneuverDistance, isArrival ? formatDistance(remaining) : formatDistance(distanceToNext));
-        setText(els.maneuverInstruction, nextStep.instruction || '-');
-        setText(els.navStreet, nextStep.street || 'Jalur pejalan kaki');
-        setText(els.navNextStreet, isArrival ? 'Tujuan akhir' : (nextStep.street || 'Lanjutkan perjalanan'));
-        els.maneuverIcon.innerHTML = maneuverSvg(nextStep.maneuver);
-
         if (state.lastNextStepIndex !== nextStep.index) {
             state.lastNextStepIndex = nextStep.index;
+            setText(els.maneuverInstruction, isArrival ? 'Lanjutkan menuju tujuan' : (nextStep.instruction || '-'));
+            setText(els.navStreet, nextStep.street || 'Jalur pejalan kaki');
+            setText(els.navNextStreet, isArrival ? 'Tujuan akhir' : (nextStep.street || 'Lanjutkan perjalanan'));
+            els.maneuverIcon.innerHTML = maneuverSvg(nextStep.modifier && nextStep.modifier !== 'straight' ? nextStep.modifier.replace(/ /g, '_') : nextStep.maneuver);
             els.navBanner.classList.remove('sheet-enter');
             void els.navBanner.offsetWidth;
             els.navBanner.classList.add('sheet-enter');
         }
 
-        if (!isArrival) {
+        if (!isArrival && allowVoice) {
             announceStep(nextStep, distanceToNext);
         }
 
-        if (remaining <= ARRIVAL_RADIUS_M || (isArrival && distanceToNext <= ARRIVAL_RADIUS_M)) {
-            completeNavigation();
-        }
     }
 
     function findNextStep(along) {
-        if (!state.steps.length) return null;
-
-        for (const step of state.steps) {
-            if (step.maneuver === 'depart') continue;
-            if ((step.distance_from_start_m || 0) > along + 1.5) return step;
+        while (state.stepCursor < state.steps.length - 1) {
+            const step = state.steps[state.stepCursor];
+            if (step.type !== 'depart' && step.maneuver !== 'depart'
+                && along <= maneuverAlong(step) + 4) break;
+            state.stepCursor++;
         }
-
-        return state.steps[state.steps.length - 1];
+        return state.steps[state.stepCursor] || null;
     }
 
-    function announceStep(step, distanceToNext) {
-        if (!step || state.muted) return;
+    function announceStep(step, distance) {
+        if (state.muted || !Number.isFinite(distance) || distance > MANEUVER_VOICE_METERS
+            || state.announced[step.index] || !step.instruction
+            || step.type === 'depart' || ['depart', 'arrive'].includes(step.maneuver)) return;
 
-        const index = step.index;
-        const already = state.announced[index] ?? Infinity;
-        let threshold = null;
+        const direction = String(step.modifier && step.modifier !== 'straight' ? step.modifier : step.maneuver || '').replaceAll('_', ' ');
+        const point = step.location;
+        const hasLocation = Number.isFinite(point?.lat) && Number.isFinite(point?.lng);
 
-        for (const value of VOICE_THRESHOLDS) {
-            if (distanceToNext <= value && already > value) {
-                threshold = value;
-                break;
-            }
+        if (hasLocation && state.spokenTurns.some(turn => turn.direction === direction
+            && haversine(point.lat, point.lng, turn.lat, turn.lng) <= SAME_MANEUVER_RADIUS_M)) {
+            state.announced[step.index] = true;
+            return;
         }
 
-        if (threshold !== null) {
-            state.announced[index] = threshold;
-            if (threshold <= 15) {
-                if (!state.spokenNow[index]) {
-                    state.spokenNow[index] = true;
-                    speak(`${spokenInstruction(step)} sekarang.`);
-                }
-            } else {
-                speak(`${spokenInstruction(step)} dalam ${Math.round(threshold / 5) * 5} meter.`);
-            }
-        }
-    }
+        // Retry on the next position update while this step is still relevant.
+        const speech = window.speechSynthesis;
+        if (speech?.speaking || speech?.pending) return;
+        if (!speak(step.instruction)) return;
 
-    function spokenInstruction(step) {
-        const street = step.street ? ` ke ${step.street}` : '';
-        switch (step.maneuver) {
-            case 'left': return `Belok kiri${street}`;
-            case 'right': return `Belok kanan${street}`;
-            case 'slight_left': return `Belok sedikit ke kiri${street}`;
-            case 'slight_right': return `Belok sedikit ke kanan${street}`;
-            case 'sharp_left': return `Belok tajam ke kiri${street}`;
-            case 'sharp_right': return `Belok tajam ke kanan${street}`;
-            case 'uturn': return 'Putar balik';
-            case 'arrive': return 'Anda telah tiba di tujuan';
-            case 'depart': return step.instruction || 'Mulai perjalanan';
-            default: return `Lanjutkan lurus${street}`;
-        }
+        state.announced[step.index] = true;
+        if (hasLocation) state.spokenTurns.push({ lat: point.lat, lng: point.lng, direction });
     }
 
     function maneuverSvg(maneuver) {
@@ -1283,87 +1314,72 @@
     // Off-Route Detection & Automatic Rerouting (Issue #49)
     // -----------------------------------------------------------------
     function detectOffRoute(point, deviation, options = {}) {
-        if (state.demoActive || state.arrived || state.rerouting) return;
-
-        // Ignore inaccurate GPS jitter (> 30m accuracy) per SRS FR-F8-12
-        if (options.accuracy !== null && options.accuracy !== undefined && options.accuracy > 30) {
+        if (!state.navigating || state.rerouting) return;
+        if (!Number.isFinite(options.accuracy) || options.accuracy <= 0 || options.accuracy > 30) {
+            state.offRouteSince = null;
             return;
         }
 
-        if (deviation >= OFF_ROUTE_METERS) {
-            setText(els.navStatus, `Keluar jalur (${Math.round(deviation)} m). Menghitung ulang rute...`);
-
-            if (state.offRouteSince === null) {
-                state.offRouteSince = Date.now();
-                showToast('Anda keluar dari jalur. Menghitung ulang rute...', 'info');
-            }
-
-            if (Date.now() - state.offRouteSince >= OFF_ROUTE_SECONDS * 1000 && !state.rerouteController) {
-                reroute(point);
-            }
-        } else {
-            if (state.offRouteSince !== null) {
-                setText(els.navStatus, 'Kembali ke jalur. Navigasi dilanjutkan.');
-            }
+        if (deviation <= ON_ROUTE_METERS) {
+            state.offRouteLatched = false;
             state.offRouteSince = null;
+            return;
         }
+        if (deviation <= OFF_ROUTE_METERS) {
+            state.offRouteSince = null;
+            return;
+        }
+        const now = performance.now();
+        if (state.offRouteLatched || now < state.cooldownUntil) return;
+        state.offRouteSince ??= now;
+        if (now - state.offRouteSince >= OFF_ROUTE_SECONDS * 1000) void reroute(point);
     }
 
     async function reroute(from) {
-        if (state.rerouting || !state.destination) return;
+        if (!state.navigating || state.rerouting || !state.destination) return;
 
         state.rerouting = true;
+        state.offRouteLatched = true;
         state.offRouteSince = null;
         els.rerouteOverlay.classList.remove('hidden');
         setText(els.rerouteTitle, 'Menghitung ulang rute...');
         setText(els.rerouteText, 'Anda terdeteksi keluar dari jalur. Rute baru sedang disiapkan.');
-        speak('Anda keluar dari jalur. Menghitung ulang rute.');
 
         const controller = new AbortController();
         state.rerouteController = controller;
-        state.rerouteTimeout = setTimeout(() => controller.abort(), 55000);
+        const timeout = setTimeout(() => controller.abort(), 55000);
+        state.rerouteTimeout = timeout;
 
         try {
             const route = await requestRoute(from, state.destination, state.preference, controller.signal);
+            if (state.rerouteController !== controller || !state.navigating) return;
+            window.speechSynthesis?.cancel();
             applyRoute(route);
-            prepareGeometry(route.polyline);
-            state.along = projectOnRoute(from.lat, from.lng).along;
-            state.announced = {};
-            state.spokenNow = {};
-            state.lastNextStepIndex = null;
-            drawRouteOnMap(route, false);
-            updateNavigationUI(projectOnRoute(from.lat, from.lng));
-            setText(els.rerouteTitle, 'Rute baru ditemukan');
-            setText(els.rerouteText, 'Lanjutkan perjalanan mengikuti instruksi terbaru.');
+            state.demoAlong = 0;
+            updateNavigationUI({ along: 0 }, false);
+            setText(els.navStatus, 'Rute baru ditemukan.');
             showToast('Rute baru ditemukan. Lanjutkan perjalanan.', 'success');
-            const next = findNextStep(state.along);
-            if (next) speak(next.instruction);
-            setTimeout(() => els.rerouteOverlay.classList.add('hidden'), 900);
         } catch (error) {
-            if (state.preference === 'safest' && ['NO_REPORT_FREE_ROUTE', 'ENDPOINT_IN_REPORT_ZONE', 'REPORT_DATA_UNAVAILABLE'].includes(error.code)) {
-                endNavigation();
-                state.route = null;
-                state.geometry = null;
-                state.steps = [];
-                routeLayer.clearLayers();
-                hazardLineLayer.clearLayers();
-                hazardMarkerLayer.clearLayers();
-                els.routeSummary.classList.add('hidden');
-                els.btnStartNav.disabled = true;
-            }
-            showToast(
-                error.name === 'AbortError'
-                    ? 'Perhitungan rute terlalu lama. Mencoba lagi saat Anda bergerak.'
-                    : (error.message || 'Gagal menghitung ulang rute. Periksa koneksi Anda.'),
-                'error'
-            );
-            els.rerouteOverlay.classList.add('hidden');
-            state.offRouteSince = null;
+            if (state.rerouteController !== controller || !state.navigating) return;
+            const messages = {
+                PEDESTRIAN_ROUTE_UNAVAILABLE: 'Jalur pejalan kaki alternatif tidak ditemukan. Kembali ke jalur sebelumnya jika memungkinkan.',
+                ROUTE_ENGINE_ERROR: 'Layanan perhitungan rute sedang bermasalah. Rute sebelumnya tetap ditampilkan.',
+            };
+            const message = error.name === 'AbortError'
+                ? 'Perhitungan rute melewati batas waktu. Rute sebelumnya tetap ditampilkan.'
+                : (messages[error.code] || error.message || 'Gagal menghitung ulang rute.');
+            setText(els.navStatus, message);
+            showToast(message, 'error');
         } finally {
-            clearTimeout(state.rerouteTimeout);
-            state.rerouteTimeout = null;
-            state.rerouteController = null;
-            state.rerouting = false;
+            clearTimeout(timeout);
+            if (state.rerouteController === controller) {
+                state.rerouteTimeout = null;
+                state.rerouteController = null;
+                state.rerouting = false;
+                state.demoOffPoint = null;
+                state.cooldownUntil = performance.now() + REROUTE_COOLDOWN_MS;
+                els.rerouteOverlay.classList.add('hidden');
+            }
         }
     }
 
@@ -1388,6 +1404,17 @@
     }
 
     function stopTracking() {
+        ++state.session;
+        window.removeEventListener('pagehide', stopTracking);
+        state.navigating = false;
+        state.rerouting = false;
+        state.offRouteSince = null;
+        state.demoActive = false;
+        state.demoOffPoint = null;
+        els.rerouteOverlay.classList.add('hidden');
+        map.stop();
+        routeRequestController?.abort();
+        routeRequestController = null;
         if (state.watchId !== null && navigator.geolocation) {
             navigator.geolocation.clearWatch(state.watchId);
             state.watchId = null;
@@ -1471,7 +1498,12 @@
         }
 
         state.demoTimer = setInterval(() => {
-            if (!state.demoActive || !state.geometry) return;
+            if (!state.demoActive || !state.geometry || state.rerouting) return;
+            if (state.demoOffPoint) {
+                handleLocation(state.demoOffPoint, { accuracy: 5 });
+                if (state.offRouteLatched) state.demoOffPoint = null;
+                return;
+            }
 
             state.demoAlong = Math.min(state.geometry.total, state.demoAlong + 8);
             const point = pointAtAlong(state.demoAlong);
@@ -1479,7 +1511,7 @@
             if (point) {
                 handleLocation({ lat: point.lat, lng: point.lng }, {
                     heading: point.bearing,
-                    accuracy: null,
+                    accuracy: 5,
                 });
             }
 
@@ -1491,6 +1523,8 @@
 
     function stopDemo() {
         state.demoActive = false;
+        state.demoOffPoint = null;
+        state.offRouteSince = null;
         if (state.demoTimer) {
             clearInterval(state.demoTimer);
             state.demoTimer = null;
@@ -1499,25 +1533,27 @@
         els.btnDemoReroute.classList.add('hidden');
         setText(els.navStatus, 'Mode simulasi dihentikan.');
 
-        if (state.navigating && state.watchId === null && navigator.geolocation) {
-            state.watchId = navigator.geolocation.watchPosition(
-                onPosition,
-                onPositionError,
-                { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 }
-            );
-        }
+        startGpsWatch();
     }
 
     els.btnDemoReroute.addEventListener('click', () => {
-        if (!state.navigating) return;
-        const currentPos = state.lastPosition || (state.origin ? { lat: state.origin.lat, lng: state.origin.lng } : null);
-        if (currentPos) {
-            showToast('Mensimulasikan deviasi 35 meter keluar jalur...', 'info');
-            // Offset roughly 35 meters perpendicular
-            const offLat = currentPos.lat + 0.00032;
-            const offLng = currentPos.lng + 0.00032;
-            handleLocation({ lat: offLat, lng: offLng }, { heading: state.currentBearing, accuracy: 5 });
+        if (!state.navigating || !state.demoActive || state.rerouting || state.demoOffPoint) return;
+        if (state.offRouteLatched || performance.now() < state.cooldownUntil) {
+            showToast('Tunggu sampai simulasi kembali ke jalur dan jeda selesai.', 'info');
+            return;
         }
+        const base = pointAtAlong(state.demoAlong);
+        if (!base) return;
+        for (const [lat, lng] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const point = { lat: base.lat + lat * .00032, lng: base.lng + lng * .00032 };
+            if (projectOnRoute(point.lat, point.lng).distance > OFF_ROUTE_METERS) {
+                state.demoOffPoint = point;
+                state.offRouteSince = null;
+                showToast('Simulasi keluar jalur selama 3 detik.', 'info');
+                return;
+            }
+        }
+        showToast('Tidak ditemukan titik simulasi di luar jalur.', 'info');
     });
 
     // -----------------------------------------------------------------
@@ -1580,9 +1616,6 @@
     // -----------------------------------------------------------------
     // Boot
     // -----------------------------------------------------------------
-    window.addEventListener('pagehide', stopTracking);
-    window.addEventListener('beforeunload', stopTracking);
-
     const incoming = readIncomingRoute();
     if (!state.origin) locateUser(false);
 
