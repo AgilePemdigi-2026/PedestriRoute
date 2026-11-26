@@ -52,7 +52,7 @@ class RouteNavigationTest extends TestCase
             'tanggal_update' => now(),
         ]);
 
-        config(['services.osrm.url' => 'https://routing.openstreetmap.de/routed-foot/route/v1/foot', 'services.osrm.residential_detours' => false]);
+        config(['services.osrm.url' => 'https://routing.openstreetmap.de/routed-foot/route/v1/foot', 'services.osrm.residential_detours' => false, 'services.routing_graph.engine' => 'osrm', 'services.osrm.report_tolerance' => 0]);
         Http::preventStrayRequests();
         Sleep::fake();
         Http::fake(['https://routing.openstreetmap.de/routed-foot/route/v1/foot/*' => Http::response([

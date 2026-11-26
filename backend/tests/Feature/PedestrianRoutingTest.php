@@ -26,7 +26,7 @@ class PedestrianRoutingTest extends TestCase
             'password' => 'password123', 'tanggal_daftar' => now(), 'gagal_login' => 0,
         ]);
         Sanctum::actingAs($warga, ['role:warga']);
-        config(['services.osrm.url' => self::FOOT_URL, 'services.osrm.residential_detours' => false]);
+        config(['services.osrm.url' => self::FOOT_URL, 'services.osrm.residential_detours' => false, 'services.routing_graph.engine' => 'osrm', 'services.osrm.report_tolerance' => 0]);
         Http::preventStrayRequests();
         Sleep::fake();
 
@@ -61,16 +61,16 @@ class PedestrianRoutingTest extends TestCase
         ]);
     }
 
-    public function test_safest_accepts_a_report_free_foot_alternative_without_a_detour_distance_cap(): void
+    public function test_safest_accepts_a_report_free_foot_alternative_within_the_detour_cap(): void
     {
         $warga = $this->authenticate();
         $this->reportAt($warga);
-        $safe = $this->route([[-0.005, 0], [-0.005, 0.02], [0.005, 0.02], [0.005, 0]], 5600, 4480);
+        $safe = $this->route([[-0.005, 0], [-0.005, 0.002], [0.005, 0.002], [0.005, 0]], 1500, 1200);
         Http::fake([self::FOOT_URL.'/*' => Http::response(['code' => 'Ok', 'routes' => [$this->route(), $safe]])]);
 
         $this->requestRoute()->assertOk()
             ->assertJsonPath('engine', 'osrm_foot')
-            ->assertJsonPath('distance_m', 5600)
+            ->assertJsonPath('distance_m', 1500)
             ->assertJsonPath('summary.report_count', 0)
             ->assertJsonPath('colliding_points', [])
             ->assertJsonPath('hazard_sections', [])
@@ -78,6 +78,35 @@ class PedestrianRoutingTest extends TestCase
             ->assertJsonPath('meta.strict_report_avoidance', true);
         Http::assertSentCount(1);
         Http::assertSent(fn ($request): bool => str_starts_with($request->url(), self::FOOT_URL.'/') && str_contains($request->url(), 'radiuses=500%3B500'));
+    }
+
+    public function test_safest_takes_any_report_free_detour_but_balanced_keeps_the_cap(): void
+    {
+        $warga = $this->authenticate();
+        $this->reportAt($warga);
+        config(['services.osrm.search_requests' => 0]);
+        $farDetour = $this->route([[-0.005, 0], [-0.005, 0.02], [0.005, 0.02], [0.005, 0]], 5600, 4480);
+        Http::fake([self::FOOT_URL.'/*' => Http::response(['code' => 'Ok', 'routes' => [$this->route(), $farDetour]])]);
+
+        $this->requestRoute('safest')->assertOk()->assertJsonPath('distance_m', 5600)
+            ->assertJsonPath('summary.report_free', true)->assertJsonPath('meta.max_detour_distance_m', null);
+        $response = $this->requestRoute('balanced')->assertOk()
+            ->assertJsonPath('distance_m', 1112)
+            ->assertJsonPath('summary.safer_fallback', true)
+            ->assertJsonPath('meta.max_detour_distance_m', 1668);
+        $this->assertContains('SAFEST_AVAILABLE_WITH_REPORTS', array_column($response->json('warnings'), 'code'));
+        Http::assertSentCount(1); // the second request reuses the cached provider response
+    }
+
+    public function test_detour_cap_is_configurable(): void
+    {
+        $warga = $this->authenticate();
+        $this->reportAt($warga);
+        config(['services.osrm.safest_max_detour_ratio' => 6, 'services.osrm.search_requests' => 0]);
+        $farDetour = $this->route([[-0.005, 0], [-0.005, 0.02], [0.005, 0.02], [0.005, 0]], 5600, 4480);
+        Http::fake([self::FOOT_URL.'/*' => Http::response(['code' => 'Ok', 'routes' => [$this->route(), $farDetour]])]);
+
+        $this->requestRoute()->assertOk()->assertJsonPath('distance_m', 5600)->assertJsonPath('summary.report_free', true);
     }
 
     public function test_fastest_shows_only_encountered_reports_and_clipped_hazard_sections(): void
@@ -122,23 +151,68 @@ class PedestrianRoutingTest extends TestCase
         }]);
 
         $this->requestRoute()->assertOk()->assertJsonPath('distance_m', 1400)->assertJsonPath('colliding_points', []);
+        // Teraman has no detour cap: 1 direct request + 4 nearby offsets + 4 kilometre-wide bypasses.
         Http::assertSentCount(9);
     }
 
-    public function test_safest_returns_a_labeled_walking_route_with_hazards_when_no_clear_candidate_is_found(): void
+    public function test_report_tolerance_weighs_one_report_against_the_osrm_detour(): void
+    {
+        $warga = $this->authenticate();
+        $this->reportAt($warga);
+        $safe = $this->route([[-0.005, 0], [-0.005, 0.002], [0.005, 0.002], [0.005, 0]], 1400, 1120);
+        Http::fake([self::FOOT_URL.'/*' => Http::response(['code' => 'Ok', 'routes' => [$this->route(), $safe]])]);
+
+        // Direct 1112 m × 1.9 (unscored) + 300 = 2413 < detour 1556 m × 1.9 = 2957.
+        config(['services.osrm.report_tolerance' => 3, 'services.osrm.report_penalty_m' => 300]);
+        $this->requestRoute('balanced')->assertOk()->assertJsonPath('distance_m', 1112)->assertJsonPath('summary.remaining_report_count', 1);
+
+        // Costs use geometry: direct 1112 m × 1.9 + 900 = 3013 > detour 1556 m × 1.9 = 2957.
+        config(['services.osrm.report_penalty_m' => 900]);
+        $this->requestRoute('balanced')->assertOk()->assertJsonPath('distance_m', 1400)->assertJsonPath('summary.report_free', true);
+    }
+
+    public function test_safest_stays_strict_even_when_a_report_tolerance_is_configured(): void
+    {
+        $warga = $this->authenticate();
+        $this->reportAt($warga);
+        $safe = $this->route([[-0.005, 0], [-0.005, 0.002], [0.005, 0.002], [0.005, 0]], 1400, 1120);
+        Http::fake([self::FOOT_URL.'/*' => Http::response(['code' => 'Ok', 'routes' => [$this->route(), $safe]])]);
+        config(['services.osrm.report_tolerance' => 3, 'services.osrm.report_penalty_m' => 1]);
+
+        $this->requestRoute('safest')->assertOk()->assertJsonPath('distance_m', 1400)
+            ->assertJsonPath('summary.report_free', true)->assertJsonPath('summary.report_tolerance', 0);
+        $this->requestRoute('balanced')->assertOk()->assertJsonPath('preference', 'balanced')
+            ->assertJsonPath('distance_m', 1112)->assertJsonPath('summary.report_tolerance', 3);
+    }
+
+    public function test_reports_beyond_the_tolerance_are_avoided_regardless_of_cost(): void
+    {
+        $warga = $this->authenticate();
+        foreach ([-0.003, -0.001, 0.001, 0.003] as $lng) {
+            $this->reportAt($warga, $lng);
+        }
+        $safe = $this->route([[-0.005, 0], [-0.005, 0.002], [0.005, 0.002], [0.005, 0]], 1650, 1320);
+        Http::fake([self::FOOT_URL.'/*' => Http::response(['code' => 'Ok', 'routes' => [$this->route(), $safe]])]);
+        config(['services.osrm.report_tolerance' => 3, 'services.osrm.report_penalty_m' => 1]);
+
+        $this->requestRoute('balanced')->assertOk()->assertJsonPath('distance_m', 1650)->assertJsonPath('summary.report_free', true);
+    }
+
+    public function test_safest_refuses_but_balanced_returns_a_labeled_route_when_no_clear_candidate_exists(): void
     {
         $warga = $this->authenticate();
         $this->reportAt($warga);
         config(['services.osrm.search_requests' => 8]);
         Http::fake([self::FOOT_URL.'/*' => Http::response(['code' => 'Ok', 'routes' => [$this->route()]])]);
 
-        $response = $this->requestRoute()->assertOk()
+        $this->requestRoute('safest')->assertStatus(422)->assertJsonPath('error.code', 'NO_REPORT_FREE_ROUTE')->assertJsonMissingPath('polyline');
+        $response = $this->requestRoute('balanced')->assertOk()
             ->assertJsonPath('success', true)->assertJsonPath('engine', 'osrm_foot')
             ->assertJsonPath('summary.safer_fallback', true)->assertJsonPath('summary.remaining_report_count', 1)
             ->assertJsonPath('summary.report_free', false)->assertJsonPath('meta.strict_report_avoidance', false)
             ->assertJsonCount(1, 'hazard_sections')->assertJsonCount(2, 'polyline');
         $this->assertContains('SAFEST_AVAILABLE_WITH_REPORTS', array_column($response->json('warnings'), 'code'));
-        Http::assertSentCount(9);
+
     }
 
     public function test_safest_checks_new_reports_on_detours_and_preserves_multiple_waypoints(): void
@@ -147,7 +221,7 @@ class PedestrianRoutingTest extends TestCase
         $this->reportAt($warga);
         $this->reportAt($warga, 0, 0.002);
         $blockedDetour = $this->route([[-0.005, 0], [-0.005, 0.002], [0.005, 0.002], [0.005, 0]], 1600, 1280);
-        $safe = $this->route([[-0.005, 0], [-0.005, 0.004], [0.005, 0.004], [0.005, 0]], 2000, 1600);
+        $safe = $this->route([[-0.005, 0], [-0.005, 0.003], [0.005, 0.003], [0.005, 0]], 1650, 1320);
         Http::fake([self::FOOT_URL.'/*' => function ($request) use ($blockedDetour, $safe) {
             $count = count(explode(';', basename(parse_url($request->url(), PHP_URL_PATH))));
 
@@ -158,7 +232,7 @@ class PedestrianRoutingTest extends TestCase
             }]]);
         }]);
 
-        $this->requestRoute()->assertOk()->assertJsonPath('distance_m', 2000)->assertJsonPath('colliding_points', []);
+        $this->requestRoute()->assertOk()->assertJsonPath('distance_m', 1650)->assertJsonPath('colliding_points', []);
         Http::assertSent(fn ($request): bool => count(explode(';', basename(parse_url($request->url(), PHP_URL_PATH)))) >= 4);
     }
 
@@ -307,14 +381,15 @@ class PedestrianRoutingTest extends TestCase
         config(['services.osrm.search_requests' => 8]);
         Http::fake([self::FOOT_URL.'/*' => Http::response(['code' => 'Ok', 'routes' => [$this->route()]])]);
 
-        $this->requestRoute()->assertOk()
+        $this->requestRoute('safest')->assertStatus(422)->assertJsonPath('error.code', 'NO_REPORT_FREE_ROUTE');
+        $this->requestRoute('balanced')->assertOk()
             ->assertJsonPath('summary.endpoint_report_count', 1)
             ->assertJsonPath('summary.remaining_report_count', 1)
             ->assertJsonPath('summary.safer_fallback', true);
-        Http::assertSentCount(9);
+
     }
 
-    public function test_long_clear_detours_are_considered_beyond_the_nearby_report_street(): void
+    public function test_kilometre_wide_detours_are_used_by_safest_but_never_requested_by_balanced(): void
     {
         $warga = $this->authenticate();
         $this->reportAt($warga);
@@ -326,10 +401,16 @@ class PedestrianRoutingTest extends TestCase
             return Http::response(['code' => 'Ok', 'routes' => [$wide ? $clear : $this->route()]]);
         }]);
 
-        $this->requestRoute()->assertOk()
-            ->assertJsonPath('distance_m', 10000)->assertJsonPath('summary.report_free', true)
-            ->assertJsonPath('summary.safer_fallback', false)->assertJsonPath('colliding_points', []);
-        Http::assertSentCount(9);
+        $this->requestRoute('balanced')->assertOk()
+            ->assertJsonPath('distance_m', 1112)->assertJsonPath('summary.report_free', false)
+            ->assertJsonPath('summary.safer_fallback', true);
+        Http::assertNotSent(function ($request): bool {
+            $coordinates = array_map(fn ($value): array => array_map('floatval', explode(',', $value)), explode(';', basename(parse_url($request->url(), PHP_URL_PATH))));
+
+            return max(array_map(fn ($point): float => abs($point[1]), $coordinates)) > 0.01;
+        });
+
+        $this->requestRoute('safest')->assertOk()->assertJsonPath('distance_m', 10000)->assertJsonPath('summary.report_free', true);
     }
 
     public function test_safest_continues_past_an_earlier_turn_to_avoid_a_report_two_turns_ahead(): void
@@ -362,21 +443,22 @@ class PedestrianRoutingTest extends TestCase
         Http::assertSent(fn ($request): bool => substr_count(parse_url($request->url(), PHP_URL_PATH), ';') === 2);
     }
 
-    public function test_safest_fallback_selects_fewer_reports_even_when_the_route_is_much_longer(): void
+    public function test_balanced_fallback_selects_fewer_reports_within_the_cap_and_ignores_longer_clear_routes(): void
     {
         $warga = $this->authenticate();
         $this->reportAt($warga);
         $this->reportAt($warga, 0.002);
         config(['services.osrm.search_requests' => 0]);
-        $lessExposed = $this->route([[-0.005, 0], [-0.005, 0.003], [0, 0], [0.005, 0.003], [0.005, 0]], 4000, 3200);
-        Http::fake([self::FOOT_URL.'/*' => Http::response(['code' => 'Ok', 'routes' => [$this->route(), $lessExposed]])]);
+        $lessExposed = $this->route([[-0.005, 0], [-0.005, 0.003], [0, 0], [0.005, 0.003], [0.005, 0]], 1600, 1280);
+        $clearButFar = $this->route([[-0.005, 0], [-0.005, 0.03], [0.005, 0.03], [0.005, 0]], 7800, 6240);
+        Http::fake([self::FOOT_URL.'/*' => Http::response(['code' => 'Ok', 'routes' => [$this->route(), $lessExposed, $clearButFar]])]);
 
-        $this->requestRoute()->assertOk()->assertJsonPath('distance_m', 4000)
+        $this->requestRoute('balanced')->assertOk()->assertJsonPath('distance_m', 1600)
             ->assertJsonPath('summary.remaining_report_count', 1)->assertJsonPath('summary.safer_fallback', true);
         Http::assertSentCount(1);
     }
 
-    public function test_failed_detour_provider_keeps_a_valid_foot_route_with_explicit_remaining_hazards(): void
+    public function test_balanced_failed_detour_provider_keeps_a_valid_foot_route_with_explicit_remaining_hazards(): void
     {
         $warga = $this->authenticate();
         $this->reportAt($warga);
@@ -384,12 +466,24 @@ class PedestrianRoutingTest extends TestCase
             ->push(['code' => 'Ok', 'routes' => [$this->route()]])
             ->push([], 503)->push([], 503)]);
 
-        $response = $this->requestRoute()->assertOk()
+        $response = $this->requestRoute('balanced')->assertOk()
             ->assertJsonPath('summary.safer_fallback', true)
             ->assertJsonPath('meta.avoidance_search_interrupted', true)
             ->assertJsonPath('summary.report_count', 1);
         $this->assertContains('AVOIDANCE_SEARCH_INTERRUPTED', array_column($response->json('warnings'), 'code'));
         Http::assertSentCount(3);
+    }
+
+    public function test_safest_reports_an_interrupted_search_instead_of_a_route_through_reports(): void
+    {
+        $warga = $this->authenticate();
+        $this->reportAt($warga);
+        Http::fake([self::FOOT_URL.'/*' => Http::sequence()
+            ->push(['code' => 'Ok', 'routes' => [$this->route()]])
+            ->push([], 503)->push([], 503)]);
+
+        $response = $this->requestRoute('safest')->assertStatus(422)->assertJsonPath('error.code', 'NO_REPORT_FREE_ROUTE');
+        $this->assertStringContainsString('terhenti', $response->json('error.message'));
     }
 
     public function test_safest_uses_actual_residential_street_vertices_to_bypass_a_reported_main_road(): void
@@ -438,7 +532,7 @@ class PedestrianRoutingTest extends TestCase
             self::FOOT_URL.'/*' => Http::response(['code' => 'Ok', 'routes' => [$this->route()]]),
         ]);
 
-        $this->requestRoute()->assertOk()->assertJsonPath('summary.safer_fallback', true);
+        $this->requestRoute('balanced')->assertOk()->assertJsonPath('summary.safer_fallback', true);
         Http::assertNotSent(fn ($request): bool => str_contains($request->url(), '/route/v1/foot/') && substr_count(parse_url($request->url(), PHP_URL_PATH), ';') > 1);
         Http::assertSentCount(3);
     }

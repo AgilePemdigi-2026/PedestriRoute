@@ -526,6 +526,7 @@
 @push('scripts')
 <!-- Leaflet JS & Leaflet Heat -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+@include('partials.map-basemap')
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 @include('partials.mulyorejo-service-area')
 <script>
@@ -707,9 +708,7 @@
         attributionControl: false
     }).setView([-7.2663, 112.7965], 15);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19
-    }).addTo(map);
+    PedestriBasemap.add(map, { maxZoom: 19 });
 
     const serviceArea = PedestriRouteServiceArea.attach(map);
     setTimeout(() => { map.invalidateSize(); }, 200);

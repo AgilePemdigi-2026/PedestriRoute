@@ -94,13 +94,20 @@
             <div class="mt-2 md:mt-0 flex flex-col md:flex-row md:items-center gap-2">
                 <!-- Preference Toggle Pills -->
                 <div class="flex items-center gap-1.5 pt-0.5 md:pt-0 md:flex-1">
-                    <div class="grid grid-cols-2 gap-1 flex-1 bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+                    <div class="grid grid-cols-3 gap-1 flex-1 bg-slate-100 p-0.5 rounded-xl border border-slate-200">
                         <button type="button" data-pref="safest"
                             class="pref-chip h-7 md:h-8 px-2 rounded-lg text-[11px] font-extrabold border transition flex items-center justify-center gap-1 shadow-sm">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                             </svg>
                             <span>Teraman</span>
+                        </button>
+                        <button type="button" data-pref="balanced" title="Boleh melewati beberapa titik laporan bila memutar terlalu jauh"
+                            class="pref-chip h-7 md:h-8 px-2 rounded-lg text-[11px] font-extrabold border transition flex items-center justify-center gap-1 shadow-sm">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 6l9-3 9 3M3 6l-2 6a3 3 0 006 0L5 6m14 0l-2 6a3 3 0 006 0l-2-6M12 3v18m-4 0h8" />
+                            </svg>
+                            <span>Balance</span>
                         </button>
                         <button type="button" data-pref="fastest"
                             class="pref-chip h-7 md:h-8 px-2 rounded-lg text-[11px] font-extrabold border transition flex items-center justify-center gap-1 shadow-sm">
@@ -203,6 +210,7 @@
 
 @push('scripts')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+@include('partials.map-basemap')
 @include('partials.mulyorejo-service-area')
 @include('partials.route-hazards')
 @include('partials.route-location-search')
@@ -225,7 +233,7 @@
 
     const map = L.map('routeMap', { attributionControl: false, zoomControl: false })
         .setView([-7.2663, 112.7965], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    PedestriBasemap.add(map, { maxZoom: 19 });
 
     const serviceArea = PedestriRouteServiceArea.attach(map);
     setTimeout(() => {
@@ -271,6 +279,7 @@
 
     const CHIP_ON = {
         safest: ['bg-brand-700', 'text-white', 'border-brand-700'],
+        balanced: ['bg-sky-600', 'text-white', 'border-sky-600'],
         fastest: ['bg-amber-500', 'text-white', 'border-amber-500'],
     };
     const CHIP_OFF = ['bg-white', 'text-slate-600', 'border-slate-200'];
@@ -279,7 +288,7 @@
         document.querySelectorAll('.pref-chip').forEach((c) => {
             const p = c.dataset.pref;
             const on = p === state.preference;
-            c.classList.remove(...CHIP_OFF, ...CHIP_ON.safest, ...CHIP_ON.fastest);
+            c.classList.remove(...CHIP_OFF, ...Object.values(CHIP_ON).flat());
             c.classList.add(...(on ? CHIP_ON[p] : CHIP_OFF));
         });
     }
@@ -555,7 +564,7 @@
         if (reportWarning) {
             alertBox.classList.remove('hidden');
             alertText.textContent = [reportWarning.message, snapWarning?.message].filter(Boolean).join(' ');
-            badge.textContent = fallbackWarning ? `Teraman tersedia · ${reportCount} laporan`
+            badge.textContent = fallbackWarning ? `${state.preference === 'balanced' ? 'Balance' : 'Teraman tersedia'} · ${reportCount} laporan`
                 : (summaryData.endpoint_report_count === reportCount ? 'Laporan di awal/tujuan' : `${reportCount} laporan pada rute`);
             badge.className = 'text-[10px] font-extrabold text-orange-800 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-md shrink-0';
         } else {
