@@ -1,11 +1,15 @@
 @php
     $navMobileVisibility = $navMobileVisibility ?? 'flex';
+    $navDesktopSidebar = $navDesktopSidebar ?? true;
+    $navDesktopClasses = $navDesktopSidebar
+        ? 'md:inset-y-0 md:left-0 md:right-auto md:bottom-auto md:w-60 lg:w-64 md:max-w-none md:flex md:flex-col md:items-stretch md:justify-start md:gap-1 md:border-r md:border-t-0 md:px-3 md:py-5 md:overflow-y-auto'
+        : 'md:hidden';
     $navLinkDesktop = 'md:flex-row md:justify-start md:gap-3 md:px-3 md:py-2.5 md:rounded-xl md:text-sm md:font-semibold';
     $navInactive = 'flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition ' . $navLinkDesktop;
     $navActive = 'flex flex-col items-center gap-1 text-brand-600 font-bold ' . $navLinkDesktop;
 @endphp
 
-<nav aria-label="Navigasi utama warga" class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-200 py-2 px-6 {{ $navMobileVisibility }} items-center justify-between z-40 md:inset-y-0 md:left-0 md:right-auto md:bottom-auto md:w-60 lg:w-64 md:max-w-none md:flex md:flex-col md:items-stretch md:justify-start md:gap-1 md:border-r md:border-t-0 md:px-3 md:py-5 md:overflow-y-auto">
+<nav aria-label="Navigasi utama warga" class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-200 py-2 px-6 {{ $navMobileVisibility }} items-center justify-between z-40 {{ $navDesktopClasses }}">
     <div class="hidden md:flex md:items-center md:gap-2.5 md:px-3 md:pb-5 md:mb-2 md:border-b md:border-slate-100">
         <span class="w-8 h-8 rounded-xl bg-brand-600 text-white flex items-center justify-center font-extrabold text-sm shrink-0">P</span>
         <div class="min-w-0">

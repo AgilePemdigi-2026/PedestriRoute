@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Beranda Warga - PedestriRoute')
+@section('warga_desktop_nav', 'top')
 
 @push('styles')
 <!-- Leaflet CSS -->
@@ -224,8 +225,8 @@
 @section('content')
 <div class="px-5 pt-6 pb-20 flex flex-col flex-1 w-full md:px-8 md:pt-8 md:pb-10 md:max-w-7xl md:mx-auto lg:grid lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[400px_minmax(0,1fr)] lg:gap-8 lg:items-start">
     <div class="lg:col-start-1">
-    <!-- Top Header -->
-    <div class="flex items-center justify-between mb-4">
+    <!-- Top Header (mobile only; desktop uses the shared top navbar) -->
+    <div class="flex items-center justify-between mb-4 md:hidden">
         <div>
             <h1 class="text-base font-extrabold text-slate-900 tracking-tight md:hidden">PedestriRoute</h1>
         </div>

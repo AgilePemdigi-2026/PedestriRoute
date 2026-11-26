@@ -42,9 +42,12 @@
 </head>
 @php
     $isWargaShell = request()->routeIs('warga.*');
+    $useWargaTopNav = $isWargaShell && trim($__env->yieldContent('warga_desktop_nav')) === 'top';
 @endphp
 <body class="min-h-screen bg-slate-50 text-slate-800 antialiased flex flex-col items-center justify-start">
-    @if($isWargaShell)
+    @if($useWargaTopNav)
+        @include('partials.warga-top-nav')
+    @elseif($isWargaShell)
         <header class="hidden md:flex fixed top-0 left-0 right-0 md:left-60 lg:left-64 h-16 z-30 items-center justify-between gap-4 bg-white/95 backdrop-blur border-b border-slate-200 px-6">
             <div class="flex items-center gap-3 min-w-0">
                 <a href="{{ route('warga.beranda') }}" class="flex items-center gap-2.5 shrink-0">
@@ -65,10 +68,20 @@
             </a>
         </header>
     @endif
-    <div class="w-full {{ $isWargaShell ? 'md:max-w-none md:shadow-none md:pb-0 md:pt-16 md:pl-60 lg:pl-64' : 'max-w-md' }} min-h-screen bg-white shadow-xl flex flex-col relative pb-16">
+    @php
+        $shellClasses = match (true) {
+            $useWargaTopNav => 'md:max-w-none md:shadow-none md:pb-0 md:pt-16',
+            $isWargaShell => 'md:max-w-none md:shadow-none md:pb-0 md:pt-16 md:pl-60 lg:pl-64',
+            default => 'max-w-md',
+        };
+    @endphp
+    <div class="w-full {{ $shellClasses }} min-h-screen bg-white shadow-xl flex flex-col relative pb-16">
         @yield('content')
         @if($isWargaShell)
-            @include('partials.warga-bottom-nav', ['navMobileVisibility' => request()->is('navigasi', 'riwayat-laporan', 'lapor-kondisi') ? 'hidden' : 'flex'])
+            @include('partials.warga-bottom-nav', [
+                'navMobileVisibility' => request()->is('navigasi', 'riwayat-laporan', 'lapor-kondisi') ? 'hidden' : 'flex',
+                'navDesktopSidebar' => ! $useWargaTopNav,
+            ])
         @endif
     </div>
 
