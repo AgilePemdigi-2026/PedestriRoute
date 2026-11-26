@@ -78,3 +78,7 @@ Route::view('/notifikasi', 'notifikasi.index')
     ->name('notifikasi.index');
     
 Route::view('/verify-otp', 'auth.verify-otp')->name('otp.verify.page');
+
+// Public legal pages
+Route::view('/privacy-policy', 'legal.privacy-policy')->name('legal.privacy');
+Route::view('/terms-of-service', 'legal.terms-of-service')->name('legal.terms');

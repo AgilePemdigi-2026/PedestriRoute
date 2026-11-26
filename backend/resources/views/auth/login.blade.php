@@ -3,9 +3,16 @@
 @section('title', 'Login - PedestriRoute')
 
 @section('content')
-<div class="px-6 pt-12 pb-8 flex flex-col items-center flex-1 justify-center">
+<div class="w-full flex-1 lg:flex lg:min-h-screen">
+    @include('partials.auth-brand-panel', [
+        'heading' => 'Selamat datang kembali di PedestriRoute.',
+        'subheading' => 'Masuk untuk melanjutkan perjalanan Anda dengan rute pejalan kaki yang paling aman dan nyaman.',
+    ])
+
+    <div class="flex-1 flex flex-col justify-center px-6 pt-12 pb-8 lg:px-12 xl:px-20">
+    <div class="w-full max-w-md mx-auto lg:max-w-lg">
     <!-- Brand Icon -->
-    <div class="w-16 h-16 bg-brand-600 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-900/20 mb-4">
+    <div class="w-16 h-16 bg-brand-600 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-900/20 mb-4 mx-auto lg:hidden">
         <!-- Walking pedestrian icon -->
         <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
             <path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7"/>
@@ -13,11 +20,17 @@
     </div>
 
     <!-- Title & Tagline -->
-    <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight text-center">PedestriRoute</h1>
-    <p class="text-sm text-slate-500 font-medium mt-1 mb-8 text-center">Navigasi Pejalan Kaki Nyaman & Aman</p>
+    <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight text-center lg:hidden">PedestriRoute</h1>
+    <p class="text-sm text-slate-500 font-medium mt-1 mb-8 text-center lg:hidden">Navigasi Pejalan Kaki Nyaman & Aman</p>
+
+    <!-- Desktop Title -->
+    <div class="hidden lg:block mb-8">
+        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Masuk ke akun Anda</h1>
+        <p class="text-sm text-slate-500 font-medium mt-1.5">Silakan masukkan kredensial Anda untuk melanjutkan.</p>
+    </div>
 
     <!-- Main Card -->
-    <div class="w-full bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+    <div class="w-full bg-white rounded-3xl p-6 shadow-sm border border-slate-100 lg:bg-transparent lg:border-0 lg:shadow-none lg:p-0">
         
         @if(request()->query('error') == 'account_not_registered')
             <div style="background-color: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 16px; text-align: center; font-size: 14px;">
@@ -110,6 +123,13 @@
     <div class="mt-8 text-center text-sm text-slate-500 font-medium">
         Belum punya akun?
         <a href="/register" class="text-brand-600 hover:text-brand-700 font-bold ml-1">Daftar</a>
+    </div>
+    <div class="mt-4 text-center text-xs text-slate-400 space-x-3">
+        <a href="{{ route('legal.privacy') }}" class="hover:text-slate-600 underline">Kebijakan Privasi</a>
+        <span>&bull;</span>
+        <a href="{{ route('legal.terms') }}" class="hover:text-slate-600 underline">Ketentuan Layanan</a>
+    </div>
+    </div>
     </div>
 </div>
 @endsection

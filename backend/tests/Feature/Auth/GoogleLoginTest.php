@@ -16,6 +16,18 @@ class GoogleLoginTest extends TestCase
         $response->assertStatus(302);
     }
 
+    public function test_google_redirect_fails_gracefully_when_credentials_missing(): void
+    {
+        config([
+            'services.google.mock' => false,
+            'services.google.client_id' => '',
+            'services.google.client_secret' => '',
+        ]);
+
+        $response = $this->get('/api/v1/auth/google/redirect');
+        $response->assertRedirect('/login?error=google_failed');
+    }
+
     public function test_google_callback_creates_warga_and_sets_token(): void
     {
         Warga::where('email', 'mock_warga@gmail.com')->delete();

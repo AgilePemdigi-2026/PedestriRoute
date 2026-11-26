@@ -1,6 +1,9 @@
 backend/.env
 backend/.env.*
 !backend/.env.example
+infra/.env
+infra/.env.*
+!infra/.env.example
 backend/vendor/
 backend/node_modules/
 backend/public/storage

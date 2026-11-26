@@ -385,8 +385,13 @@ class AuthController extends Controller
      */
     public function googleRedirect()
     {
-        if (env('GOOGLE_OAUTH_MOCK', false)) {
+        if (config('services.google.mock', false)) {
             return redirect('/api/v1/auth/google/callback?mock=true');
+        }
+
+        if (empty(config('services.google.client_id')) || empty(config('services.google.client_secret'))) {
+            Log::error('Google OAuth misconfigured: GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET is empty.');
+            return redirect('/login?error=google_failed');
         }
 
         return Socialite::driver('google')->stateless()->redirect();
@@ -397,7 +402,7 @@ class AuthController extends Controller
      */
     public function googleCallback(Request $request)
     {
-        if (env('GOOGLE_OAUTH_MOCK', false) && $request->has('mock')) {
+        if (config('services.google.mock', false) && $request->has('mock')) {
             $email = 'mock_warga@gmail.com';
             $nama = 'Warga Google Mock';
             $googleId = 'google_mock_123456';

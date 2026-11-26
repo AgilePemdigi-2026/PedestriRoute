@@ -42,6 +42,7 @@
 </head>
 @php
     $isWargaShell = request()->routeIs('warga.*');
+    $isAuthShell = request()->routeIs('login', 'register', 'legal.*');
 @endphp
 <body class="min-h-screen bg-slate-50 text-slate-800 antialiased flex flex-col items-center justify-start">
     @if($isWargaShell)
@@ -65,7 +66,7 @@
             </a>
         </header>
     @endif
-    <div class="w-full {{ $isWargaShell ? 'md:max-w-none md:shadow-none md:pb-0 md:pt-16 md:pl-60 lg:pl-64' : 'max-w-md' }} min-h-screen bg-white shadow-xl flex flex-col relative pb-16">
+    <div class="w-full {{ $isWargaShell ? 'md:max-w-none md:shadow-none md:pb-0 md:pt-16 md:pl-60 lg:pl-64' : ($isAuthShell ? 'max-w-md lg:max-w-none lg:shadow-none lg:pb-0' : 'max-w-md') }} min-h-screen bg-white shadow-xl flex flex-col relative pb-16">
         @yield('content')
         @if($isWargaShell)
             @include('partials.warga-bottom-nav', ['navMobileVisibility' => request()->is('navigasi', 'riwayat-laporan', 'lapor-kondisi') ? 'hidden' : 'flex'])
