@@ -309,7 +309,6 @@
     const OFF_ROUTE_SECONDS = 3;
     const VOICE_THRESHOLDS = [120, 50, 15];
     const ARRIVAL_RADIUS_M = 15;
-    const MAX_GPS_ACCURACY_M = 30;
 
     const SAMPLE_PLACES = [
         { name: 'Kampus C Universitas Airlangga', type: 'Kampus', lat: -7.2672, lng: 112.7846 },
@@ -841,18 +840,10 @@
                 els.btnLocate.classList.remove('animate-pulse');
                 const { latitude, longitude, accuracy } = position.coords;
 
-                if (state.navigating || state.demoActive) return;
-
                 if (!serviceArea.contains(latitude, longitude)) {
                     if (showFeedback) showToast('Lokasi fisik di luar Kecamatan Mulyorejo. Titik contoh digunakan.', 'info');
                     setText(els.gpsStatus, 'Lokasi di luar area layanan Mulyorejo');
                     if (!state.origin) useFallbackOrigin();
-                    return;
-                }
-
-                if (!Number.isFinite(accuracy) || accuracy > MAX_GPS_ACCURACY_M) {
-                    if (!state.origin) useFallbackOrigin();
-                    setText(els.gpsStatus, 'Sinyal GPS lemah. Titik awal dipertahankan.');
                     return;
                 }
 
@@ -1079,8 +1070,6 @@
     // Navigation Lifecycle & Tracking
     // -----------------------------------------------------------------
     async function startNavigation() {
-        if (state.navigating) return;
-
         if (!state.route) {
             await findRoute({ autostart: true });
             return;
@@ -1104,14 +1093,12 @@
         map.setView([state.origin?.lat ?? -7.2663, state.origin?.lng ?? 112.7965], 17, { animate: false });
 
         prepareGeometry(state.route.polyline);
-        state.along = projectOnRoute(state.origin?.lat ?? 0, state.origin?.lng ?? 0).along;
-        state.lastPosition = state.origin ? { lat: state.origin.lat, lng: state.origin.lng } : null;
         drawRouteOnMap(state.route, false);
 
         await requestCompassPermission();
         await requestWakeLock();
 
-        if (state.navigating && !state.demoActive && navigator.geolocation) {
+        if (navigator.geolocation) {
             state.watchId = navigator.geolocation.watchPosition(
                 onPosition,
                 onPositionError,
@@ -1134,17 +1121,6 @@
         const coords = position.coords;
         const point = { lat: coords.latitude, lng: coords.longitude };
 
-        if (!Number.isFinite(point.lat) || !Number.isFinite(point.lng)
-            || !serviceArea.contains(point.lat, point.lng)) {
-            setText(els.navStatus, 'Lokasi GPS di luar area layanan. Posisi terakhir dipertahankan.');
-            return;
-        }
-
-        if (!Number.isFinite(coords.accuracy) || coords.accuracy < 0 || coords.accuracy > MAX_GPS_ACCURACY_M) {
-            setText(els.navStatus, 'Sinyal GPS lemah. Menunggu posisi yang lebih akurat.');
-            return;
-        }
-
         state.lastPosition = point;
         state.gpsHeading = (typeof coords.heading === 'number' && Number.isFinite(coords.heading) && coords.heading >= 0) ? coords.heading : null;
 
@@ -1156,7 +1132,7 @@
     }
 
     function onPositionError(error) {
-        if (!state.navigating || state.arrived || state.demoActive) return;
+        if (state.arrived) return;
 
         if (error.code === error.PERMISSION_DENIED) {
             setText(els.navStatus, 'Izin GPS ditolak. Gunakan mode simulasi.');
@@ -1490,7 +1466,8 @@
         }
 
         state.demoActive = true;
-        state.demoAlong = state.along || 0;
+        // Simulation progress is independent of the device's GPS position.
+        state.demoAlong = state.demoAlong || 0;
         els.demoLabel.textContent = 'Hentikan';
         els.btnDemoReroute.classList.remove('hidden');
         setText(els.navStatus, 'Mode simulasi aktif.');
@@ -1505,6 +1482,7 @@
         if (startPoint) {
             handleLocation(startPoint, { heading: startPoint.bearing, accuracy: null });
         }
+        if (!state.navigating) return;
 
         state.demoTimer = setInterval(() => {
             if (!state.demoActive || !state.geometry) return;

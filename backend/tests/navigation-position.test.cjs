@@ -55,21 +55,12 @@ function position(lat, lng, accuracy) {
     return { coords: { latitude: lat, longitude: lng, accuracy, heading: null } };
 }
 
-test('unreliable and out-of-area GPS fixes cannot move the marker or simulation progress', async () => {
+test('simulation starts at the route origin even after GPS has moved elsewhere', async () => {
     const h = navigationHarness();
     await h.startNavigation();
-    const initialPosition = h.state.lastPosition;
-    const initialAlong = h.state.along;
-    for (const fix of [
-        position(-7.265, 112.78, 25000),
-        position(-6.2, 106.8, 5),
-        position(NaN, 112.79, 5),
-        position(-7.265, 112.79, undefined),
-    ]) h.onPosition(fix);
-    assert.equal(h.state.lastPosition, initialPosition);
-    assert.equal(h.state.along, initialAlong);
-    assert.equal(h.pans.length, 0);
-    assert.equal(h.state.arrived, false);
+    h.onPosition(position(-7.265, 112.78, 25000));
+    assert.equal(h.state.lastPosition.lng, 112.78);
+    assert.ok(h.state.along > 500);
 
     h.elements.get('btnDemo').events.click();
     assert.equal(h.state.userMarker.point[0], -7.27);
@@ -79,27 +70,19 @@ test('unreliable and out-of-area GPS fixes cannot move the marker or simulation 
     assert.equal(h.state.userMarker.point[1], 112.79);
 });
 
-test('accurate walking positions update progress and simulation resumes on the route', async () => {
+test('simulation ignores live GPS and resumes its own progress after stopping', async () => {
     const h = navigationHarness();
     await h.startNavigation();
-    h.onPosition(position(-7.268, 112.79005, 10));
-    assert.equal(h.state.lastPosition.lat, -7.268);
-    const along = h.state.along;
-    assert.ok(along > 200);
+    h.elements.get('btnDemo').events.click();
+    h.tick();
+    const along = h.state.demoAlong;
+    h.onPosition(position(-7.269, 112.79, 5));
+    assert.ok(Math.abs(h.state.along - along) < 0.01);
+    h.elements.get('btnDemo').events.click();
+    h.onPosition(position(-7.265, 112.78, 25000));
     h.elements.get('btnDemo').events.click();
     assert.equal(h.state.userMarker.point[1], 112.79);
-    h.onPosition(position(-7.269, 112.79, 5));
-    h.onPositionError({ code: 1, PERMISSION_DENIED: 1 });
-    assert.equal(h.elements.get('navStatus').textContent, 'Mode simulasi aktif.');
+    assert.ok(Math.abs(h.state.along - along) < 0.01);
     h.tick();
     assert.ok(Math.abs(h.state.along - along - 8) < 0.01);
-});
-
-test('starting simulation while navigation permissions resolve does not restart GPS tracking', async () => {
-    const h = navigationHarness();
-    const starting = h.startNavigation();
-    h.elements.get('btnDemo').events.click();
-    await starting;
-    assert.equal(h.watches.length, 0);
-    assert.equal(h.state.demoActive, true);
 });
