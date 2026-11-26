@@ -48,8 +48,12 @@ services:
       GOOGLE_MAPS_API_KEY: "${GOOGLE_MAPS_API_KEY:-}"
       GOOGLE_MAPS_TYPE: "${GOOGLE_MAPS_TYPE:-roadmap}"
       FACEBOOK_OAUTH_MOCK: "true"
+    volumes:
+      - pedestriroute_storage:/var/www/backend/storage/app/public
     depends_on:
       db:
+        condition: service_healthy
+      cv-service:
         condition: service_healthy
 
   nginx:
@@ -68,8 +72,14 @@ services:
     container_name: pedestriroute_cv
     restart: unless-stopped
     environment:
-      - CV_MOCK=false
+      - CV_MOCK=${CV_MOCK:-false}
       - CV_MODEL_PATH=/app/models/pedestriroute_classifier.onnx
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, json, sys; d = json.load(urllib.request.urlopen('http://localhost:8000/health')); sys.exit(0 if d.get('model_ready') else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   queue:
     build:
@@ -103,11 +113,13 @@ services:
       GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET}"
       GOOGLE_REDIRECT_URI: "https://pedestri-route.caiis.ai.id/api/v1/auth/google/callback"
       FACEBOOK_OAUTH_MOCK: "true"
+    volumes:
+      - pedestriroute_storage:/var/www/backend/storage/app/public
     depends_on:
       db:
         condition: service_healthy
       cv-service:
-        condition: service_started
+        condition: service_healthy
 
   reverb:
     build:
@@ -135,3 +147,4 @@ services:
 
 volumes:
   pedestriroute_pgdata:
+  pedestriroute_storage:

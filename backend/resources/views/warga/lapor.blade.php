@@ -196,7 +196,7 @@
         <div class="text-center">
             <h1 class="text-sm font-extrabold text-slate-900 leading-tight">Lapor Fasilitas</h1>
         </div>
-        <div class="relative">
+        <div class="relative md:hidden">
             <button id="userMenuBtn" class="w-8 h-8 rounded-xl overflow-hidden border border-slate-200 focus:outline-none relative flex items-center justify-center bg-teal-800 text-white font-bold text-xs shadow-sm" aria-label="Menu Pengguna">
                 <img id="navAvatar" src="" alt="Avatar" class="w-full h-full object-cover hidden" onerror="this.classList.add('hidden'); document.getElementById('navAvatarFallback')?.classList.remove('hidden');">
                 <span id="navAvatarFallback" class="w-full h-full flex items-center justify-center bg-teal-800 text-white font-bold text-xs uppercase">W</span>
@@ -214,6 +214,7 @@
                 </button>
             </div>
         </div>
+        <div class="hidden md:block w-8" aria-hidden="true"></div>
     </div>
 
     <form id="reportForm" class="space-y-3 md:grid md:grid-cols-2 md:gap-5 md:items-start md:space-y-0">
