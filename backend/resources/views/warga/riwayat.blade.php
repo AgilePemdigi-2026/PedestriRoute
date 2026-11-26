@@ -3,22 +3,22 @@
 @section('title', 'Riwayat Laporan - PedestriRoute')
 
 @section('content')
-<div class="px-5 pt-6 pb-20 flex flex-col flex-1 w-full md:px-8 md:pt-8 md:pb-10 md:max-w-7xl md:mx-auto">
+<div class="px-5 pt-6 pb-20 flex flex-col flex-1 w-full md:px-8 lg:px-10 md:pt-8 md:pb-12">
     <div class="flex items-center gap-2.5 mb-4 md:mb-6">
         <a href="/beranda-warga" class="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition shadow-sm" aria-label="Kembali">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" /></svg>
         </a>
         <div>
-            <h1 class="text-base font-extrabold text-slate-900 tracking-tight">Riwayat Laporan</h1>
-            <p id="riwayatSubtitle" class="text-xs text-slate-500 font-medium">Memuat...</p>
+            <h1 class="text-base md:text-xl font-extrabold text-slate-900 tracking-tight">Riwayat Laporan</h1>
+            <p id="riwayatSubtitle" class="text-xs md:text-sm text-slate-500 font-medium">Memuat...</p>
         </div>
     </div>
 
-    <div class="md:grid md:grid-cols-[minmax(240px,300px)_minmax(0,1fr)] md:gap-6 md:items-start">
+    <div class="flex flex-col gap-4 md:gap-6">
     <!-- Search & Filter Controls -->
-    <div class="space-y-2 mb-3 md:sticky md:top-20">
+    <div class="space-y-2 md:space-y-0 md:flex md:items-center md:gap-3 md:bg-slate-50 md:border md:border-slate-200/80 md:rounded-2xl md:p-3">
         <!-- Text Search -->
-        <div class="relative">
+        <div class="relative md:flex-1">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -26,18 +26,18 @@
             </div>
             <input type="text" id="searchInput" oninput="renderReports()"
                 placeholder="Cari kode laporan, nama jalan..."
-                class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 transition shadow-sm font-medium" />
+                class="w-full pl-9 pr-8 py-2 md:py-2.5 bg-white border border-slate-200 rounded-xl text-xs md:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 transition shadow-sm font-medium" />
             <button type="button" id="btnClearSearch" onclick="clearSearchText()" class="hidden absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
 
         <!-- 2-Column Grid: Status Dropdown + Date Picker -->
-        <div class="grid grid-cols-2 gap-2">
+        <div class="grid grid-cols-2 gap-2 md:flex md:items-center md:gap-3">
             <!-- Status Dropdown -->
-            <div class="relative">
+            <div class="relative md:w-48">
                 <select id="selectStatusFilter" onchange="onStatusFilterChange(this.value)"
-                    class="w-full pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm appearance-none cursor-pointer transition">
+                    class="w-full pl-3 pr-8 py-2 md:py-2.5 bg-white border border-slate-200 rounded-xl text-xs md:text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm appearance-none cursor-pointer transition">
                     <option value="">Semua Status</option>
                     <option value="MENUNGGU_VALIDASI_ADMIN,DIPROSES">Menunggu</option>
                     <option value="TERVALIDASI">Valid</option>
@@ -51,9 +51,9 @@
             </div>
 
             <!-- Date Picker -->
-            <div class="relative flex items-center">
+            <div class="relative flex items-center md:w-44">
                 <input type="date" id="dateFilter" onchange="renderReports()"
-                    class="w-full px-2.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm transition font-medium" />
+                    class="w-full px-2.5 py-2 md:py-2.5 bg-white border border-slate-200 rounded-xl text-xs md:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm transition font-medium" />
                 <button type="button" onclick="clearDateFilter()" id="btnClearDate" class="hidden absolute right-2 text-slate-400 hover:text-slate-600" title="Reset tanggal">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
@@ -61,7 +61,7 @@
         </div>
     </div>
 
-    <div id="reportsList" class="space-y-3 md:space-y-0 md:grid md:grid-cols-2 xl:grid-cols-3 md:gap-4"></div>
+    <div id="reportsList" class="space-y-3 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 md:gap-4"></div>
     </div>
 </div>
 <!-- Navigasi Warga: konsisten dengan Beranda; Riwayat aktif. -->

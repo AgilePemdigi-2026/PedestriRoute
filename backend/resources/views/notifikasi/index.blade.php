@@ -3,14 +3,14 @@
 @section('title', 'Notifikasi - PedestriRoute')
 
 @section('content')
-<div class="flex-1 px-5 pt-6 pb-24">
-    <header class="flex items-start justify-between gap-3 mb-5">
+<div class="flex-1 w-full px-5 pt-6 pb-24 md:px-8 lg:px-10 md:pt-8 md:pb-12 md:max-w-6xl md:mx-auto">
+    <header class="flex items-start justify-between gap-3 mb-5 md:mb-6">
         <div>
-            <h1 class="text-xl font-extrabold text-slate-900">
+            <h1 class="text-xl md:text-2xl font-extrabold text-slate-900">
                 Notifikasi
             </h1>
             <p id="notificationSummary"
-                class="text-xs text-slate-500 mt-1"
+                class="text-xs md:text-sm text-slate-500 mt-1"
                 aria-live="polite">
                 Memuat notifikasi...
             </p>
@@ -22,14 +22,14 @@
         </div>
 
         <button id="refreshNotifications" type="button"
-                class="rounded-xl border border-slate-200 px-3 py-2 text-xs
+                class="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs
                        font-bold text-brand-600 hover:bg-brand-50
-                       disabled:opacity-50">
+                       disabled:opacity-50 transition shadow-sm">
             Muat ulang
         </button>
     </header>
 
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4 md:mb-6 md:bg-slate-50 md:border md:border-slate-200/80 md:rounded-2xl md:px-4 md:py-3">
         <label class="text-xs font-semibold text-slate-600">
             Tampilkan
             <select id="notificationFilter"
@@ -42,8 +42,8 @@
         </label>
 
         <button id="markAllRead" type="button" disabled
-                class="text-xs font-bold text-brand-600
-                       disabled:opacity-40">
+                class="text-xs font-bold text-brand-600 hover:text-brand-700
+                       disabled:opacity-40 transition">
             Tandai semua dibaca
         </button>
     </div>
@@ -52,18 +52,18 @@
        class="hidden rounded-xl bg-slate-50 p-4 text-sm text-slate-600 mb-4"
        role="status"></p>
 
-    <div id="notificationList" class="space-y-3"></div>
+    <div id="notificationList" class="space-y-3 md:space-y-0 md:grid md:grid-cols-2 md:gap-4"></div>
 
     <button id="loadMoreNotifications" type="button"
-            class="hidden w-full mt-5 rounded-xl border border-brand-600
+            class="hidden w-full md:w-auto md:px-8 md:mx-auto md:block mt-5 rounded-xl border border-brand-600
                    py-3 text-sm font-bold text-brand-600
-                   hover:bg-brand-50 disabled:opacity-50">
+                   hover:bg-brand-50 disabled:opacity-50 transition">
         Muat lebih banyak
     </button>
 </div>
 
-<!-- Bottom Navigation for Citizen (Default) -->
-<nav id="wargaBottomNav" class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-200 py-2 px-6 flex items-center justify-between z-40" aria-label="Navigasi Warga">
+<!-- Bottom Navigation for Citizen (Default, Mobile Only) -->
+<nav id="wargaBottomNav" class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-200 py-2 px-6 flex items-center justify-between z-40 md:hidden" aria-label="Navigasi Warga">
     <a href="/beranda-warga" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition">
         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z"/>
@@ -101,8 +101,8 @@
     </a>
 </nav>
 
-<!-- Bottom Navigation for Admin -->
-<nav id="adminBottomNav" class="hidden fixed bottom-0 max-w-md w-full bg-white border-t border-slate-200 px-2 pt-1.5 pb-2 flex items-stretch justify-around z-40" aria-label="Navigasi Admin">
+<!-- Bottom Navigation for Admin (Mobile Only) -->
+<nav id="adminBottomNav" class="hidden fixed bottom-0 max-w-md w-full bg-white border-t border-slate-200 px-2 pt-1.5 pb-2 flex items-stretch justify-around z-40 md:hidden" aria-label="Navigasi Admin">
     <a href="/admin/validasi" class="relative flex-1 flex flex-col items-center gap-0.5 pt-1.5 pb-0.5 text-slate-400 hover:text-slate-600 transition">
         <span class="w-9 h-6 flex items-center justify-center rounded-full">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,12 +154,24 @@
         const isAdmin = role === 'admin';
         const wargaNav = document.getElementById('wargaBottomNav');
         const adminNav = document.getElementById('adminBottomNav');
+        const wargaTopNav = document.getElementById('wargaTopNav');
+        const adminTopNav = document.getElementById('adminTopNav');
+        const wargaTopProfile = document.getElementById('wargaTopProfile');
+        const topNavBrandLink = document.getElementById('topNavBrandLink');
         if (isAdmin) {
             wargaNav?.classList.add('hidden');
             adminNav?.classList.remove('hidden');
+            wargaTopNav?.classList.add('hidden');
+            adminTopNav?.classList.remove('hidden');
+            wargaTopProfile?.classList.add('hidden');
+            if (topNavBrandLink) topNavBrandLink.href = '/admin/validasi';
         } else {
             wargaNav?.classList.remove('hidden');
             adminNav?.classList.add('hidden');
+            wargaTopNav?.classList.remove('hidden');
+            adminTopNav?.classList.add('hidden');
+            wargaTopProfile?.classList.remove('hidden');
+            if (topNavBrandLink) topNavBrandLink.href = '/beranda-warga';
         }
     }
 

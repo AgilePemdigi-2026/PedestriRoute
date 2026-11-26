@@ -24,8 +24,8 @@
 @endpush
 
 @section('content')
-<div class="relative flex-1 overflow-hidden h-[calc(100dvh-4.5rem)] md:flex md:flex-none md:h-[calc(100dvh-4rem)]">    <!-- Peta Full Screen -->
-    <div id="routeMap" aria-label="Peta rute pejalan kaki" class="md:!relative md:!h-full md:!flex-1"></div>
+<div class="relative flex-1 overflow-hidden h-[calc(100dvh-4.5rem)] md:overflow-visible md:h-auto md:flex-none md:w-full">    <!-- Peta Full Screen -->
+    <div id="routeMap" aria-label="Peta rute pejalan kaki" class="md:!relative md:!inset-auto md:!w-full md:!h-[calc(100dvh-4rem)]"></div>
 
     <!-- Loading Screen Overlay -->
     <div id="routeLoading" class="hidden absolute inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 pointer-events-auto">
@@ -43,7 +43,7 @@
         </div>
     </div>
 
-    <div class="contents md:order-first md:flex md:w-[360px] lg:w-[400px] md:shrink-0 md:flex-col md:justify-start md:gap-4 md:p-4 md:overflow-y-auto md:border-r md:border-slate-200 md:bg-slate-50/50">
+    <div class="contents md:grid md:grid-cols-1 lg:grid-cols-2 md:gap-6 md:items-start md:w-full md:max-w-6xl md:mx-auto md:px-8 md:py-8">
     <!-- Floating Top Search Card -->
     <div class="absolute inset-x-0 top-0 z-30 px-3 pt-3 pointer-events-none md:!static md:!inset-auto md:!p-0 md:!pointer-events-auto">
         <div class="pointer-events-auto bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-lg p-2.5 space-y-2">

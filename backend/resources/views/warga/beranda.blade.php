@@ -222,13 +222,12 @@
 @endpush
 
 @section('content')
-<div class="px-5 pt-6 pb-20 flex flex-col flex-1 w-full md:px-8 md:pt-8 md:pb-10 md:max-w-7xl md:mx-auto lg:grid lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[400px_minmax(0,1fr)] lg:gap-8 lg:items-start">
-    <div class="lg:col-start-1">
-    <!-- Top Header -->
-    <div class="flex items-center justify-between mb-4">
+<div class="px-5 pt-6 pb-20 flex flex-col flex-1 w-full md:px-0 md:pt-0 md:pb-12">
+    <div class="order-1 md:order-2 md:px-8 md:pt-8 md:max-w-7xl md:mx-auto md:w-full">
+    <!-- Top Header (Mobile Only; Desktop uses top navbar) -->
+    <div class="flex items-center justify-between mb-4 md:hidden">
         <div>
-            <h1 class="text-base font-extrabold text-slate-900 tracking-tight md:hidden">PedestriRoute</h1>
-            <h1 class="hidden md:block text-lg font-extrabold text-slate-900 tracking-tight">Beranda Warga</h1>
+            <h1 class="text-base font-extrabold text-slate-900 tracking-tight">PedestriRoute</h1>
         </div>
 
         <div class="flex items-center gap-2">
@@ -327,16 +326,16 @@
         </div>
     </div>
     </div>
-    <div class="lg:col-start-2 lg:sticky lg:top-20">
+    <div class="order-2 md:order-1 w-full">
     <!-- Map Section (Toggleable: Heatmap / Normal Map) -->
-    <div class="mb-4">
-        <div class="flex items-center justify-between mb-2.5">
+    <div class="mb-4 md:mb-0 md:px-8 md:py-3 md:bg-white md:border-b md:border-slate-200 md:flex md:flex-wrap md:items-center md:justify-between md:gap-4">
+        <div class="flex items-center justify-between mb-2.5 md:mb-0 md:gap-4">
             <div>
-                <h3 class="text-xs font-bold text-slate-800 tracking-wide uppercase" id="mapTitle">Peta Heatmap Kelayakan</h3>
+                <h3 class="text-xs md:text-sm font-bold text-slate-800 tracking-wide uppercase" id="mapTitle">Peta Heatmap Kelayakan</h3>
                 <p class="text-[11px] text-slate-500 mt-0.5" id="mapSubtitle">Kondisi segmen jalur ramah pejalan kaki</p>
             </div>
             <!-- Mode Toggle Switcher -->
-            <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+            <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 shrink-0">
                 <button type="button" onclick="setMapMode('heatmap')" id="btnModeHeatmap" class="px-2.5 py-1 rounded-lg text-xs font-bold transition bg-brand-600 text-white shadow-sm flex items-center gap-1">
                     <span>Heatmap</span>
                 </button>
@@ -347,7 +346,7 @@
         </div>
 
         <!-- Integrated Status & Category Filter (1 Row Dropdown) -->
-        <div class="grid grid-cols-2 gap-2 mb-2.5 transition-all" id="statusFilterGroup">
+        <div class="grid grid-cols-2 gap-2 mb-2.5 md:mb-0 md:flex md:items-center md:gap-3 transition-all" id="statusFilterGroup">
             <!-- Filter Status Dropdown -->
             <div class="relative">
                 <select id="selectStatusFilter" onchange="selectRepairFilter(this.value)"
@@ -394,8 +393,8 @@
     </div>
 
         <!-- Map Container with Relative Overlay -->
-        <div class="relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
-            <div id="map" class="lg:!h-[calc(100vh-16rem)] lg:!min-h-[480px] lg:!max-h-none"></div>
+        <div class="relative rounded-2xl md:rounded-none overflow-hidden border border-slate-200 md:border-x-0 md:border-t-0 shadow-sm md:shadow-none">
+            <div id="map" class="md:!h-[calc(100dvh-8.5rem)] md:!min-h-[520px] md:!max-h-none md:!rounded-none"></div>
 
             <!-- Heatmap Loading Spinner Indicator -->
             <div id="mapLoading" class="hidden absolute top-3 left-12 z-20 bg-white/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl shadow-md border border-slate-100 flex items-center gap-2">
@@ -458,7 +457,8 @@
         </div>
 
         <!-- Floating Dynamic Legend Card (FR-F6-05, Only for Heatmap Mode) -->
-        <div id="legendContainer" class="mt-2.5 bg-white rounded-2xl p-3 border border-slate-100 shadow-sm transition-all">
+        <div class="md:max-w-7xl md:mx-auto md:px-8">
+        <div id="legendContainer" class="mt-2.5 md:mt-6 bg-white rounded-2xl p-3 md:p-4 border border-slate-100 md:border-slate-200 shadow-sm transition-all">
             <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-1.5">
                     <span class="text-xs font-bold text-slate-700">Kepadatan Titik Aduan</span>
@@ -499,6 +499,7 @@
         </div>
 
         <p class="text-[11px] text-slate-400 mt-1.5 text-center">© OpenStreetMap contributors</p>
+        </div>
     </div>
 </div>
 
