@@ -71,8 +71,6 @@ services:
       dockerfile: Dockerfile
     container_name: pedestriroute_cv
     restart: unless-stopped
-    volumes:
-      - ../cv-service/models:/app/models
     environment:
       - CV_MOCK=${CV_MOCK:-false}
       - CV_MODEL_PATH=/app/models/pedestriroute_classifier.onnx
@@ -81,7 +79,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 15s
+      start_period: 120s
 
   queue:
     build:

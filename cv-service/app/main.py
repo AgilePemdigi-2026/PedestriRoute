@@ -34,6 +34,7 @@ CATEGORY_DISPLAY_NAMES = {
 # ONNX Runtime Sessions
 ort_session = None
 SPECIALIST_SESSIONS = {}
+MODEL_LOAD_ERRORS = []
 SPECIALIST_CLASSES = ["BAIK", "RUSAK", "SPAM"]
 
 CATEGORY_SLUG_MAP = {
@@ -72,7 +73,9 @@ def resolve_category_slug(cat_str: Optional[str]) -> str:
 
 def load_model():
     global ort_session, SPECIALIST_SESSIONS
+    ort_session = None
     SPECIALIST_SESSIONS = {}
+    MODEL_LOAD_ERRORS.clear()
     if not CV_MOCK:
         try:
             import onnxruntime as ort
@@ -86,6 +89,7 @@ def load_model():
                         SPECIALIST_SESSIONS[cat_key] = ort.InferenceSession(cat_path, providers=["CPUExecutionProvider"])
                         print(f"Loaded specialist ONNX model: {cat_key} from {cat_path}")
                     except Exception as ex:
+                        MODEL_LOAD_ERRORS.append(f"{cat_key}: {ex}")
                         print(f"Warning: Failed loading specialist {cat_path}: {ex}")
             
             # 2. Legacy / fallback monolithic model (if present)
@@ -93,8 +97,13 @@ def load_model():
                 ort_session = ort.InferenceSession(MODEL_PATH, providers=["CPUExecutionProvider"])
                 print(f"Loaded fallback ONNX model from {MODEL_PATH}")
         except Exception as e:
-            print(f"Warning: Failed to load ONNX model ({e}). Will fallback to mock.")
+            MODEL_LOAD_ERRORS.append(str(e))
+            print(f"Warning: Failed to load ONNX model ({e}). Check /health for readiness.")
             ort_session = None
+        if not SPECIALIST_SESSIONS and ort_session is None:
+            message = f"No usable ONNX models loaded from {os.path.dirname(MODEL_PATH)}. Check model files and Git LFS checkout."
+            MODEL_LOAD_ERRORS.append(message)
+            print(f"Error: {message}")
     else:
         ort_session = None
 
@@ -109,7 +118,8 @@ def health_check():
         "model_ready": len(SPECIALIST_SESSIONS) > 0 or ort_session is not None or CV_MOCK,
         "specialists_loaded": list(SPECIALIST_SESSIONS.keys()),
         "mock_mode": CV_MOCK,
-        "model_path": MODEL_PATH
+        "model_path": MODEL_PATH,
+        "model_load_errors": MODEL_LOAD_ERRORS,
     }
 
 def softmax(x):
