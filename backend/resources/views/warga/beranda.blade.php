@@ -223,8 +223,7 @@
 
 @section('content')
 <div class="px-5 pt-6 pb-20 flex flex-col flex-1 w-full md:relative md:h-[calc(100dvh-4rem)] md:flex-none md:overflow-hidden md:p-0">
-    <div class="order-1 md:order-2 md:absolute md:top-4 md:left-4 md:z-20 md:w-[360px] md:pointer-events-none">
-    <!-- Top Header (Mobile Only; Desktop uses top navbar) -->
+    <!-- Mobile Top Header (Hidden on Desktop) -->
     <div class="flex items-center justify-between mb-4 md:hidden">
         <div>
             <h1 class="text-base font-extrabold text-slate-900 tracking-tight">PedestriRoute</h1>
@@ -236,7 +235,7 @@
                 data-notification-link
                 onclick="window.location.href='/notifikasi'"
                 class="relative w-8 h-8 rounded-xl bg-slate-100 flex items-center
-                    justify-center text-slate-600 hover:bg-slate-200 transition md:hidden"
+                    justify-center text-slate-600 hover:bg-slate-200 transition"
                 aria-label="Notifikasi">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -271,193 +270,187 @@
         </div>
     </div>
 
-    <!-- Active AI Analysis Banner (Appears when counts.diproses > 0) -->
-    <div id="aiAnalysisBanner" class="hidden mb-3 p-3 bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200 rounded-2xl shadow-sm md:shadow-xl md:pointer-events-auto flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-            <span class="w-8 h-8 rounded-xl bg-sky-500 text-white flex items-center justify-center text-xs animate-pulse">
-                <i class="fa-solid fa-radar"></i>
-            </span>
-            <div>
-                <p class="text-xs font-bold text-sky-950">Analisis ML Berjalan</p>
-                <p id="aiAnalysisCountText" class="text-[11px] text-sky-700">Aduan sedang diproses Computer Vision</p>
-            </div>
-        </div>
-        <a href="/riwayat-laporan?status=DIPROSES" class="px-2.5 py-1 bg-sky-600 hover:bg-sky-700 text-white text-[11px] font-bold rounded-lg transition shadow-sm shrink-0">
-            Lihat
-        </a>
-    </div>
+    <!-- Map Container (Full Screen on Desktop) -->
+    <div class="order-2 md:order-1 relative rounded-2xl md:rounded-none overflow-hidden border border-slate-200 md:border-0 shadow-sm md:shadow-none md:absolute md:inset-0 md:w-full md:h-full">
+        <div id="map" class="md:!h-full md:!min-h-0 md:!max-h-none md:!rounded-none"></div>
 
-    <!-- User Welcome & Quick Action Card -->
-    <div class="bg-white md:bg-white/95 md:backdrop-blur-md rounded-2xl p-4 border border-slate-100 md:border-slate-200/80 shadow-sm md:shadow-xl mb-4 md:mb-0 md:pointer-events-auto">
-        <div class="flex items-center justify-between mb-3">
-            <div>
-                <h2 class="text-sm font-bold text-slate-900">Halo, <span id="greetingName">Warga</span></h2>
-            </div>
-            <a href="/lapor-kondisi" class="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center gap-1.5 transition shrink-0">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        <!-- Heatmap Loading Spinner Indicator -->
+        <div id="mapLoading" class="hidden absolute top-3 left-12 md:top-4 md:left-14 z-20 bg-white/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl shadow-md border border-slate-100 flex items-center gap-2">
+            <svg class="w-3.5 h-3.5 animate-spin text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span class="text-[11px] font-bold text-slate-700">Memperbarui peta...</span>
+        </div>
+
+        <!-- Floating Top-Right Map Controls: Lokasi Saya -->
+        <div class="absolute top-3 right-3 md:top-4 md:right-4 z-20 flex flex-col gap-2">
+            <button type="button" onclick="locateUser()" id="btnLocateUser"
+                class="w-9 h-9 rounded-xl bg-white/95 backdrop-blur-md text-slate-700 hover:text-brand-700 hover:bg-white shadow-md border border-slate-200/80 flex items-center justify-center transition active:scale-95"
+                title="Pusatkan ke lokasi saya" aria-label="Lokasi Saya">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="3" fill="currentColor"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v3m0 14v3M2 12h3m14 0h3"/>
+                    <circle cx="12" cy="12" r="7" stroke="currentColor"/>
                 </svg>
-                <span>Lapor</span>
-            </a>
+            </button>
         </div>
 
-        <!-- Status Laporan Saya Stats -->
-        <div class="pt-3 border-t border-slate-50">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-semibold text-slate-700">Laporan Saya</span>
-                <a href="/riwayat-laporan" id="totalReportsCount" class="text-xs font-bold text-brand-600 hover:text-brand-700 transition">
-                    Total: 0 →
-                </a>
-            </div>
-            <div class="grid grid-cols-3 gap-2">
-                <a href="/riwayat-laporan" class="bg-amber-50/70 border border-amber-100/80 rounded-xl p-2.5 text-center hover:bg-amber-100/60 transition">
-                    <p class="text-[11px] font-semibold text-amber-800">Menunggu</p>
-                    <p id="countMenunggu" class="text-base font-extrabold text-amber-900 mt-0.5">0</p>
-                </a>
-                <a href="/riwayat-laporan" class="bg-emerald-50/70 border border-emerald-100/80 rounded-xl p-2.5 text-center hover:bg-emerald-100/60 transition">
-                    <p class="text-[11px] font-semibold text-emerald-800">Valid</p>
-                    <p id="countTervalidasi" class="text-base font-extrabold text-emerald-900 mt-0.5">0</p>
-                </a>
-                <a href="/riwayat-laporan" class="bg-rose-50/70 border border-rose-100/80 rounded-xl p-2.5 text-center hover:bg-rose-100/60 transition">
-                    <p class="text-[11px] font-semibold text-rose-800">Ditolak</p>
-                    <p id="countDitolak" class="text-base font-extrabold text-rose-900 mt-0.5">0</p>
-                </a>
-            </div>
-        </div>
-    </div>
-    </div>
-    <div class="order-2 md:order-1 w-full md:absolute md:inset-0 md:h-full">
-    <!-- Map Section (Toggleable: Heatmap / Normal Map) -->
-    <div class="mb-4 md:mb-0 md:absolute md:top-4 md:right-14 md:z-20 md:bg-white/95 md:backdrop-blur-md md:rounded-2xl md:p-3 md:shadow-xl md:border md:border-slate-200/80 md:flex md:flex-col md:gap-2">
-        <div class="flex items-center justify-between mb-2.5 md:mb-0 md:gap-4">
-            <div>
-                <h3 class="text-xs md:text-sm font-bold text-slate-800 tracking-wide uppercase" id="mapTitle">Peta Heatmap Kelayakan</h3>
-                <p class="text-[11px] text-slate-500 mt-0.5" id="mapSubtitle">Kondisi segmen jalur ramah pejalan kaki</p>
-            </div>
-            <!-- Mode Toggle Switcher -->
-            <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 shrink-0">
-                <button type="button" onclick="setMapMode('heatmap')" id="btnModeHeatmap" class="px-2.5 py-1 rounded-lg text-xs font-bold transition bg-brand-600 text-white shadow-sm flex items-center gap-1">
-                    <span>Heatmap</span>
-                </button>
-                <button type="button" onclick="setMapMode('normal')" id="btnModeNormal" class="px-2.5 py-1 rounded-lg text-xs font-bold transition text-slate-600 hover:text-slate-900 flex items-center gap-1">
-                    <span>Standar</span>
-                </button>
-            </div>
+        <!-- Truncated / Zoom In Warning Banner (FR-F6-08) -->
+        <div id="mapNotice" class="hidden absolute bottom-3 left-3 right-3 md:bottom-auto md:top-4 md:left-1/2 md:-translate-x-1/2 md:right-auto z-20 bg-amber-500/95 text-white px-3 py-2 rounded-xl text-center text-xs font-semibold shadow-lg backdrop-blur-sm">
+            Perbesar peta untuk melihat semua segmen jalur.
         </div>
 
-        <!-- Integrated Status & Category Filter (1 Row Dropdown) -->
-        <div class="grid grid-cols-2 gap-2 mb-2.5 md:mb-0 md:flex md:items-center md:gap-3 transition-all" id="statusFilterGroup">
-            <!-- Filter Status Dropdown -->
-            <div class="relative">
-                <select id="selectStatusFilter" onchange="selectRepairFilter(this.value)"
-                    class="w-full pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm appearance-none cursor-pointer transition">
-                    <option value="aktif">🟡 Aduan Aktif</option>
-                    <option value="sedang">🔵 Sedang Dikerjakan</option>
-                    <option value="selesai">🟢 Sudah Diperbaiki</option>
-                    <option value="semua">⚪ Semua Status</option>
-                </select>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        <!-- Empty Data Notice Overlay (FR-F6-03, FR-F6-04) -->
+        <div id="mapEmptyNotice" class="hidden absolute inset-0 z-20 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl p-4 text-center max-w-xs shadow-xl border border-slate-100">
+                <div class="w-10 h-10 bg-slate-100 text-slate-400 rounded-xl flex items-center justify-center mx-auto mb-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" stroke-linecap="round" stroke-linejoin="round"/>
+                        <line x1="9" y1="3" x2="9" y2="18"/>
+                        <line x1="15" y1="6" x2="15" y2="21"/>
                     </svg>
                 </div>
-            </div>
-
-            <!-- Filter Kategori Dropdown -->
-            <div class="relative">
-                <select id="selectCategoryFilter" onchange="selectCategory(this.value === '' ? null : parseInt(this.value, 10))"
-                    class="w-full pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm appearance-none cursor-pointer transition">
-                    <option value="">Semua Kategori</option>
-                    <option value="1">Trotoar Rusak</option>
-                    <option value="2">Masalah Drainase</option>
-                    <option value="3">Guiding Block</option>
-                    <option value="5">Parkir Liar</option>
-                </select>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        <!-- Hidden container to preserve categoryChips reference if needed -->
-        <div id="categoryChips" class="hidden"></div>
-
-        <!-- Normal Map Service Area Info Banner (Only for Normal Mode) -->
-        <div id="normalMapBanner" class="hidden mb-2 flex items-center gap-1.5 text-xs text-slate-500 px-0.5" role="note">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-            <span>Wilayah Layanan Aktif: <span class="font-medium text-slate-700">Kecamatan Mulyorejo, Surabaya</span></span>
-        </div>
-
-    </div>
-
-        <!-- Map Container with Relative Overlay -->
-        <div class="relative rounded-2xl md:rounded-none overflow-hidden border border-slate-200 md:border-0 shadow-sm md:shadow-none md:w-full md:h-full">
-            <div id="map" class="md:!h-full md:!min-h-0 md:!max-h-none md:!rounded-none"></div>
-
-            <!-- Heatmap Loading Spinner Indicator -->
-            <div id="mapLoading" class="hidden absolute top-3 left-12 md:top-4 md:left-[390px] z-20 bg-white/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl shadow-md border border-slate-100 flex items-center gap-2">
-                <svg class="w-3.5 h-3.5 animate-spin text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                <span class="text-[11px] font-bold text-slate-700">Memperbarui peta...</span>
-            </div>
-
-            <!-- Floating Top-Right Map Controls: Lokasi Saya & Toggle Jalur -->
-            <div class="absolute top-3 right-3 z-20 flex flex-col gap-2">
-                <!-- Lokasi Saya Button -->
-                <button type="button" onclick="locateUser()" id="btnLocateUser"
-                    class="w-9 h-9 rounded-xl bg-white/95 backdrop-blur-md text-slate-700 hover:text-brand-700 hover:bg-white shadow-md border border-slate-200/80 flex items-center justify-center transition active:scale-95"
-                    title="Pusatkan ke lokasi saya" aria-label="Lokasi Saya">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="3" fill="currentColor"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v3m0 14v3M2 12h3m14 0h3"/>
-                        <circle cx="12" cy="12" r="7" stroke="currentColor"/>
-                    </svg>
+                <p class="text-xs font-bold text-slate-800" id="emptyNoticeTitle">Data tidak tersedia</p>
+                <p class="text-xs text-slate-500 mt-1 leading-relaxed" id="emptyNoticeMsg">Data kelayakan jalur belum tersedia untuk area ini.</p>
+                <button onclick="dismissEmptyNotice()" class="mt-3 px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition">
+                    Tutup
                 </button>
             </div>
+        </div>
 
-            <!-- Truncated / Zoom In Warning Banner (FR-F6-08) -->
-            <div id="mapNotice" class="hidden absolute bottom-3 left-3 right-3 z-20 bg-amber-500/95 text-white px-3 py-2 rounded-xl text-center text-xs font-semibold shadow-lg backdrop-blur-sm">
-                Perbesar peta untuk melihat semua segmen jalur.
+        <!-- In-Map Report Bottom Sheet (Opsi B) -->
+        <div id="reportBottomSheet" class="absolute bottom-0 inset-x-0 z-30 transform translate-y-full opacity-0 pointer-events-none bg-white rounded-t-3xl shadow-2xl border-t border-slate-200/80 max-h-[60%] md:left-auto md:right-4 md:bottom-44 md:w-[420px] md:rounded-3xl md:border md:max-h-[65%] flex flex-col transition-all">
+            <div id="sheetDragHandle" class="w-full pt-2.5 pb-1 flex justify-center cursor-pointer select-none" onclick="closeReportBottomSheet()" title="Tutup lembar aduan">
+                <div class="w-10 h-1 bg-slate-300 rounded-full hover:bg-slate-400 transition"></div>
             </div>
+            <div id="sheetHeader" class="px-4 py-2 border-b border-slate-100 flex items-center justify-between"></div>
+            <div id="sheetBody" class="p-4 overflow-y-auto max-h-[calc(640px*0.52)] md:max-h-[55vh] scrollbar-thin"></div>
+        </div>
+    </div>
 
-            <!-- Empty Data Notice Overlay (FR-F6-03, FR-F6-04) -->
-            <div id="mapEmptyNotice" class="hidden absolute inset-0 z-20 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-                <div class="bg-white rounded-2xl p-4 text-center max-w-xs shadow-xl border border-slate-100">
-                    <div class="w-10 h-10 bg-slate-100 text-slate-400 rounded-xl flex items-center justify-center mx-auto mb-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" stroke-linecap="round" stroke-linejoin="round"/>
-                            <line x1="9" y1="3" x2="9" y2="18"/>
-                            <line x1="15" y1="6" x2="15" y2="21"/>
-                        </svg>
+    <!-- Unified Bottom Dock Bar on Desktop (Contents on Mobile) -->
+    <div class="contents md:absolute md:bottom-4 md:inset-x-4 md:z-20 md:max-w-7xl md:mx-auto md:bg-white/95 md:backdrop-blur-md md:rounded-2xl md:shadow-2xl md:border md:border-slate-200/90 md:p-4 md:grid md:grid-cols-[minmax(250px,1.05fr)_minmax(280px,1.15fr)_minmax(250px,1fr)] md:gap-5 md:items-center">
+        <!-- Col 1: Welcome & Quick Action -->
+        <div class="order-1">
+            <!-- Active AI Analysis Banner (Appears when counts.diproses > 0) -->
+            <div id="aiAnalysisBanner" class="hidden mb-3 md:mb-2 p-3 md:p-2.5 bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200 rounded-2xl shadow-sm flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-xl bg-sky-500 text-white flex items-center justify-center text-xs animate-pulse">
+                        <i class="fa-solid fa-radar"></i>
+                    </span>
+                    <div>
+                        <p class="text-xs font-bold text-sky-950">Analisis ML Berjalan</p>
+                        <p id="aiAnalysisCountText" class="text-[11px] text-sky-700">Aduan sedang diproses Computer Vision</p>
                     </div>
-                    <p class="text-xs font-bold text-slate-800" id="emptyNoticeTitle">Data tidak tersedia</p>
-                    <p class="text-xs text-slate-500 mt-1 leading-relaxed" id="emptyNoticeMsg">Data kelayakan jalur belum tersedia untuk area ini.</p>
-                    <button onclick="dismissEmptyNotice()" class="mt-3 px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition">
-                        Tutup
+                </div>
+                <a href="/riwayat-laporan?status=DIPROSES" class="px-2.5 py-1 bg-sky-600 hover:bg-sky-700 text-white text-[11px] font-bold rounded-lg transition shadow-sm shrink-0">
+                    Lihat
+                </a>
+            </div>
+
+            <!-- User Welcome & Quick Action Card -->
+            <div class="bg-white md:bg-transparent rounded-2xl md:rounded-none p-4 md:p-0 border border-slate-100 md:border-0 shadow-sm md:shadow-none mb-4 md:mb-0">
+                <div class="flex items-center justify-between mb-3 md:mb-2">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900">Halo, <span id="greetingName">Warga</span></h2>
+                    </div>
+                    <a href="/lapor-kondisi" class="px-3.5 py-2 md:py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center gap-1.5 transition shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span>Lapor</span>
+                    </a>
+                </div>
+
+                <!-- Status Laporan Saya Stats -->
+                <div class="pt-3 md:pt-2 border-t border-slate-100">
+                    <div class="flex items-center justify-between mb-2 md:mb-1.5">
+                        <span class="text-xs font-semibold text-slate-700">Laporan Saya</span>
+                        <a href="/riwayat-laporan" id="totalReportsCount" class="text-xs font-bold text-brand-600 hover:text-brand-700 transition">
+                            Total: 0 →
+                        </a>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <a href="/riwayat-laporan" class="bg-amber-50/70 border border-amber-100/80 rounded-xl p-2.5 md:py-1.5 md:px-2 text-center hover:bg-amber-100/60 transition">
+                            <p class="text-[11px] font-semibold text-amber-800">Menunggu</p>
+                            <p id="countMenunggu" class="text-base md:text-sm font-extrabold text-amber-900 mt-0.5">0</p>
+                        </a>
+                        <a href="/riwayat-laporan" class="bg-emerald-50/70 border border-emerald-100/80 rounded-xl p-2.5 md:py-1.5 md:px-2 text-center hover:bg-emerald-100/60 transition">
+                            <p class="text-[11px] font-semibold text-emerald-800">Valid</p>
+                            <p id="countTervalidasi" class="text-base md:text-sm font-extrabold text-emerald-900 mt-0.5">0</p>
+                        </a>
+                        <a href="/riwayat-laporan" class="bg-rose-50/70 border border-rose-100/80 rounded-xl p-2.5 md:py-1.5 md:px-2 text-center hover:bg-rose-100/60 transition">
+                            <p class="text-[11px] font-semibold text-rose-800">Ditolak</p>
+                            <p id="countDitolak" class="text-base md:text-sm font-extrabold text-rose-900 mt-0.5">0</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Col 2: Map Mode & Filters -->
+        <div class="order-1 mb-4 md:mb-0 md:border-x md:border-slate-200/80 md:px-5">
+            <div class="flex items-center justify-between mb-2.5 gap-2">
+                <div>
+                    <h3 class="text-xs font-bold text-slate-800 tracking-wide uppercase" id="mapTitle">Peta Heatmap Kelayakan</h3>
+                    <p class="text-[11px] text-slate-500 mt-0.5" id="mapSubtitle">Kondisi segmen jalur ramah pejalan kaki</p>
+                </div>
+                <!-- Mode Toggle Switcher -->
+                <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 shrink-0">
+                    <button type="button" onclick="setMapMode('heatmap')" id="btnModeHeatmap" class="px-2.5 py-1 rounded-lg text-xs font-bold transition bg-brand-600 text-white shadow-sm flex items-center gap-1">
+                        <span>Heatmap</span>
+                    </button>
+                    <button type="button" onclick="setMapMode('normal')" id="btnModeNormal" class="px-2.5 py-1 rounded-lg text-xs font-bold transition text-slate-600 hover:text-slate-900 flex items-center gap-1">
+                        <span>Standar</span>
                     </button>
                 </div>
             </div>
 
-            <!-- In-Map Report Bottom Sheet (Opsi B) -->
-            <div id="reportBottomSheet" class="absolute bottom-0 inset-x-0 z-30 transform translate-y-full opacity-0 pointer-events-none bg-white rounded-t-3xl shadow-2xl border-t border-slate-200/80 max-h-[60%] md:left-auto md:right-4 md:bottom-4 md:w-[420px] md:rounded-3xl md:border md:max-h-[75%] flex flex-col transition-all">
-                <!-- Grab Handle Bar -->
-                <div id="sheetDragHandle" class="w-full pt-2.5 pb-1 flex justify-center cursor-pointer select-none" onclick="closeReportBottomSheet()" title="Tutup lembar aduan">
-                    <div class="w-10 h-1 bg-slate-300 rounded-full hover:bg-slate-400 transition"></div>
+            <!-- Integrated Status & Category Filter (1 Row Dropdown) -->
+            <div class="grid grid-cols-2 gap-2 mb-2.5 md:mb-0 transition-all" id="statusFilterGroup">
+                <div class="relative">
+                    <select id="selectStatusFilter" onchange="selectRepairFilter(this.value)"
+                        class="w-full pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm appearance-none cursor-pointer transition">
+                        <option value="aktif">🟡 Aduan Aktif</option>
+                        <option value="sedang">🔵 Sedang Dikerjakan</option>
+                        <option value="selesai">🟢 Sudah Diperbaiki</option>
+                        <option value="semua">⚪ Semua Status</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
                 </div>
 
-                <!-- Sheet Dynamic Header -->
-                <div id="sheetHeader" class="px-4 py-2 border-b border-slate-100 flex items-center justify-between"></div>
+                <div class="relative">
+                    <select id="selectCategoryFilter" onchange="selectCategory(this.value === '' ? null : parseInt(this.value, 10))"
+                        class="w-full pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm appearance-none cursor-pointer transition">
+                        <option value="">Semua Kategori</option>
+                        <option value="1">Trotoar Rusak</option>
+                        <option value="2">Masalah Drainase</option>
+                        <option value="3">Guiding Block</option>
+                        <option value="5">Parkir Liar</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
 
-                <!-- Sheet Dynamic Scrollable Body -->
-                <div id="sheetBody" class="p-4 overflow-y-auto max-h-[calc(640px*0.52)] md:max-h-[60vh] scrollbar-thin"></div>
+            <div id="categoryChips" class="hidden"></div>
+
+            <!-- Normal Map Service Area Info Banner (Only for Normal Mode) -->
+            <div id="normalMapBanner" class="hidden mt-2 flex items-center gap-1.5 text-xs text-slate-500 px-0.5" role="note">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                <span>Wilayah Layanan Aktif: <span class="font-medium text-slate-700">Kecamatan Mulyorejo, Surabaya</span></span>
             </div>
         </div>
 
-        <!-- Floating Dynamic Legend Card (FR-F6-05, Only for Heatmap Mode) -->
-        <div id="legendContainer" class="mt-2.5 md:mt-0 md:absolute md:bottom-4 md:left-4 md:z-20 md:w-[360px] bg-white md:bg-white/95 md:backdrop-blur-md rounded-2xl p-3 border border-slate-100 md:border-slate-200/80 shadow-sm md:shadow-xl transition-all">
+        <!-- Col 3: Floating Dynamic Legend Card (FR-F6-05, Only for Heatmap Mode) -->
+        <div id="legendContainer" class="order-3 mt-2.5 md:mt-0 bg-white md:bg-transparent rounded-2xl md:rounded-none p-3 md:p-0 border border-slate-100 md:border-0 shadow-sm md:shadow-none transition-all">
             <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-1.5">
                     <span class="text-xs font-bold text-slate-700">Kepadatan Titik Aduan</span>
@@ -496,9 +489,9 @@
                 </button>
             </div>
         </div>
-
-        <p class="text-[11px] text-slate-400 mt-1.5 text-center md:absolute md:bottom-2 md:right-3 md:z-20 md:bg-white/85 md:px-2 md:py-0.5 md:rounded-md md:mt-0">© OpenStreetMap contributors</p>
     </div>
+
+    <p class="order-4 text-[11px] text-slate-400 mt-1.5 text-center md:hidden">© OpenStreetMap contributors</p>
 </div>
 
 <!-- Modal Kelengkapan Nomor HP -->

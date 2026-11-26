@@ -44,15 +44,16 @@
         </div>
     </div>
 
-    <div class="contents">
-    <!-- Floating Top Search Card -->
-    <div class="absolute inset-x-0 top-0 z-30 px-3 pt-3 pointer-events-none md:inset-x-auto md:left-4 md:top-4 md:w-[390px] md:p-0">
-        <div class="pointer-events-auto bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-lg p-2.5 space-y-2">
+    <div class="contents md:block md:absolute md:bottom-4 md:inset-x-4 md:z-30 md:max-w-7xl md:mx-auto md:pointer-events-none">
+    <!-- Floating Top Search Card (Bottom Bar on Desktop) -->
+    <div class="absolute inset-x-0 top-0 z-30 px-3 pt-3 pointer-events-none md:static md:p-0">
+        <div class="pointer-events-auto bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-lg md:shadow-2xl p-2.5 md:p-4 space-y-2 md:space-y-2.5">
+            <div class="md:grid md:grid-cols-[minmax(0,1.6fr)_minmax(260px,1fr)] md:gap-4 md:items-center">
             <!-- Form Titik Awal & Titik Tujuan with Swap Button -->
             <div class="relative flex items-center gap-1.5">
-                <div class="flex-1 space-y-1.5 min-w-0">
+                <div class="flex-1 space-y-1.5 md:space-y-0 md:grid md:grid-cols-2 md:gap-2 min-w-0">
                     <!-- Titik Awal -->
-                    <div class="relative flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500">
+                    <div class="relative flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 md:py-1.5 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500">
                         <span class="w-5 h-5 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center shrink-0 text-[10px] font-black">A</span>
                         <input id="originInput" type="text" autocomplete="off" maxlength="160" aria-label="Alamat titik awal" placeholder="Ketik alamat, jalan, atau lokasi awal…"
                             class="w-full bg-transparent ml-2 text-xs font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none">
@@ -63,11 +64,11 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v3m0 14v3M2 12h3m14 0h3" />
                             </svg>
                         </button>
-                        <ul id="originList" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white rounded-2xl shadow-2xl border border-slate-100 py-1.5 z-50 max-h-52 overflow-y-auto custom-scrollbar"></ul>
+                        <ul id="originList" class="hidden absolute left-0 right-0 top-full mt-1.5 md:top-auto md:bottom-full md:mt-0 md:mb-1.5 bg-white rounded-2xl shadow-2xl border border-slate-100 py-1.5 z-50 max-h-52 overflow-y-auto custom-scrollbar"></ul>
                     </div>
 
                     <!-- Titik Tujuan -->
-                    <div class="relative flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500">
+                    <div class="relative flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 md:py-1.5 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500">
                         <span class="w-5 h-5 rounded-full bg-brand-100 text-brand-800 flex items-center justify-center shrink-0 text-[10px] font-black">B</span>
                         <input id="destInput" type="text" autocomplete="off" maxlength="160" aria-label="Alamat tujuan" placeholder="Ketik alamat tujuan di Mulyorejo…"
                             class="w-full bg-transparent ml-2 text-xs font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none">
@@ -77,66 +78,69 @@
                                 <path stroke-linecap="round" d="M6 6l12 12M18 6 6 18" />
                             </svg>
                         </button>
-                        <ul id="destList" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white rounded-2xl shadow-2xl border border-slate-100 py-1.5 z-50 max-h-52 overflow-y-auto custom-scrollbar"></ul>
+                        <ul id="destList" class="hidden absolute left-0 right-0 top-full mt-1.5 md:top-auto md:bottom-full md:mt-0 md:mb-1.5 bg-white rounded-2xl shadow-2xl border border-slate-100 py-1.5 z-50 max-h-52 overflow-y-auto custom-scrollbar"></ul>
                     </div>
                 </div>
 
                 <!-- Swap Button -->
                 <button type="button" id="btnSwap" title="Tukar Titik Awal & Tujuan"
-                    class="w-8 h-14 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 flex items-center justify-center shrink-0 active:scale-95 transition">
+                    class="w-8 h-14 md:h-9 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 flex items-center justify-center shrink-0 active:scale-95 transition">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4" />
                     </svg>
                 </button>
             </div>
 
-            <p class="text-[10px] text-slate-500">Ketik alamat atau nama jalan, lalu pilih rekomendasi lokasi di sekitar Mulyorejo.</p>
-
-            <!-- Preference Toggle Pills -->
-            <div class="flex items-center gap-1.5 pt-0.5">
-                <div class="grid grid-cols-2 gap-1 flex-1 bg-slate-100 p-0.5 rounded-xl border border-slate-200">
-                    <button type="button" data-pref="safest"
-                        class="pref-chip h-7 px-2 rounded-lg text-[11px] font-extrabold border transition flex items-center justify-center gap-1 shadow-sm">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                        <span>Teraman</span>
-                    </button>
-                    <button type="button" data-pref="fastest"
-                        class="pref-chip h-7 px-2 rounded-lg text-[11px] font-extrabold border transition flex items-center justify-center gap-1 shadow-sm">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                        <span>Tercepat</span>
-                    </button>
+            <div class="mt-2 md:mt-0 flex flex-col md:flex-row md:items-center gap-2">
+                <!-- Preference Toggle Pills -->
+                <div class="flex items-center gap-1.5 pt-0.5 md:pt-0 md:flex-1">
+                    <div class="grid grid-cols-2 gap-1 flex-1 bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+                        <button type="button" data-pref="safest"
+                            class="pref-chip h-7 md:h-8 px-2 rounded-lg text-[11px] font-extrabold border transition flex items-center justify-center gap-1 shadow-sm">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                            <span>Teraman</span>
+                        </button>
+                        <button type="button" data-pref="fastest"
+                            class="pref-chip h-7 md:h-8 px-2 rounded-lg text-[11px] font-extrabold border transition flex items-center justify-center gap-1 shadow-sm">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <span>Tercepat</span>
+                        </button>
+                    </div>
+                    <span id="mapEngineBadge" class="hidden text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg">OSRM</span>
                 </div>
-                <span id="mapEngineBadge" class="hidden text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg">OSRM</span>
+
+                <!-- Confirm / Cari Rute Button -->
+                <button type="button" id="btnFindRoute"
+                    class="w-full md:w-auto md:px-5 h-8 md:h-9 bg-brand-700 hover:bg-brand-800 text-white font-extrabold text-xs rounded-xl shadow-sm transition active:scale-[0.98] flex items-center justify-center gap-1.5 shrink-0">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                    </svg>
+                    <span id="btnFindRouteText">Cari Rute Pejalan Kaki</span>
+                </button>
+            </div>
             </div>
 
-            <!-- Confirm / Cari Rute Button -->
-            <button type="button" id="btnFindRoute"
-                class="w-full h-8 bg-brand-700 hover:bg-brand-800 text-white font-extrabold text-xs rounded-xl shadow-sm transition active:scale-[0.98] flex items-center justify-center gap-1.5">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                </svg>
-                <span id="btnFindRouteText">Cari Rute Pejalan Kaki</span>
-            </button>
-
-            <!-- Quick destination chips -->
-            <div id="quickChipsBar" class="flex items-center gap-1 overflow-x-auto pb-0.5 text-[10px] custom-scrollbar">
-                <span class="text-slate-400 font-bold shrink-0">Cepat:</span>
-                <button type="button" class="quick-chip shrink-0 px-2 py-0.5 rounded-md bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-semibold border border-slate-200 transition" data-index="0">Unair C</button>
-                <button type="button" class="quick-chip shrink-0 px-2 py-0.5 rounded-md bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-semibold border border-slate-200 transition" data-index="1">RS Unair</button>
-                <button type="button" class="quick-chip shrink-0 px-2 py-0.5 rounded-md bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-semibold border border-slate-200 transition" data-index="4">Puskesmas</button>
-                <button type="button" class="quick-chip shrink-0 px-2 py-0.5 rounded-md bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-semibold border border-slate-200 transition" data-index="6">Pasar</button>
-                <button type="button" class="quick-chip shrink-0 px-2 py-0.5 rounded-md bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-semibold border border-slate-200 transition" data-index="8">Taman</button>
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-1.5">
+                <!-- Quick destination chips -->
+                <div id="quickChipsBar" class="flex items-center gap-1 overflow-x-auto pb-0.5 md:pb-0 text-[10px] custom-scrollbar">
+                    <span class="text-slate-400 font-bold shrink-0">Cepat:</span>
+                    <button type="button" class="quick-chip shrink-0 px-2 py-0.5 rounded-md bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-semibold border border-slate-200 transition" data-index="0">Unair C</button>
+                    <button type="button" class="quick-chip shrink-0 px-2 py-0.5 rounded-md bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-semibold border border-slate-200 transition" data-index="1">RS Unair</button>
+                    <button type="button" class="quick-chip shrink-0 px-2 py-0.5 rounded-md bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-semibold border border-slate-200 transition" data-index="4">Puskesmas</button>
+                    <button type="button" class="quick-chip shrink-0 px-2 py-0.5 rounded-md bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-semibold border border-slate-200 transition" data-index="6">Pasar</button>
+                    <button type="button" class="quick-chip shrink-0 px-2 py-0.5 rounded-md bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-semibold border border-slate-200 transition" data-index="8">Taman</button>
+                </div>
+                <p class="text-[9px] md:text-[10px] text-slate-400 shrink-0">Ketik alamat di sekitar Mulyorejo &bull; © OpenStreetMap contributors · Photon</p>
             </div>
-            <p class="text-[9px] text-slate-400">Pencarian alamat: © OpenStreetMap contributors · Photon</p>
         </div>
     </div>
 
-    <!-- Floating Bottom Summary Sheet -->
-    <div id="routeSummary" class="absolute bottom-16 inset-x-3 z-30 transform translate-y-[130%] opacity-0 pointer-events-none bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/90 p-3 md:bottom-4 md:left-4 md:right-auto md:w-[390px] md:p-4">
+    <!-- Floating Bottom Summary Sheet (Slides above Bottom Bar on Desktop) -->
+    <div id="routeSummary" class="absolute bottom-16 inset-x-3 z-30 transform translate-y-[130%] opacity-0 pointer-events-none bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/90 p-3 md:bottom-full md:mb-3 md:inset-x-0 md:w-full md:p-4">
         <!-- Compact Main Bar: Stats & Mulai Button -->
         <div class="flex items-center justify-between gap-3">
             <div class="min-w-0 flex-1">
