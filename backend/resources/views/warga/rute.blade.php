@@ -303,7 +303,7 @@
         lastRoute = null;
         const card = document.getElementById('routeSummary');
         if (card) {
-            card.classList.remove('translate-y-0', 'opacity-100');
+            card.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
             card.classList.add('translate-y-[130%]', 'opacity-0', 'pointer-events-none');
         }
         resetDetailsDrawer();
@@ -605,7 +605,7 @@
 
         const card = document.getElementById('routeSummary');
         card.classList.remove('translate-y-[130%]', 'opacity-0', 'pointer-events-none');
-        card.classList.add('translate-y-0', 'opacity-100');
+        card.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
     }
 
     async function drawRoute() {

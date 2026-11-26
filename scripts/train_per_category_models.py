@@ -2,7 +2,7 @@
 """
 PedestriRoute - Multi-Category Specialist Training & ONNX Export Pipeline (384x384)
 ===================================================================================
-Trains dedicated YOLOv8s-cls specialist models for all 5 pedestrian defect categories:
+Trains dedicated YOLOv8m-cls specialist models for all 5 pedestrian defect categories:
   1. trotoar        -> cv-service/models/trotoar_classifier.onnx
   2. drainase       -> cv-service/models/drainase_classifier.onnx
   3. guiding_block  -> cv-service/models/guiding_block_classifier.onnx
@@ -12,7 +12,7 @@ Trains dedicated YOLOv8s-cls specialist models for all 5 pedestrian defect categ
 Key Advantages:
   - Resolution 384x384: captures fine crack lines, tile dislodgements, and tactile paving studs.
   - Domain Isolation: zero cross-category conflict (e.g. sidewalk crack never competes with drainase).
-  - High Capacity: YOLOv8s (5.08M params) with deep feature fine-tuning (freeze=4).
+  - High Capacity: YOLOv8m (15.8M params) with deep feature fine-tuning (freeze=4).
 """
 
 import os
@@ -34,20 +34,33 @@ CATEGORIES = [
 ]
 
 
-def train_category(category_name, epochs=6, imgsz=384, batch=32):
+def detect_device():
+    import torch
+
+    if torch.cuda.is_available():
+        try:
+            _ = (torch.zeros(1, device="cuda") + 1).item()
+            return "0"
+        except Exception:
+            pass
+    return "cpu"
+
+
+def train_category(category_name, epochs=6, imgsz=384, batch=16):
     from ultralytics import YOLO
 
+    device = detect_device()
     cat_data_dir = os.path.join(DATA_BASE, category_name)
     if not os.path.exists(cat_data_dir):
         print(f"Skipping {category_name}: dataset directory not found at {cat_data_dir}")
         return False
 
     print("\n" + "=" * 70)
-    print(f"STARTING TRAINING: {category_name.upper()} SPECIALIST (YOLOv8s-cls @ {imgsz}x{imgsz})")
+    print(f"STARTING TRAINING: {category_name.upper()} SPECIALIST (YOLOv8m-cls @ {imgsz}x{imgsz}, device={device})")
     print("=" * 70)
     t0 = time.time()
 
-    model = YOLO("yolov8s-cls.pt")
+    model = YOLO("yolov8m-cls.pt")
     save_run_name = f"model_{category_name}"
 
     model.train(
@@ -55,7 +68,7 @@ def train_category(category_name, epochs=6, imgsz=384, batch=32):
         epochs=epochs,
         imgsz=imgsz,
         batch=batch,
-        device="cpu",
+        device=device,
         workers=6,
         freeze=4,           # Fine-tune layers 4..9 for fine-grained paving & surface defects
         patience=3,
