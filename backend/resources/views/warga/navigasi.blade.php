@@ -130,10 +130,15 @@
                 </div>
 
                 <!-- Preference -->
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-3 gap-2">
                     <button type="button" data-pref="safest" class="pref-chip h-10 rounded-xl text-xs font-extrabold border transition">
                         <span class="inline-flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-current"></span> Paling Aman
+                        </span>
+                    </button>
+                    <button type="button" data-pref="balanced" title="Boleh melewati beberapa titik laporan bila memutar terlalu jauh" class="pref-chip h-10 rounded-xl text-xs font-extrabold border transition">
+                        <span class="inline-flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-current"></span> Balance
                         </span>
                     </button>
                     <button type="button" data-pref="fastest" class="pref-chip h-10 rounded-xl text-xs font-extrabold border transition">
@@ -286,6 +291,7 @@
 
 @push('scripts')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+@include('partials.map-basemap')
 @include('partials.mulyorejo-service-area')
 @include('partials.route-hazards')
 <script>
@@ -321,7 +327,7 @@
     // Map Setup
     // -----------------------------------------------------------------
     const map = L.map('navMap', { attributionControl: false, zoomControl: false }).setView([-7.2663, 112.7965], 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    PedestriBasemap.add(map, { maxZoom: 19 });
 
     const serviceArea = PedestriRouteServiceArea.attach(map, { drawLayer: false });
     setTimeout(() => {
@@ -467,6 +473,7 @@
     // -----------------------------------------------------------------
     const CHIP_ON = {
         safest: ['bg-brand-700', 'text-white', 'border-brand-700'],
+        balanced: ['bg-sky-600', 'text-white', 'border-sky-600'],
         fastest: ['bg-amber-400', 'text-slate-900', 'border-amber-400'],
     };
     const CHIP_OFF = ['bg-white', 'text-slate-600', 'border-slate-200'];
@@ -475,7 +482,7 @@
         document.querySelectorAll('.pref-chip').forEach((chip) => {
             const pref = chip.dataset.pref;
             const on = pref === state.preference;
-            chip.classList.remove(...CHIP_OFF, ...CHIP_ON.safest, ...CHIP_ON.fastest);
+            chip.classList.remove(...CHIP_OFF, ...Object.values(CHIP_ON).flat());
             chip.classList.add(...(on ? CHIP_ON[pref] : CHIP_OFF));
             chip.setAttribute('aria-pressed', on ? 'true' : 'false');
         });
@@ -1340,7 +1347,7 @@
             if (next) speak(next.instruction);
             setTimeout(() => els.rerouteOverlay.classList.add('hidden'), 900);
         } catch (error) {
-            if (state.preference === 'safest' && ['NO_REPORT_FREE_ROUTE', 'ENDPOINT_IN_REPORT_ZONE', 'REPORT_DATA_UNAVAILABLE'].includes(error.code)) {
+            if (state.preference !== 'fastest' && ['NO_REPORT_FREE_ROUTE', 'ENDPOINT_IN_REPORT_ZONE', 'REPORT_DATA_UNAVAILABLE'].includes(error.code)) {
                 endNavigation();
                 state.route = null;
                 state.geometry = null;
@@ -1566,10 +1573,11 @@
             setText(els.headerSubtitle, state.destination.label);
         }
 
-        if (pref === 'safest' || pref === 'fastest') {
+        const preferences = ['safest', 'balanced', 'fastest'];
+        if (preferences.includes(pref)) {
             state.preference = pref;
             paintChips();
-        } else if (incoming?.preference === 'safest' || incoming?.preference === 'fastest') {
+        } else if (preferences.includes(incoming?.preference)) {
             state.preference = incoming.preference;
             paintChips();
         }

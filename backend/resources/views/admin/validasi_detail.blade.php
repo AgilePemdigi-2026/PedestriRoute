@@ -218,6 +218,7 @@
 
 @push('scripts')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+@include('partials.map-basemap')
 <script>
     const reportId = {{ $id }};
     const token = localStorage.getItem('token');
@@ -360,10 +361,7 @@
         try {
             mapElement.classList.remove('hidden');
             reportMap = L.map(mapElement, {scrollWheelZoom: false}).setView([lat, lng], 18);
-            const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(reportMap);
+            const tiles = PedestriBasemap.add(reportMap, { maxZoom: 19 });
             status.classList.add('hidden');
             tiles.on('tileerror', () => {
                 status.textContent = 'Sebagian peta dasar gagal dimuat. Gunakan Google Maps bila diperlukan.';

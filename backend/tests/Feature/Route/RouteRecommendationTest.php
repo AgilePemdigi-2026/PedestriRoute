@@ -81,7 +81,7 @@ class RouteRecommendationTest extends TestCase
             $unique + 2,
         );
 
-        config(['services.osrm.url' => 'https://routing.openstreetmap.de/routed-foot/route/v1/foot', 'services.osrm.residential_detours' => false]);
+        config(['services.osrm.url' => 'https://routing.openstreetmap.de/routed-foot/route/v1/foot', 'services.osrm.residential_detours' => false, 'services.routing_graph.engine' => 'osrm', 'services.osrm.report_tolerance' => 0]);
         Http::preventStrayRequests();
         Sleep::fake();
         Http::fake(['https://routing.openstreetmap.de/routed-foot/route/v1/foot/*' => function ($request) use ($unique) {
@@ -246,6 +246,27 @@ class RouteRecommendationTest extends TestCase
         $this->assertLessThan(90, $fastest->json('summary.average_score'));
     }
 
+    public function test_safest_prefers_higher_wsm_score_even_without_reports(): void
+    {
+        $safest = $this->requestRoute(['origin' => $this->origin, 'destination' => $this->destination, 'preference' => 'safest'])->assertStatus(200);
+        $fastest = $this->requestRoute(['origin' => $this->origin, 'destination' => $this->destination, 'preference' => 'fastest'])->assertStatus(200);
+
+        $this->assertNotContains($this->directSegmentId, array_column($safest->json('segments'), 'segmen_id'));
+        $this->assertContains($this->directSegmentId, array_column($fastest->json('segments'), 'segmen_id'));
+        $this->assertTrue($safest->json('summary.report_free'));
+        $this->assertSame(3.0, (float) $safest->json('meta.score_penalty_factor'));
+    }
+
+    public function test_wsm_score_never_pushes_balanced_beyond_the_detour_cap(): void
+    {
+        config(['services.osrm.safest_max_detour_ratio' => 1.0, 'services.osrm.safest_max_detour_extra_m' => 10]);
+
+        $safest = $this->requestRoute(['origin' => $this->origin, 'destination' => $this->destination, 'preference' => 'balanced'])->assertStatus(200);
+
+        $this->assertContains($this->directSegmentId, array_column($safest->json('segments'), 'segmen_id'));
+        $this->assertEqualsWithDelta(109.3, $safest->json('meta.max_detour_distance_m'), 0.01);
+    }
+
     public function test_active_repair_produces_warning_when_route_passes_through_it(): void
     {
         $lokasiId = DB::table('lokasi')->insertGetId([
@@ -278,6 +299,14 @@ class RouteRecommendationTest extends TestCase
         $warnings = array_column($response->json('warnings'), 'code');
         $this->assertContains('ACTIVE_REPAIR', $warnings);
         $this->assertGreaterThan(0, $response->json('summary.repair_distance_m'));
+    }
+
+    public function test_balanced_preference_is_accepted_and_unknown_preferences_are_rejected(): void
+    {
+        $this->requestRoute(['origin' => $this->origin, 'destination' => $this->destination, 'preference' => 'balanced'])
+            ->assertStatus(200)->assertJsonPath('preference', 'balanced');
+        $this->requestRoute(['origin' => $this->origin, 'destination' => $this->destination, 'preference' => 'scenic'])
+            ->assertStatus(422);
     }
 
     public function test_flattened_payload_and_admin_access_are_supported(): void

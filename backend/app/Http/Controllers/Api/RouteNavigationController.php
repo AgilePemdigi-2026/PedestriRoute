@@ -53,7 +53,7 @@ class RouteNavigationController extends Controller
             'destination' => ['required', 'array'],
             'destination.lat' => ['required', 'numeric', 'between:-90,90'],
             'destination.lng' => ['required', 'numeric', 'between:-180,180'],
-            'preference' => ['nullable', 'string', 'in:safest,fastest'],
+            'preference' => ['nullable', 'string', 'in:safest,balanced,fastest'],
         ], [
             'origin.required' => 'Titik awal wajib diisi.',
             'destination.required' => 'Titik tujuan wajib diisi.',
@@ -61,7 +61,7 @@ class RouteNavigationController extends Controller
             'origin.lng.*' => 'Koordinat bujur titik awal tidak valid.',
             'destination.lat.*' => 'Koordinat lintang titik tujuan tidak valid.',
             'destination.lng.*' => 'Koordinat bujur titik tujuan tidak valid.',
-            'preference.in' => 'Preferensi rute harus "safest" atau "fastest".',
+            'preference.in' => 'Preferensi rute harus "safest", "balanced", atau "fastest".',
         ]);
 
         if ($validator->fails()) {
