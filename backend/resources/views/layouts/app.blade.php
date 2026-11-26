@@ -42,13 +42,14 @@
 </head>
 @php
     $isWargaShell = request()->routeIs('warga.*');
+    $isAdminShell = request()->routeIs('admin.*');
     $isAuthShell = request()->routeIs('login', 'register', 'legal.*');
 @endphp
 <body class="min-h-screen bg-slate-50 text-slate-800 antialiased flex flex-col items-center justify-start">
-    @if($isWargaShell)
+    @if($isWargaShell || $isAdminShell)
         <header class="hidden md:flex fixed top-0 left-0 right-0 md:left-60 lg:left-64 h-16 z-30 items-center justify-between gap-4 bg-white/95 backdrop-blur border-b border-slate-200 px-6">
             <div class="flex items-center gap-3 min-w-0">
-                <a href="{{ route('warga.beranda') }}" class="flex items-center gap-2.5 shrink-0">
+                <a href="{{ $isAdminShell ? route('admin.validasi.queue') : route('warga.beranda') }}" class="flex items-center gap-2.5 shrink-0">
                     <span class="w-8 h-8 rounded-xl bg-brand-600 text-white flex items-center justify-center font-extrabold text-sm">P</span>
                     <span class="font-extrabold text-slate-900 tracking-tight">PedestriRoute</span>
                 </a>
@@ -66,7 +67,7 @@
             </a>
         </header>
     @endif
-    <div class="w-full {{ $isWargaShell ? 'md:max-w-none md:shadow-none md:pb-0 md:pt-16 md:pl-60 lg:pl-64' : ($isAuthShell ? 'max-w-md lg:max-w-none lg:shadow-none lg:pb-0' : 'max-w-md') }} min-h-screen bg-white shadow-xl flex flex-col relative pb-16">
+    <div class="w-full {{ ($isWargaShell || $isAdminShell) ? 'max-w-md md:max-w-none md:shadow-none md:pb-0 md:pt-16 md:pl-60 lg:pl-64' : ($isAuthShell ? 'max-w-md lg:max-w-none lg:shadow-none lg:pb-0' : 'max-w-md') }} min-h-screen bg-white shadow-xl flex flex-col relative pb-16">
         @yield('content')
         @if($isWargaShell)
             @include('partials.warga-bottom-nav', ['navMobileVisibility' => request()->is('navigasi', 'riwayat-laporan', 'lapor-kondisi') ? 'hidden' : 'flex'])
@@ -74,7 +75,7 @@
     </div>
 
     <!-- Notification Toast Container -->
-    <div id="toast" class="fixed top-5 {{ $isWargaShell ? 'md:top-20' : '' }} z-50 transform -translate-x-1/2 left-1/2 transition-all duration-300 opacity-0 pointer-events-none max-w-xs w-full px-4">
+    <div id="toast" class="fixed top-5 {{ ($isWargaShell || $isAdminShell) ? 'md:top-20' : '' }} z-50 transform -translate-x-1/2 left-1/2 transition-all duration-300 opacity-0 pointer-events-none max-w-xs w-full px-4">
         <div id="toast-body" class="bg-slate-900 text-white text-sm px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
             <span id="toast-icon" class="flex items-center justify-center shrink-0">
                 <svg class="w-5 h-5 text-teal-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

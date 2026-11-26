@@ -50,7 +50,7 @@
 <div class="relative flex-1 overflow-hidden bg-slate-100 h-[calc(100dvh-4rem)] md:flex md:flex-none">
     <div id="navMap" aria-label="Peta navigasi pejalan kaki" class="md:!relative md:!h-full md:!flex-1"></div>
 
-    <div class="contents md:flex md:w-[380px] lg:w-[420px] md:shrink-0 md:flex-col md:justify-between md:gap-4 md:p-4 md:overflow-y-auto">
+    <div class="contents md:order-first md:flex md:w-[380px] lg:w-[420px] md:shrink-0 md:flex-col md:justify-between md:gap-4 md:p-4 md:overflow-y-auto md:border-r md:border-slate-200 md:bg-slate-50/50">
     <!-- ===================== SETUP HEADER ===================== -->
     <div id="setupHeader" class="absolute inset-x-0 top-0 z-30 px-4 pt-4 md:!static md:!inset-auto md:!p-0">
         <div class="flex items-center gap-2.5">
@@ -260,8 +260,8 @@
     </div>
 
     <!-- ===================== ARRIVAL OVERLAY ===================== -->
-    <div id="arrivalOverlay" class="hidden absolute inset-0 z-50 bg-slate-900/45 backdrop-blur-[2px] flex items-end justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl w-full p-5 text-center sheet-enter">
+    <div id="arrivalOverlay" class="hidden absolute inset-0 z-50 bg-slate-900/45 backdrop-blur-[2px] flex items-end md:items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-5 text-center sheet-enter">
             <div class="mx-auto w-14 h-14 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center">
                 <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />

@@ -3,11 +3,11 @@
 @section('title', 'Validasi & Perbaikan - PedestriRoute Admin')
 
 @section('content')
-<div class="px-5 pt-6 pb-24 flex flex-col flex-1">
+<div class="px-5 pt-6 pb-24 flex flex-col flex-1 w-full md:px-8 md:pt-8 md:pb-10 md:max-w-7xl md:mx-auto">
     @include('partials.admin-header', ['title' => 'Validasi & Perbaikan', 'subtitle' => 'Memuat data...', 'subtitleId' => 'queueSubtitle'])
 
     <!-- Segmented Control: Tab Validasi vs Perbaikan vs Ditolak -->
-    <div class="flex p-1 bg-slate-100 rounded-xl mb-3 gap-1">
+    <div class="flex p-1 bg-slate-100 rounded-xl mb-3 gap-1 md:max-w-md">
         <button type="button" id="tabValidasiBtn" onclick="switchTab('validasi')"
             class="flex-1 py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm bg-white text-slate-800">
             <span>Antrean</span>
@@ -26,9 +26,9 @@
     </div>
 
     <!-- Search & Filter Controls -->
-    <div class="space-y-2 mb-3">
+    <div class="space-y-2 mb-3 md:space-y-0 md:grid md:grid-cols-12 md:gap-3 md:mb-5 md:items-center">
         <!-- Text Search -->
-        <div class="relative">
+        <div class="relative md:col-span-6">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -43,7 +43,7 @@
         </div>
 
         <!-- Secondary Filter: Status Perbaikan Dropdown + Date Picker -->
-        <div class="grid grid-cols-2 gap-2" id="filterSecondaryRow">
+        <div class="grid grid-cols-2 gap-2 md:col-span-6" id="filterSecondaryRow">
             <!-- Status Perbaikan Dropdown (only visible on Perbaikan tab) -->
             <div id="repairDropdownWrapper" class="hidden relative">
                 <select id="selectRepairStatusFilter" onchange="onRepairStatusChange(this.value)"
@@ -72,8 +72,8 @@
     </div>
 
     <!-- Report List Container -->
-    <div id="reportsList" class="space-y-3">
-        <div class="text-center py-10 text-slate-400 text-xs">
+    <div id="reportsList" class="space-y-3 md:space-y-0 md:grid md:grid-cols-2 xl:grid-cols-3 md:gap-4">
+        <div class="col-span-full text-center py-10 text-slate-400 text-xs">
             <svg class="w-8 h-8 mx-auto mb-2 animate-spin text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
@@ -313,7 +313,7 @@
             }
 
             container.innerHTML = `
-                <div class="text-center py-12 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+                <div class="col-span-full text-center py-12 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
                     <span class="text-3xl mb-2 block">${icon}</span>
                     <h3 class="text-sm font-bold text-slate-800">${title}</h3>
                     <p class="text-xs text-slate-500 mt-1">${desc}</p>
@@ -324,7 +324,7 @@
 
         if (filtered.length === 0) {
             container.innerHTML = `
-                <div class="text-center py-10 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+                <div class="col-span-full text-center py-10 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
                     <span class="text-2xl mb-1.5 block">🔍</span>
                     <h3 class="text-sm font-bold text-slate-800">Tidak Ada Hasil</h3>
                     <p class="text-xs text-slate-500 mt-1">Tidak ada laporan yang cocok dengan kriteria filter.</p>

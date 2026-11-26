@@ -3,11 +3,12 @@
 @section('title', 'Riwayat Validasi - PedestriRoute Admin')
 
 @section('content')
-<div class="px-5 pt-6 pb-24 flex flex-col flex-1">
+<div class="px-5 pt-6 pb-24 flex flex-col flex-1 w-full md:px-8 md:pt-8 md:pb-10 md:max-w-7xl md:mx-auto">
     @include('partials.admin-header', ['title' => 'Riwayat Validasi', 'subtitle' => 'Memuat...', 'subtitleId' => 'riwayatSubtitle'])
 
+    <div class="md:grid md:grid-cols-[minmax(240px,300px)_minmax(0,1fr)] md:gap-6 md:items-start">
     <!-- Search & Filter Controls -->
-    <div class="space-y-2 mb-3">
+    <div class="space-y-2 mb-3 md:sticky md:top-20">
         <!-- Text Search -->
         <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -51,7 +52,8 @@
         </div>
     </div>
 
-    <div id="reportsList" class="space-y-3"></div>
+    <div id="reportsList" class="space-y-3 md:space-y-0 md:grid md:grid-cols-2 xl:grid-cols-3 md:gap-4"></div>
+    </div>
 </div>
 
 @include('partials.admin-bottom-nav')

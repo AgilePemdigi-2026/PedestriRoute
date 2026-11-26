@@ -3,7 +3,7 @@
 @section('title', 'Statistik Laporan - PedestriRoute Admin')
 
 @section('content')
-<div class="px-5 pt-6 pb-24 flex flex-col flex-1">
+<div class="px-5 pt-6 pb-24 flex flex-col flex-1 w-full md:px-8 md:pt-8 md:pb-10 md:max-w-7xl md:mx-auto">
     @include('partials.admin-header', ['title' => 'Ringkasan Statistik', 'subtitle' => 'Kecamatan Mulyorejo, Surabaya'])
 
     <!-- Info pembaruan + tombol segarkan -->
@@ -27,7 +27,7 @@
 
     <div id="statsContent" class="hidden space-y-4">
         <!-- 1. Kartu KPI -->
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             <div class="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Aduan</span>
@@ -74,7 +74,7 @@
         </div>
 
         <!-- 2. Akses cepat -->
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-3 md:gap-4">
             <a href="/admin/validasi" class="flex items-center justify-between gap-2 px-3.5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition">
                 <span class="text-xs font-bold leading-tight">Verifikasi<br>Laporan</span>
                 <span id="shortcutValidasiCount" class="min-w-[1.75rem] text-center px-2 py-0.5 bg-white text-amber-700 text-xs font-extrabold rounded-full">0</span>
@@ -85,6 +85,7 @@
             </a>
         </div>
 
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <!-- 3. Rasio validasi -->
         <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
             <div class="flex items-center justify-between mb-3">
@@ -101,6 +102,7 @@
             <p class="text-[10px] text-slate-400 mb-3">Jumlah laporan per kategori masalah</p>
             <div id="kategoriList" class="space-y-3"></div>
         </div>
+        </div>
 
         <!-- 5. Kondisi segmen jalur -->
         <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
@@ -114,7 +116,7 @@
                     <span class="text-[10px] text-slate-400 block">Rata-rata</span>
                 </div>
             </div>
-            <div id="segmenList" class="space-y-2"></div>
+            <div id="segmenList" class="space-y-2 md:space-y-0 md:grid md:grid-cols-2 md:gap-3"></div>
             <button type="button" id="btnToggleSegmen" class="hidden w-full mt-3 py-2 text-xs font-bold text-brand-600 bg-teal-50 hover:bg-teal-100 rounded-xl transition"></button>
         </div>
     </div>

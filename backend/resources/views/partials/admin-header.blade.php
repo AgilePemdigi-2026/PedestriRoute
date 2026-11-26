@@ -1,9 +1,9 @@
 {{-- Header standar semua halaman admin.
      Parameter: title, subtitle, subtitleId (opsional), badgeId (opsional) --}}
-<div class="flex items-center justify-between mb-4">
+<div class="flex items-center justify-between mb-4 md:mb-6">
     <div class="min-w-0">
-        <h1 class="text-base font-extrabold text-slate-900 tracking-tight">{{ $title }}</h1>
-        <p @if(!empty($subtitleId)) id="{{ $subtitleId }}" @endif class="text-xs text-slate-500 font-medium">{{ $subtitle ?? '' }}</p>
+        <h1 class="text-base md:text-xl font-extrabold text-slate-900 tracking-tight">{{ $title }}</h1>
+        <p @if(!empty($subtitleId)) id="{{ $subtitleId }}" @endif class="text-xs md:text-sm text-slate-500 font-medium">{{ $subtitle ?? '' }}</p>
     </div>
     <div class="flex items-center gap-2 shrink-0">
         @if(!empty($badgeId))

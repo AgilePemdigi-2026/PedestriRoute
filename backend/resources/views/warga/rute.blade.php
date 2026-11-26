@@ -43,7 +43,7 @@
         </div>
     </div>
 
-    <div class="contents md:flex md:w-[360px] lg:w-[400px] md:shrink-0 md:flex-col md:justify-between md:gap-4 md:p-4 md:overflow-y-auto">
+    <div class="contents md:order-first md:flex md:w-[360px] lg:w-[400px] md:shrink-0 md:flex-col md:justify-start md:gap-4 md:p-4 md:overflow-y-auto md:border-r md:border-slate-200 md:bg-slate-50/50">
     <!-- Floating Top Search Card -->
     <div class="absolute inset-x-0 top-0 z-30 px-3 pt-3 pointer-events-none md:!static md:!inset-auto md:!p-0 md:!pointer-events-auto">
         <div class="pointer-events-auto bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-lg p-2.5 space-y-2">
@@ -135,7 +135,7 @@
     </div>
 
     <!-- Floating Bottom Summary Sheet -->
-    <div id="routeSummary" class="absolute bottom-16 inset-x-3 z-30 transform translate-y-[130%] opacity-0 pointer-events-none bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/90 p-3 md:!static md:!inset-auto md:!w-full md:!p-4">
+    <div id="routeSummary" class="absolute bottom-16 inset-x-3 z-30 transform translate-y-[130%] opacity-0 pointer-events-none bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/90 p-3 md:!static md:!inset-auto md:!w-full md:!p-4 md:!translate-y-0">
         <!-- Compact Main Bar: Stats & Mulai Button -->
         <div class="flex items-center justify-between gap-3">
             <div class="min-w-0 flex-1">

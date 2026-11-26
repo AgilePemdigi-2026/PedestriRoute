@@ -3,9 +3,9 @@
 @section('title', 'Detail Status Perbaikan - PedestriRoute Admin')
 
 @section('content')
-<div class="px-5 pt-6 pb-24 flex flex-col flex-1">
+<div class="px-5 pt-6 pb-24 flex flex-col flex-1 w-full md:px-8 md:pt-8 md:pb-10 md:max-w-6xl md:mx-auto">
     <!-- Header with Back Button -->
-    <div class="flex items-center gap-2.5 mb-4">
+    <div class="flex items-center gap-2.5 mb-4 md:mb-6">
         <a href="/admin/status-laporan" class="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition shadow-sm">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -28,7 +28,8 @@
     </div>
 
     <!-- Main Content Container (hidden until loaded) -->
-    <div id="mainContent" class="hidden space-y-3">
+    <div id="mainContent" class="hidden space-y-3 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
+        <div class="lg:col-span-7 space-y-3">
         <!-- Photo Preview Card -->
         <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm overflow-hidden">
             <div id="photoGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-3">
@@ -89,6 +90,16 @@
             </div>
         </div>
 
+        <!-- Riwayat Perjalanan Status Timeline -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+            <h3 class="text-xs font-bold text-slate-800 mb-3">Riwayat Penanganan</h3>
+            <div id="timelineContainer" class="space-y-3">
+                <!-- Timeline items injected via JS -->
+            </div>
+        </div>
+        </div>
+
+        <div class="lg:col-span-5 space-y-3 lg:sticky lg:top-20">
         <!-- Current Status Banner -->
         <div class="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-sm flex items-center justify-between">
             <span class="text-[10px] font-medium text-slate-400">Status Saat Ini</span>
@@ -154,13 +165,6 @@
                 <span>Simpan Status</span>
             </button>
         </div>
-
-        <!-- Riwayat Perjalanan Status Timeline -->
-        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
-            <h3 class="text-xs font-bold text-slate-800 mb-3">Riwayat Penanganan</h3>
-            <div id="timelineContainer" class="space-y-3">
-                <!-- Timeline items injected via JS -->
-            </div>
         </div>
     </div>
 </div>

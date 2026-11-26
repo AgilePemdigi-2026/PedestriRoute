@@ -228,6 +228,7 @@
     <div class="flex items-center justify-between mb-4">
         <div>
             <h1 class="text-base font-extrabold text-slate-900 tracking-tight md:hidden">PedestriRoute</h1>
+            <h1 class="hidden md:block text-lg font-extrabold text-slate-900 tracking-tight">Beranda Warga</h1>
         </div>
 
         <div class="flex items-center gap-2">

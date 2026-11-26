@@ -10,9 +10,9 @@
 @endpush
 
 @section('content')
-<div class="px-5 pt-5 pb-20 flex flex-col flex-1">
+<div class="px-5 pt-5 pb-20 flex flex-col flex-1 w-full md:px-8 md:pt-8 md:pb-10 md:max-w-6xl md:mx-auto">
     <!-- Header with Back Button -->
-    <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center justify-between mb-3 md:mb-5">
         <div class="flex items-center gap-2.5">
             <a href="/admin/validasi" class="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,8 +41,10 @@
         </div>
     </div>
 
+    <div class="lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
+    <div class="lg:col-span-7 space-y-3">
     <!-- Photo Container -->
-    <div class="w-full h-52 bg-slate-100 rounded-2xl relative overflow-hidden mb-3 border border-slate-200 shadow-sm">
+    <div class="w-full h-52 md:h-72 bg-slate-100 rounded-2xl relative overflow-hidden border border-slate-200 shadow-sm">
         <img id="reportPhoto" src="" class="w-full h-full object-cover hidden" alt="Foto Laporan" />
         <div id="photoSkeleton" class="w-full h-full flex items-center justify-center text-xs text-slate-400">
             Memuat foto...
@@ -58,7 +60,7 @@
     </div>
 
     <!-- Info & Deskripsi Card -->
-    <div class="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-sm mb-3">
+    <div class="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-sm">
         <div class="flex items-start gap-1.5 mb-2">
             <svg class="w-4 h-4 text-brand-600 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
@@ -73,12 +75,12 @@
     </div>
 
     <!-- Peta Lokasi Card -->
-    <section class="bg-white rounded-2xl border border-slate-100 shadow-sm mb-3 overflow-hidden" aria-labelledby="reportMapTitle">
+    <section class="bg-white rounded-2xl border border-slate-100 shadow-sm mb-3 lg:mb-0 overflow-hidden" aria-labelledby="reportMapTitle">
         <div class="px-3.5 py-2.5 flex items-center justify-between border-b border-slate-50">
             <h3 id="reportMapTitle" class="text-xs font-bold text-slate-800">Peta Lokasi</h3>
             <span id="reportCoordinates" class="text-[10px] text-slate-400 font-mono">Memuat koordinat...</span>
         </div>
-        <div id="reportMap" class="hidden" aria-label="Peta titik laporan dan segmen jalan"></div>
+        <div id="reportMap" class="hidden md:!h-[320px]" aria-label="Peta titik laporan dan segmen jalan"></div>
         <p id="reportMapStatus" role="status" class="p-3 text-xs text-slate-400">Memuat peta...</p>
         <div class="p-2.5 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between gap-2">
             <p id="reportSnapInfo" class="text-[11px] text-slate-600 truncate" role="status">Memuat segmen...</p>
@@ -89,8 +91,11 @@
         </div>
     </section>
 
+    </div>
+
+    <div class="lg:col-span-5 space-y-3 lg:sticky lg:top-20">
     <!-- Machine Learning Verification Section -->
-    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm mb-3">
+    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
         <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
                 <span class="w-6 h-6 rounded-lg bg-teal-50 border border-teal-200 text-brand-600 flex items-center justify-center text-xs">
@@ -195,6 +200,8 @@
             class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl flex items-center justify-center gap-1 transition">
             <span>Kembali ke Antrean</span>
         </a>
+    </div>
+    </div>
     </div>
 </div>
 
@@ -364,6 +371,7 @@
             });
             L.marker([lat, lng]).addTo(reportMap).bindPopup('Titik laporan warga');
             requestAnimationFrame(() => reportMap?.invalidateSize());
+            window.addEventListener('resize', () => reportMap?.invalidateSize());
         } catch (error) {
             if (reportMap) { reportMap.remove(); reportMap = null; }
             mapElement.classList.add('hidden');
