@@ -24,8 +24,9 @@
 @endpush
 
 @section('content')
-<div class="relative flex-1 overflow-hidden h-[calc(100dvh-4.5rem)] md:overflow-visible md:h-auto md:flex-none md:w-full">    <!-- Peta Full Screen -->
-    <div id="routeMap" aria-label="Peta rute pejalan kaki" class="md:!relative md:!inset-auto md:!w-full md:!h-[calc(100dvh-4rem)]"></div>
+<div class="relative flex-1 overflow-hidden h-[calc(100dvh-4.5rem)] md:h-[calc(100dvh-4rem)] md:flex-none md:w-full">
+    <!-- Peta Full Screen -->
+    <div id="routeMap" aria-label="Peta rute pejalan kaki"></div>
 
     <!-- Loading Screen Overlay -->
     <div id="routeLoading" class="hidden absolute inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 pointer-events-auto">
@@ -43,9 +44,9 @@
         </div>
     </div>
 
-    <div class="contents md:grid md:grid-cols-1 lg:grid-cols-2 md:gap-6 md:items-start md:w-full md:max-w-6xl md:mx-auto md:px-8 md:py-8">
+    <div class="contents">
     <!-- Floating Top Search Card -->
-    <div class="absolute inset-x-0 top-0 z-30 px-3 pt-3 pointer-events-none md:!static md:!inset-auto md:!p-0 md:!pointer-events-auto">
+    <div class="absolute inset-x-0 top-0 z-30 px-3 pt-3 pointer-events-none md:inset-x-auto md:left-4 md:top-4 md:w-[390px] md:p-0">
         <div class="pointer-events-auto bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-lg p-2.5 space-y-2">
             <!-- Form Titik Awal & Titik Tujuan with Swap Button -->
             <div class="relative flex items-center gap-1.5">
@@ -135,7 +136,7 @@
     </div>
 
     <!-- Floating Bottom Summary Sheet -->
-    <div id="routeSummary" class="absolute bottom-16 inset-x-3 z-30 transform translate-y-[130%] opacity-0 pointer-events-none bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/90 p-3 md:!static md:!inset-auto md:!w-full md:!p-4 md:!translate-y-0">
+    <div id="routeSummary" class="absolute bottom-16 inset-x-3 z-30 transform translate-y-[130%] opacity-0 pointer-events-none bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/90 p-3 md:bottom-4 md:left-4 md:right-auto md:w-[390px] md:p-4">
         <!-- Compact Main Bar: Stats & Mulai Button -->
         <div class="flex items-center justify-between gap-3">
             <div class="min-w-0 flex-1">

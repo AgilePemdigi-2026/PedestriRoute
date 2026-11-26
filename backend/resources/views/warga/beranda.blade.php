@@ -222,8 +222,8 @@
 @endpush
 
 @section('content')
-<div class="px-5 pt-6 pb-20 flex flex-col flex-1 w-full md:px-0 md:pt-0 md:pb-12">
-    <div class="order-1 md:order-2 md:px-8 md:pt-8 md:max-w-7xl md:mx-auto md:w-full">
+<div class="px-5 pt-6 pb-20 flex flex-col flex-1 w-full md:relative md:h-[calc(100dvh-4rem)] md:flex-none md:overflow-hidden md:p-0">
+    <div class="order-1 md:order-2 md:absolute md:top-4 md:left-4 md:z-20 md:w-[360px] md:pointer-events-none">
     <!-- Top Header (Mobile Only; Desktop uses top navbar) -->
     <div class="flex items-center justify-between mb-4 md:hidden">
         <div>
@@ -272,7 +272,7 @@
     </div>
 
     <!-- Active AI Analysis Banner (Appears when counts.diproses > 0) -->
-    <div id="aiAnalysisBanner" class="hidden mb-3 p-3 bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200 rounded-2xl shadow-sm flex items-center justify-between">
+    <div id="aiAnalysisBanner" class="hidden mb-3 p-3 bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200 rounded-2xl shadow-sm md:shadow-xl md:pointer-events-auto flex items-center justify-between">
         <div class="flex items-center gap-2.5">
             <span class="w-8 h-8 rounded-xl bg-sky-500 text-white flex items-center justify-center text-xs animate-pulse">
                 <i class="fa-solid fa-radar"></i>
@@ -288,7 +288,7 @@
     </div>
 
     <!-- User Welcome & Quick Action Card -->
-    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm mb-4">
+    <div class="bg-white md:bg-white/95 md:backdrop-blur-md rounded-2xl p-4 border border-slate-100 md:border-slate-200/80 shadow-sm md:shadow-xl mb-4 md:mb-0 md:pointer-events-auto">
         <div class="flex items-center justify-between mb-3">
             <div>
                 <h2 class="text-sm font-bold text-slate-900">Halo, <span id="greetingName">Warga</span></h2>
@@ -326,9 +326,9 @@
         </div>
     </div>
     </div>
-    <div class="order-2 md:order-1 w-full">
+    <div class="order-2 md:order-1 w-full md:absolute md:inset-0 md:h-full">
     <!-- Map Section (Toggleable: Heatmap / Normal Map) -->
-    <div class="mb-4 md:mb-0 md:px-8 md:py-3 md:bg-white md:border-b md:border-slate-200 md:flex md:flex-wrap md:items-center md:justify-between md:gap-4">
+    <div class="mb-4 md:mb-0 md:absolute md:top-4 md:right-14 md:z-20 md:bg-white/95 md:backdrop-blur-md md:rounded-2xl md:p-3 md:shadow-xl md:border md:border-slate-200/80 md:flex md:flex-col md:gap-2">
         <div class="flex items-center justify-between mb-2.5 md:mb-0 md:gap-4">
             <div>
                 <h3 class="text-xs md:text-sm font-bold text-slate-800 tracking-wide uppercase" id="mapTitle">Peta Heatmap Kelayakan</h3>
@@ -393,11 +393,11 @@
     </div>
 
         <!-- Map Container with Relative Overlay -->
-        <div class="relative rounded-2xl md:rounded-none overflow-hidden border border-slate-200 md:border-x-0 md:border-t-0 shadow-sm md:shadow-none">
-            <div id="map" class="md:!h-[calc(100dvh-8.5rem)] md:!min-h-[520px] md:!max-h-none md:!rounded-none"></div>
+        <div class="relative rounded-2xl md:rounded-none overflow-hidden border border-slate-200 md:border-0 shadow-sm md:shadow-none md:w-full md:h-full">
+            <div id="map" class="md:!h-full md:!min-h-0 md:!max-h-none md:!rounded-none"></div>
 
             <!-- Heatmap Loading Spinner Indicator -->
-            <div id="mapLoading" class="hidden absolute top-3 left-12 z-20 bg-white/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl shadow-md border border-slate-100 flex items-center gap-2">
+            <div id="mapLoading" class="hidden absolute top-3 left-12 md:top-4 md:left-[390px] z-20 bg-white/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl shadow-md border border-slate-100 flex items-center gap-2">
                 <svg class="w-3.5 h-3.5 animate-spin text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
@@ -442,7 +442,7 @@
             </div>
 
             <!-- In-Map Report Bottom Sheet (Opsi B) -->
-            <div id="reportBottomSheet" class="absolute bottom-0 inset-x-0 z-30 transform translate-y-full opacity-0 pointer-events-none bg-white rounded-t-3xl shadow-2xl border-t border-slate-200/80 max-h-[60%] flex flex-col transition-all">
+            <div id="reportBottomSheet" class="absolute bottom-0 inset-x-0 z-30 transform translate-y-full opacity-0 pointer-events-none bg-white rounded-t-3xl shadow-2xl border-t border-slate-200/80 max-h-[60%] md:left-auto md:right-4 md:bottom-4 md:w-[420px] md:rounded-3xl md:border md:max-h-[75%] flex flex-col transition-all">
                 <!-- Grab Handle Bar -->
                 <div id="sheetDragHandle" class="w-full pt-2.5 pb-1 flex justify-center cursor-pointer select-none" onclick="closeReportBottomSheet()" title="Tutup lembar aduan">
                     <div class="w-10 h-1 bg-slate-300 rounded-full hover:bg-slate-400 transition"></div>
@@ -457,8 +457,7 @@
         </div>
 
         <!-- Floating Dynamic Legend Card (FR-F6-05, Only for Heatmap Mode) -->
-        <div class="md:max-w-7xl md:mx-auto md:px-8">
-        <div id="legendContainer" class="mt-2.5 md:mt-6 bg-white rounded-2xl p-3 md:p-4 border border-slate-100 md:border-slate-200 shadow-sm transition-all">
+        <div id="legendContainer" class="mt-2.5 md:mt-0 md:absolute md:bottom-4 md:left-4 md:z-20 md:w-[360px] bg-white md:bg-white/95 md:backdrop-blur-md rounded-2xl p-3 border border-slate-100 md:border-slate-200/80 shadow-sm md:shadow-xl transition-all">
             <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-1.5">
                     <span class="text-xs font-bold text-slate-700">Kepadatan Titik Aduan</span>
@@ -498,8 +497,7 @@
             </div>
         </div>
 
-        <p class="text-[11px] text-slate-400 mt-1.5 text-center">© OpenStreetMap contributors</p>
-        </div>
+        <p class="text-[11px] text-slate-400 mt-1.5 text-center md:absolute md:bottom-2 md:right-3 md:z-20 md:bg-white/85 md:px-2 md:py-0.5 md:rounded-md md:mt-0">© OpenStreetMap contributors</p>
     </div>
 </div>
 
