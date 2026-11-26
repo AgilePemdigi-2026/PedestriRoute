@@ -33,8 +33,6 @@ class RouteRecommendationService
         // Engine order (CFG_ROUTE_ENGINE=auto): F7 A* over the imported pedestrian graph
         // with WSM edge costs → Valhalla pedestrian → OSRM foot as the last resort.
         $engine = (string) config('services.routing_graph.engine', 'auto');
-        // If the pedestrian graph cannot serve this trip (e.g., origin/destination outside mapped network),
-        // return direct fallback immediately instead of trying Valhalla/OSRM.
         if (in_array($engine, ['auto', 'graph'], true)) {
             $graphRoute = $this->graph->route($origin, $destination, $preference, $reports, $radius, fn (float $shortest): float => $this->detourCap($preference, $shortest));
             if ($graphRoute !== null) {
@@ -42,12 +40,11 @@ class RouteRecommendationService
 
                 return $this->formatResponse($graphRoute, $origin, $destination, $preference, $assessment, $graphRoute['_max_distance']);
             }
-            // Graph route not available (e.g., origin/destination outside mapped network);
-            // return direct fallback instead of falling through to Valhalla/OSRM.
-            return $this->directFallbackResponse($origin, $destination, $preference);
-            // engine === 'graph' case: throw if no clear path, otherwise fall through
-            if ($this->graph->noClearPath) {
+            if ($engine === 'graph' && $this->graph->noClearPath) {
                 throw $this->noReportFreeRoute();
+            }
+            if ($engine === 'graph') {
+                throw new RouteUnavailableException('PEDESTRIAN_ROUTE_UNAVAILABLE', 'Jaringan jalur pejalan kaki belum mencakup titik awal atau tujuan. Pilih titik di dekat jalan atau jalur pejalan kaki.', 503);
             }
         }
         if (in_array($engine, ['auto', 'valhalla'], true)) {
@@ -758,63 +755,6 @@ class RouteRecommendationService
         ];
     }
 
-private function directFallbackResponse(array $origin, array $destination, string $preference): array
-    {
-        $originLng = (float) $origin['lng'];
-        $originLat = (float) $origin['lat'];
-        $destLng = (float) $destination['lng'];
-        $destLat = (float) $destination['lat'];
-        $coordinates = [[$originLng, $originLat], [$destLng, $destLat]];
-        $polyline = array_map(fn (array $point): array => [(float) $point[1], (float) $point[0]], $coordinates);
-        $distance = $this->geometry->distance($origin, $destination);
-        $duration = (int) round($distance / TurnInstructionService::WALK_SPEED_MPS);
-
-        return [
-            'route_id' => 'RTE-FALLBACK',
-            'engine' => 'direct_fallback', 'preference' => $preference,
-            'origin' => $origin, 'destination' => $destination,
-            'snapped_origin' => ['lat' => $origin['lat'], 'lng' => $origin['lng']],
-            'snapped_destination' => ['lat' => $destination['lat'], 'lng' => $destination['lng']],
-            'snap_distances_m' => ['origin' => 0.0, 'destination' => 0.0],
-            'distance_m' => round($distance, 1), 'duration_min' => max(1, (int) ceil($duration / 60)),
-            'duration_s' => $duration, 'walk_speed_mps' => round($distance / max(1, $duration), 2),
-            'polyline' => $polyline, 'segments' => [],
-            'steps' => [],
-            'summary' => [
-                'average_score' => null,
-                'minimum_score' => null,
-                'repair_distance_m' => 0.0,
-                'hazard_distance_m' => 0.0,
-                'safe_distance_m' => 0.0,
-                'score_coverage' => 0.0,
-                'total_segments' => 0, 'fallback' => true,
-                'report_count' => 0,
-                'endpoint_report_count' => 0,
-                'remaining_report_count' => 0,
-                'safer_fallback' => false,
-                'report_tolerance' => null,
-                'report_free' => true,
-            ],
-            'hazard_sections' => [],
-            'colliding_points' => [], 'obstacles' => [], 'avoided_points' => [],
-            'warnings' => [
-                ['code' => 'NETWORK_FALLBACK', 'message' => 'Jalur pejalan kaki di luar jaringan terpadu. Menyediakan rute langsung antara titik awal dan tujuan.'],
-            ],
-            'meta' => [
-                'considered_segments' => 0, 'connector_radius_m' => null,
-                'score_penalty_factor' => $preference !== 'fastest' ? (float) config('services.osrm.score_penalty', 3.0) : 0, 'repair_penalty_factor' => 0,
-                'max_detour_distance_m' => null,
-                'avoid_radius_m' => (float) config('services.osrm.avoid_radius_m'),
-                'strict_report_avoidance' => false,
-                'endpoint_zone_exception' => false,
-                'avoidance_search_interrupted' => false, 'profile' => 'foot',
-                'algorithm' => 'direct_fallback',
-                'graph_pass' => null, 'graph_cost' => null,
-                'provider_cache' => 'miss',
-                'generated_at' => now()->toIso8601String(),
-            ],
-        ];
-    }
     private function routeSegments(array $route): array
     {
         $hasSegmentIds = array_filter(array_merge(...array_map(fn (array $leg): array => $leg['steps'] ?? [], $route['legs'] ?? [])), fn (array $step): bool => array_key_exists('segmen_id', $step)) !== [];

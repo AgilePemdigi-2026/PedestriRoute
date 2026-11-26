@@ -1466,8 +1466,7 @@
         }
 
         state.demoActive = true;
-        // Simulation progress is independent of the device's GPS position.
-        state.demoAlong = state.demoAlong || 0;
+        state.demoAlong = state.along || 0;
         els.demoLabel.textContent = 'Hentikan';
         els.btnDemoReroute.classList.remove('hidden');
         setText(els.navStatus, 'Mode simulasi aktif.');
@@ -1477,12 +1476,6 @@
             navigator.geolocation.clearWatch(state.watchId);
             state.watchId = null;
         }
-
-        const startPoint = pointAtAlong(state.demoAlong);
-        if (startPoint) {
-            handleLocation(startPoint, { heading: startPoint.bearing, accuracy: null });
-        }
-        if (!state.navigating) return;
 
         state.demoTimer = setInterval(() => {
             if (!state.demoActive || !state.geometry) return;
