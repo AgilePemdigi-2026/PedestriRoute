@@ -1,0 +1,1845 @@
+{
+  "started_at": "2026-11-25T11:56:23.725236+00:00",
+  "isolated_database": "pedestriroute_eval_9d8f2bc09b69",
+  "external_api_calls": false,
+  "steps": [
+    {
+      "name": "create_database",
+      "command": [
+        "docker",
+        "exec",
+        "pedestriroute_db",
+        "psql",
+        "-U",
+        "pedestriroute",
+        "-d",
+        "postgres",
+        "-c",
+        "CREATE DATABASE pedestriroute_eval_9d8f2bc09b69;"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.2646580679993349,
+      "output": "CREATE DATABASE\n"
+    },
+    {
+      "name": "migrations",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "infra_default",
+        "--read-only",
+        "--tmpfs",
+        "/tmp",
+        "--tmpfs",
+        "/workspace/backend/storage",
+        "--tmpfs",
+        "/workspace/backend/bootstrap/cache",
+        "-v",
+        "/home/rog-theseus/Projects/PedestriRoute:/workspace:ro",
+        "-w",
+        "/workspace/backend",
+        "-e",
+        "APP_ENV=testing",
+        "-e",
+        "APP_DEBUG=false",
+        "-e",
+        "APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+        "-e",
+        "DB_CONNECTION=pgsql",
+        "-e",
+        "DB_HOST=db",
+        "-e",
+        "DB_PORT=5432",
+        "-e",
+        "DB_DATABASE=pedestriroute_eval_9d8f2bc09b69",
+        "-e",
+        "DB_USERNAME=pedestriroute",
+        "-e",
+        "DB_PASSWORD=secretpassword",
+        "-e",
+        "CACHE_STORE=array",
+        "-e",
+        "LOG_CHANNEL=stderr",
+        "-e",
+        "BROADCAST_CONNECTION=null",
+        "--entrypoint",
+        "php",
+        "infra-app",
+        "-r",
+        "foreach ([\"storage/framework/cache/data\", \"storage/framework/views\", \"storage/framework/sessions\", \"storage/logs\"] as $d) {if (!is_dir($d)) { mkdir($d, 0777, true); }} $p=proc_open(array_slice($argv, 1), [0=>STDIN, 1=>STDOUT, 2=>STDERR], $pipes); exit(proc_close($p));",
+        "--",
+        "php",
+        "artisan",
+        "migrate",
+        "--force",
+        "--no-interaction"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 4.0123231779998605,
+      "output": "\n   INFO  Preparing database.  \n\n  Creating migration table ...................................... 24.95ms DONE\n\n   INFO  Running migrations.  \n\n  0001_01_01_000000_create_users_table .......................... 84.80ms DONE\n  0001_01_01_000001_create_cache_table .......................... 62.72ms DONE\n  0001_01_01_000002_create_jobs_table .......................... 106.47ms DONE\n  2026_10_18_000001_create_pedestriroute_tables ..................... 1dt DONE\n  2026_10_18_040948_create_personal_access_tokens_table ......... 66.65ms DONE\n  2026_10_18_130314_add_facebook_id_to_warga_table ............... 7.60ms DONE\n  2026_10_26_100000_add_fields_to_kategori_masalah_table ........ 48.68ms DONE\n  2026_11_01_130000_change_avatar_url_to_text_in_warga_table ..... 8.25ms DONE\n  2026_11_01_150000_add_foto_perbaikan_to_laporan_table ......... 27.00ms DONE\n\n"
+    },
+    {
+      "name": "category_seed",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "infra_default",
+        "--read-only",
+        "--tmpfs",
+        "/tmp",
+        "--tmpfs",
+        "/workspace/backend/storage",
+        "--tmpfs",
+        "/workspace/backend/bootstrap/cache",
+        "-v",
+        "/home/rog-theseus/Projects/PedestriRoute:/workspace:ro",
+        "-w",
+        "/workspace/backend",
+        "-e",
+        "APP_ENV=testing",
+        "-e",
+        "APP_DEBUG=false",
+        "-e",
+        "APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+        "-e",
+        "DB_CONNECTION=pgsql",
+        "-e",
+        "DB_HOST=db",
+        "-e",
+        "DB_PORT=5432",
+        "-e",
+        "DB_DATABASE=pedestriroute_eval_9d8f2bc09b69",
+        "-e",
+        "DB_USERNAME=pedestriroute",
+        "-e",
+        "DB_PASSWORD=secretpassword",
+        "-e",
+        "CACHE_STORE=array",
+        "-e",
+        "LOG_CHANNEL=stderr",
+        "-e",
+        "BROADCAST_CONNECTION=null",
+        "--entrypoint",
+        "php",
+        "infra-app",
+        "-r",
+        "foreach ([\"storage/framework/cache/data\", \"storage/framework/views\", \"storage/framework/sessions\", \"storage/logs\"] as $d) {if (!is_dir($d)) { mkdir($d, 0777, true); }} $p=proc_open(array_slice($argv, 1), [0=>STDIN, 1=>STDOUT, 2=>STDERR], $pipes); exit(proc_close($p));",
+        "--",
+        "php",
+        "artisan",
+        "db:seed",
+        "--class=KategoriMasalahSeeder",
+        "--force",
+        "--no-interaction"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.717427425999631,
+      "output": "\n   INFO  Seeding database.  \n\n  Database\\Seeders\\KategoriMasalahSeeder ............................. RUNNING  \n  Database\\Seeders\\KategoriMasalahSeeder .......................... 58 ms DONE  \n\n"
+    },
+    {
+      "name": "hazard_geometry",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "infra_default",
+        "--read-only",
+        "--tmpfs",
+        "/tmp",
+        "--tmpfs",
+        "/workspace/backend/storage",
+        "--tmpfs",
+        "/workspace/backend/bootstrap/cache",
+        "-v",
+        "/home/rog-theseus/Projects/PedestriRoute:/workspace:ro",
+        "-w",
+        "/workspace/backend",
+        "-e",
+        "APP_ENV=testing",
+        "-e",
+        "APP_DEBUG=false",
+        "-e",
+        "APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+        "-e",
+        "DB_CONNECTION=pgsql",
+        "-e",
+        "DB_HOST=db",
+        "-e",
+        "DB_PORT=5432",
+        "-e",
+        "DB_DATABASE=pedestriroute_eval_9d8f2bc09b69",
+        "-e",
+        "DB_USERNAME=pedestriroute",
+        "-e",
+        "DB_PASSWORD=secretpassword",
+        "-e",
+        "CACHE_STORE=array",
+        "-e",
+        "LOG_CHANNEL=stderr",
+        "-e",
+        "BROADCAST_CONNECTION=null",
+        "--entrypoint",
+        "php",
+        "infra-app",
+        "-r",
+        "foreach ([\"storage/framework/cache/data\", \"storage/framework/views\", \"storage/framework/sessions\", \"storage/logs\"] as $d) {if (!is_dir($d)) { mkdir($d, 0777, true); }} $p=proc_open(array_slice($argv, 1), [0=>STDIN, 1=>STDOUT, 2=>STDERR], $pipes); exit(proc_close($p));",
+        "--",
+        "php",
+        "vendor/bin/phpunit",
+        "--do-not-cache-result",
+        "--log-junit",
+        "/tmp/evaluation.xml",
+        "tests/Unit/RouteHazardGeometryTest.php"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.278332803000012,
+      "output": "PHPUnit 12.5.40 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.37\nConfiguration: /workspace/backend/phpunit.xml\n\n....                                                                4 / 4 (100%)\n\nTime: 00:00.002, Memory: 20.00 MB\n\nOK (4 tests, 13 assertions)\n"
+    },
+    {
+      "name": "route_recommendation",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "infra_default",
+        "--read-only",
+        "--tmpfs",
+        "/tmp",
+        "--tmpfs",
+        "/workspace/backend/storage",
+        "--tmpfs",
+        "/workspace/backend/bootstrap/cache",
+        "-v",
+        "/home/rog-theseus/Projects/PedestriRoute:/workspace:ro",
+        "-w",
+        "/workspace/backend",
+        "-e",
+        "APP_ENV=testing",
+        "-e",
+        "APP_DEBUG=false",
+        "-e",
+        "APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+        "-e",
+        "DB_CONNECTION=pgsql",
+        "-e",
+        "DB_HOST=db",
+        "-e",
+        "DB_PORT=5432",
+        "-e",
+        "DB_DATABASE=pedestriroute_eval_9d8f2bc09b69",
+        "-e",
+        "DB_USERNAME=pedestriroute",
+        "-e",
+        "DB_PASSWORD=secretpassword",
+        "-e",
+        "CACHE_STORE=array",
+        "-e",
+        "LOG_CHANNEL=stderr",
+        "-e",
+        "BROADCAST_CONNECTION=null",
+        "--entrypoint",
+        "php",
+        "infra-app",
+        "-r",
+        "foreach ([\"storage/framework/cache/data\", \"storage/framework/views\", \"storage/framework/sessions\", \"storage/logs\"] as $d) {if (!is_dir($d)) { mkdir($d, 0777, true); }} $p=proc_open(array_slice($argv, 1), [0=>STDIN, 1=>STDOUT, 2=>STDERR], $pipes); exit(proc_close($p));",
+        "--",
+        "php",
+        "vendor/bin/phpunit",
+        "--do-not-cache-result",
+        "--log-junit",
+        "/tmp/evaluation.xml",
+        "tests/Feature/Route/RouteRecommendationTest.php"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 3.5108584979989246,
+      "output": "PHPUnit 12.5.40 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.37\nConfiguration: /workspace/backend/phpunit.xml\n\n.......                                                             7 / 7 (100%)\n\nTime: 00:01.841, Memory: 48.50 MB\n\nOK (7 tests, 75 assertions)\n"
+    },
+    {
+      "name": "route_navigation",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "infra_default",
+        "--read-only",
+        "--tmpfs",
+        "/tmp",
+        "--tmpfs",
+        "/workspace/backend/storage",
+        "--tmpfs",
+        "/workspace/backend/bootstrap/cache",
+        "-v",
+        "/home/rog-theseus/Projects/PedestriRoute:/workspace:ro",
+        "-w",
+        "/workspace/backend",
+        "-e",
+        "APP_ENV=testing",
+        "-e",
+        "APP_DEBUG=false",
+        "-e",
+        "APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+        "-e",
+        "DB_CONNECTION=pgsql",
+        "-e",
+        "DB_HOST=db",
+        "-e",
+        "DB_PORT=5432",
+        "-e",
+        "DB_DATABASE=pedestriroute_eval_9d8f2bc09b69",
+        "-e",
+        "DB_USERNAME=pedestriroute",
+        "-e",
+        "DB_PASSWORD=secretpassword",
+        "-e",
+        "CACHE_STORE=array",
+        "-e",
+        "LOG_CHANNEL=stderr",
+        "-e",
+        "BROADCAST_CONNECTION=null",
+        "--entrypoint",
+        "php",
+        "infra-app",
+        "-r",
+        "foreach ([\"storage/framework/cache/data\", \"storage/framework/views\", \"storage/framework/sessions\", \"storage/logs\"] as $d) {if (!is_dir($d)) { mkdir($d, 0777, true); }} $p=proc_open(array_slice($argv, 1), [0=>STDIN, 1=>STDOUT, 2=>STDERR], $pipes); exit(proc_close($p));",
+        "--",
+        "php",
+        "vendor/bin/phpunit",
+        "--do-not-cache-result",
+        "--log-junit",
+        "/tmp/evaluation.xml",
+        "tests/Feature/Navigation/RouteNavigationTest.php"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 2.8310015620008926,
+      "output": "PHPUnit 12.5.40 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.37\nConfiguration: /workspace/backend/phpunit.xml\n\n....                                                                4 / 4 (100%)\n\nTime: 00:01.144, Memory: 46.50 MB\n\nOK (4 tests, 71 assertions)\n"
+    },
+    {
+      "name": "paired_controlled_benchmark",
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "infra_default",
+        "--read-only",
+        "--tmpfs",
+        "/tmp",
+        "--tmpfs",
+        "/workspace/backend/storage",
+        "--tmpfs",
+        "/workspace/backend/bootstrap/cache",
+        "-v",
+        "/home/rog-theseus/Projects/PedestriRoute:/workspace:ro",
+        "-w",
+        "/workspace/backend",
+        "-e",
+        "APP_ENV=testing",
+        "-e",
+        "APP_DEBUG=false",
+        "-e",
+        "APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+        "-e",
+        "DB_CONNECTION=pgsql",
+        "-e",
+        "DB_HOST=db",
+        "-e",
+        "DB_PORT=5432",
+        "-e",
+        "DB_DATABASE=pedestriroute_eval_9d8f2bc09b69",
+        "-e",
+        "DB_USERNAME=pedestriroute",
+        "-e",
+        "DB_PASSWORD=secretpassword",
+        "-e",
+        "CACHE_STORE=array",
+        "-e",
+        "LOG_CHANNEL=stderr",
+        "-e",
+        "BROADCAST_CONNECTION=null",
+        "--entrypoint",
+        "php",
+        "infra-app",
+        "-r",
+        "foreach ([\"storage/framework/cache/data\", \"storage/framework/views\", \"storage/framework/sessions\", \"storage/logs\"] as $d) {if (!is_dir($d)) { mkdir($d, 0777, true); }} $p=proc_open(array_slice($argv, 1), [0=>STDIN, 1=>STDOUT, 2=>STDERR], $pipes); exit(proc_close($p));",
+        "--",
+        "php",
+        "../scripts/evaluate_routing_cases.php"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 2.632297677000679,
+      "output": "{\"rows\":[{\"scenario\":\"no_reports\",\"radius_m\":10,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":0,\"in_process_ms\":70.06619,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"no_reports\",\"radius_m\":10,\"preference\":\"safest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":2.460038,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"validated\",\"radius_m\":10,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":20,\"expected_exposure_m\":20,\"blocking_count\":1,\"candidate_duration_gap_percent\":0,\"in_process_ms\":2.917162,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[\"REPORT_ON_ROUTE\"],\"candidate_raw_exposure_m\":[19.999986807156873,0]},{\"scenario\":\"validated\",\"radius_m\":10,\"preference\":\"safest\",\"duration_s\":400,\"distance_m\":443,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":2.606397,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[19.999986807156873,0]},{\"scenario\":\"pending\",\"radius_m\":10,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":0,\"in_process_ms\":2.689297,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"pending\",\"radius_m\":10,\"preference\":\"safest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":2.487684,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"rejected\",\"radius_m\":10,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":0,\"in_process_ms\":2.458752,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"rejected\",\"radius_m\":10,\"preference\":\"safest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":1.936359,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"repaired\",\"radius_m\":10,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":0,\"in_process_ms\":2.694281,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"repaired\",\"radius_m\":10,\"preference\":\"safest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":2.539415,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"repair_active\",\"radius_m\":10,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":20,\"expected_exposure_m\":20,\"blocking_count\":1,\"candidate_duration_gap_percent\":0,\"in_process_ms\":3.216367,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[\"REPORT_ON_ROUTE\",\"ACTIVE_REPAIR\"],\"candidate_raw_exposure_m\":[19.999986807156873,0]},{\"scenario\":\"repair_active\",\"radius_m\":10,\"preference\":\"safest\",\"duration_s\":400,\"distance_m\":443,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":4.857148,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[19.999986807156873,0]},{\"scenario\":\"endpoint\",\"radius_m\":10,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":10,\"expected_exposure_m\":10,\"blocking_count\":0,\"candidate_duration_gap_percent\":0,\"in_process_ms\":5.893758,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[\"REPORT_ON_ROUTE\"],\"candidate_raw_exposure_m\":[9.999993403578486,9.999993403025265]},{\"scenario\":\"endpoint\",\"radius_m\":10,\"preference\":\"safest\",\"duration_s\":400,\"distance_m\":443,\"exposure_m\":10,\"expected_exposure_m\":10,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":6.436699,\"checks\":{\"expected_route\":false,\"expected_duration\":false,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":false,\"warnings\":[\"REPORT_ON_ROUTE\"],\"candidate_raw_exposure_m\":[9.999993403578486,9.999993403025265]},{\"scenario\":\"unavoidable\",\"radius_m\":10,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":20,\"expected_exposure_m\":20,\"blocking_count\":1,\"candidate_duration_gap_percent\":0,\"in_process_ms\":6.261687,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[\"REPORT_ON_ROUTE\"],\"candidate_raw_exposure_m\":[19.999986807156873]},{\"scenario\":\"unavoidable\",\"radius_m\":10,\"preference\":\"safest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":20,\"expected_exposure_m\":20,\"blocking_count\":1,\"candidate_duration_gap_percent\":null,\"in_process_ms\":7.117255,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[\"REPORT_ON_ROUTE\",\"SAFEST_AVAILABLE_WITH_REPORTS\"],\"candidate_raw_exposure_m\":[19.999986807156873]},{\"scenario\":\"duration_first\",\"radius_m\":10,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":443,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":0,\"in_process_ms\":6.602026,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"duration_first\",\"radius_m\":10,\"preference\":\"safest\",\"duration_s\":200,\"distance_m\":443,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":6.57356,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"no_reports\",\"radius_m\":25,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":0,\"in_process_ms\":7.604465,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"no_reports\",\"radius_m\":25,\"preference\":\"safest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":6.261706,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"validated\",\"radius_m\":25,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":50,\"expected_exposure_m\":50,\"blocking_count\":1,\"candidate_duration_gap_percent\":0,\"in_process_ms\":8.334071,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[\"REPORT_ON_ROUTE\"],\"candidate_raw_exposure_m\":[49.99996701475549,0]},{\"scenario\":\"validated\",\"radius_m\":25,\"preference\":\"safest\",\"duration_s\":400,\"distance_m\":443,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":7.34273,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[49.99996701475549,0]},{\"scenario\":\"pending\",\"radius_m\":25,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":0,\"in_process_ms\":6.170862,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"pending\",\"radius_m\":25,\"preference\":\"safest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":7.266478,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"rejected\",\"radius_m\":25,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":0,\"in_process_ms\":5.865821,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"rejected\",\"radius_m\":25,\"preference\":\"safest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":6.124838,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"repaired\",\"radius_m\":25,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":0,\"in_process_ms\":6.917992,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"repaired\",\"radius_m\":25,\"preference\":\"safest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":6.178137,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"repair_active\",\"radius_m\":25,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":50,\"expected_exposure_m\":50,\"blocking_count\":1,\"candidate_duration_gap_percent\":0,\"in_process_ms\":7.026589,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[\"REPORT_ON_ROUTE\",\"ACTIVE_REPAIR\"],\"candidate_raw_exposure_m\":[49.99996701475549,0]},{\"scenario\":\"repair_active\",\"radius_m\":25,\"preference\":\"safest\",\"duration_s\":400,\"distance_m\":443,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":6.664677,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[49.99996701475549,0]},{\"scenario\":\"endpoint\",\"radius_m\":25,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":25,\"expected_exposure_m\":25,\"blocking_count\":0,\"candidate_duration_gap_percent\":0,\"in_process_ms\":7.456104,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[\"REPORT_ON_ROUTE\"],\"candidate_raw_exposure_m\":[24.999983507378523,24.99998350756316]},{\"scenario\":\"endpoint\",\"radius_m\":25,\"preference\":\"safest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":25,\"expected_exposure_m\":25,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":6.869452,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[\"REPORT_ON_ROUTE\"],\"candidate_raw_exposure_m\":[24.999983507378523,24.99998350756316]},{\"scenario\":\"unavoidable\",\"radius_m\":25,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":50,\"expected_exposure_m\":50,\"blocking_count\":1,\"candidate_duration_gap_percent\":0,\"in_process_ms\":6.263344,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[\"REPORT_ON_ROUTE\"],\"candidate_raw_exposure_m\":[49.99996701475549]},{\"scenario\":\"unavoidable\",\"radius_m\":25,\"preference\":\"safest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":50,\"expected_exposure_m\":50,\"blocking_count\":1,\"candidate_duration_gap_percent\":null,\"in_process_ms\":7.156875,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[\"REPORT_ON_ROUTE\",\"SAFEST_AVAILABLE_WITH_REPORTS\"],\"candidate_raw_exposure_m\":[49.99996701475549]},{\"scenario\":\"duration_first\",\"radius_m\":25,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":443,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":0,\"in_process_ms\":6.934017,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"duration_first\",\"radius_m\":25,\"preference\":\"safest\",\"duration_s\":200,\"distance_m\":443,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":5.824788,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"no_reports\",\"radius_m\":40,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":0,\"in_process_ms\":6.72219,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"no_reports\",\"radius_m\":40,\"preference\":\"safest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":6.241043,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"validated\",\"radius_m\":40,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":80,\"expected_exposure_m\":80,\"blocking_count\":1,\"candidate_duration_gap_percent\":0,\"in_process_ms\":6.104086,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[\"REPORT_ON_ROUTE\"],\"candidate_raw_exposure_m\":[79.99994722548452,0]},{\"scenario\":\"validated\",\"radius_m\":40,\"preference\":\"safest\",\"duration_s\":400,\"distance_m\":443,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":6.083398,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[79.99994722548452,0]},{\"scenario\":\"pending\",\"radius_m\":40,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":0,\"in_process_ms\":6.801143,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"pending\",\"radius_m\":40,\"preference\":\"safest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":6.176036,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"rejected\",\"radius_m\":40,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":0,\"in_process_ms\":6.284689,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"rejected\",\"radius_m\":40,\"preference\":\"safest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":6.434701,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"repaired\",\"radius_m\":40,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":0,\"in_process_ms\":6.699791,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"repaired\",\"radius_m\":40,\"preference\":\"safest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":6.169094,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"repair_active\",\"radius_m\":40,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":80,\"expected_exposure_m\":80,\"blocking_count\":1,\"candidate_duration_gap_percent\":0,\"in_process_ms\":6.292756,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[\"REPORT_ON_ROUTE\",\"ACTIVE_REPAIR\"],\"candidate_raw_exposure_m\":[79.99994722548452,0]},{\"scenario\":\"repair_active\",\"radius_m\":40,\"preference\":\"safest\",\"duration_s\":400,\"distance_m\":443,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":7.066634,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[79.99994722548452,0]},{\"scenario\":\"endpoint\",\"radius_m\":40,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":40,\"expected_exposure_m\":40,\"blocking_count\":0,\"candidate_duration_gap_percent\":0,\"in_process_ms\":6.102892,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[\"REPORT_ON_ROUTE\"],\"candidate_raw_exposure_m\":[39.99997361274547,39.999973611924226]},{\"scenario\":\"endpoint\",\"radius_m\":40,\"preference\":\"safest\",\"duration_s\":400,\"distance_m\":443,\"exposure_m\":40,\"expected_exposure_m\":40,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":7.334337,\"checks\":{\"expected_route\":false,\"expected_duration\":false,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":false,\"warnings\":[\"REPORT_ON_ROUTE\"],\"candidate_raw_exposure_m\":[39.99997361274547,39.999973611924226]},{\"scenario\":\"unavoidable\",\"radius_m\":40,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":80,\"expected_exposure_m\":80,\"blocking_count\":1,\"candidate_duration_gap_percent\":0,\"in_process_ms\":6.627192,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[\"REPORT_ON_ROUTE\"],\"candidate_raw_exposure_m\":[79.99994722548452]},{\"scenario\":\"unavoidable\",\"radius_m\":40,\"preference\":\"safest\",\"duration_s\":200,\"distance_m\":220.6,\"exposure_m\":80,\"expected_exposure_m\":80,\"blocking_count\":1,\"candidate_duration_gap_percent\":null,\"in_process_ms\":6.582056,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[\"REPORT_ON_ROUTE\",\"SAFEST_AVAILABLE_WITH_REPORTS\"],\"candidate_raw_exposure_m\":[79.99994722548452]},{\"scenario\":\"duration_first\",\"radius_m\":40,\"preference\":\"fastest\",\"duration_s\":200,\"distance_m\":443,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":0,\"in_process_ms\":6.430876,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]},{\"scenario\":\"duration_first\",\"radius_m\":40,\"preference\":\"safest\",\"duration_s\":200,\"distance_m\":443,\"exposure_m\":0,\"expected_exposure_m\":0,\"blocking_count\":0,\"candidate_duration_gap_percent\":null,\"in_process_ms\":6.645269,\"checks\":{\"expected_route\":true,\"expected_duration\":true,\"analytic_exposure\":true,\"blocking_count\":true,\"residual_warning\":true,\"repair_warning\":true},\"passed\":true,\"warnings\":[],\"candidate_raw_exposure_m\":[0,0]}],\"passed\":52,\"total\":54}\n"
+    },
+    {
+      "name": "drop_database",
+      "command": [
+        "docker",
+        "exec",
+        "pedestriroute_db",
+        "psql",
+        "-U",
+        "pedestriroute",
+        "-d",
+        "postgres",
+        "-c",
+        "DROP DATABASE pedestriroute_eval_9d8f2bc09b69 WITH (FORCE);"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.45162417800020194,
+      "output": "DROP DATABASE\n"
+    }
+  ],
+  "paired_benchmark": {
+    "rows": [
+      {
+        "scenario": "no_reports",
+        "radius_m": 10,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 70.06619,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "no_reports",
+        "radius_m": 10,
+        "preference": "safest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 2.460038,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "validated",
+        "radius_m": 10,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 20,
+        "expected_exposure_m": 20,
+        "blocking_count": 1,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 2.917162,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [
+          "REPORT_ON_ROUTE"
+        ],
+        "candidate_raw_exposure_m": [
+          19.999986807156873,
+          0
+        ]
+      },
+      {
+        "scenario": "validated",
+        "radius_m": 10,
+        "preference": "safest",
+        "duration_s": 400,
+        "distance_m": 443,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 2.606397,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          19.999986807156873,
+          0
+        ]
+      },
+      {
+        "scenario": "pending",
+        "radius_m": 10,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 2.689297,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "pending",
+        "radius_m": 10,
+        "preference": "safest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 2.487684,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "rejected",
+        "radius_m": 10,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 2.458752,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "rejected",
+        "radius_m": 10,
+        "preference": "safest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 1.936359,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "repaired",
+        "radius_m": 10,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 2.694281,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "repaired",
+        "radius_m": 10,
+        "preference": "safest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 2.539415,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "repair_active",
+        "radius_m": 10,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 20,
+        "expected_exposure_m": 20,
+        "blocking_count": 1,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 3.216367,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [
+          "REPORT_ON_ROUTE",
+          "ACTIVE_REPAIR"
+        ],
+        "candidate_raw_exposure_m": [
+          19.999986807156873,
+          0
+        ]
+      },
+      {
+        "scenario": "repair_active",
+        "radius_m": 10,
+        "preference": "safest",
+        "duration_s": 400,
+        "distance_m": 443,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 4.857148,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          19.999986807156873,
+          0
+        ]
+      },
+      {
+        "scenario": "endpoint",
+        "radius_m": 10,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 10,
+        "expected_exposure_m": 10,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 5.893758,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [
+          "REPORT_ON_ROUTE"
+        ],
+        "candidate_raw_exposure_m": [
+          9.999993403578486,
+          9.999993403025265
+        ]
+      },
+      {
+        "scenario": "endpoint",
+        "radius_m": 10,
+        "preference": "safest",
+        "duration_s": 400,
+        "distance_m": 443,
+        "exposure_m": 10,
+        "expected_exposure_m": 10,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 6.436699,
+        "checks": {
+          "expected_route": false,
+          "expected_duration": false,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": false,
+        "warnings": [
+          "REPORT_ON_ROUTE"
+        ],
+        "candidate_raw_exposure_m": [
+          9.999993403578486,
+          9.999993403025265
+        ]
+      },
+      {
+        "scenario": "unavoidable",
+        "radius_m": 10,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 20,
+        "expected_exposure_m": 20,
+        "blocking_count": 1,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 6.261687,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [
+          "REPORT_ON_ROUTE"
+        ],
+        "candidate_raw_exposure_m": [
+          19.999986807156873
+        ]
+      },
+      {
+        "scenario": "unavoidable",
+        "radius_m": 10,
+        "preference": "safest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 20,
+        "expected_exposure_m": 20,
+        "blocking_count": 1,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 7.117255,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [
+          "REPORT_ON_ROUTE",
+          "SAFEST_AVAILABLE_WITH_REPORTS"
+        ],
+        "candidate_raw_exposure_m": [
+          19.999986807156873
+        ]
+      },
+      {
+        "scenario": "duration_first",
+        "radius_m": 10,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 443,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 6.602026,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "duration_first",
+        "radius_m": 10,
+        "preference": "safest",
+        "duration_s": 200,
+        "distance_m": 443,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 6.57356,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "no_reports",
+        "radius_m": 25,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 7.604465,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "no_reports",
+        "radius_m": 25,
+        "preference": "safest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 6.261706,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "validated",
+        "radius_m": 25,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 50,
+        "expected_exposure_m": 50,
+        "blocking_count": 1,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 8.334071,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [
+          "REPORT_ON_ROUTE"
+        ],
+        "candidate_raw_exposure_m": [
+          49.99996701475549,
+          0
+        ]
+      },
+      {
+        "scenario": "validated",
+        "radius_m": 25,
+        "preference": "safest",
+        "duration_s": 400,
+        "distance_m": 443,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 7.34273,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          49.99996701475549,
+          0
+        ]
+      },
+      {
+        "scenario": "pending",
+        "radius_m": 25,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 6.170862,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "pending",
+        "radius_m": 25,
+        "preference": "safest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 7.266478,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "rejected",
+        "radius_m": 25,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 5.865821,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "rejected",
+        "radius_m": 25,
+        "preference": "safest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 6.124838,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "repaired",
+        "radius_m": 25,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 6.917992,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "repaired",
+        "radius_m": 25,
+        "preference": "safest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 6.178137,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "repair_active",
+        "radius_m": 25,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 50,
+        "expected_exposure_m": 50,
+        "blocking_count": 1,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 7.026589,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [
+          "REPORT_ON_ROUTE",
+          "ACTIVE_REPAIR"
+        ],
+        "candidate_raw_exposure_m": [
+          49.99996701475549,
+          0
+        ]
+      },
+      {
+        "scenario": "repair_active",
+        "radius_m": 25,
+        "preference": "safest",
+        "duration_s": 400,
+        "distance_m": 443,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 6.664677,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          49.99996701475549,
+          0
+        ]
+      },
+      {
+        "scenario": "endpoint",
+        "radius_m": 25,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 25,
+        "expected_exposure_m": 25,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 7.456104,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [
+          "REPORT_ON_ROUTE"
+        ],
+        "candidate_raw_exposure_m": [
+          24.999983507378523,
+          24.99998350756316
+        ]
+      },
+      {
+        "scenario": "endpoint",
+        "radius_m": 25,
+        "preference": "safest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 25,
+        "expected_exposure_m": 25,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 6.869452,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [
+          "REPORT_ON_ROUTE"
+        ],
+        "candidate_raw_exposure_m": [
+          24.999983507378523,
+          24.99998350756316
+        ]
+      },
+      {
+        "scenario": "unavoidable",
+        "radius_m": 25,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 50,
+        "expected_exposure_m": 50,
+        "blocking_count": 1,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 6.263344,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [
+          "REPORT_ON_ROUTE"
+        ],
+        "candidate_raw_exposure_m": [
+          49.99996701475549
+        ]
+      },
+      {
+        "scenario": "unavoidable",
+        "radius_m": 25,
+        "preference": "safest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 50,
+        "expected_exposure_m": 50,
+        "blocking_count": 1,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 7.156875,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [
+          "REPORT_ON_ROUTE",
+          "SAFEST_AVAILABLE_WITH_REPORTS"
+        ],
+        "candidate_raw_exposure_m": [
+          49.99996701475549
+        ]
+      },
+      {
+        "scenario": "duration_first",
+        "radius_m": 25,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 443,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 6.934017,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "duration_first",
+        "radius_m": 25,
+        "preference": "safest",
+        "duration_s": 200,
+        "distance_m": 443,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 5.824788,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "no_reports",
+        "radius_m": 40,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 6.72219,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "no_reports",
+        "radius_m": 40,
+        "preference": "safest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 6.241043,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "validated",
+        "radius_m": 40,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 80,
+        "expected_exposure_m": 80,
+        "blocking_count": 1,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 6.104086,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [
+          "REPORT_ON_ROUTE"
+        ],
+        "candidate_raw_exposure_m": [
+          79.99994722548452,
+          0
+        ]
+      },
+      {
+        "scenario": "validated",
+        "radius_m": 40,
+        "preference": "safest",
+        "duration_s": 400,
+        "distance_m": 443,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 6.083398,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          79.99994722548452,
+          0
+        ]
+      },
+      {
+        "scenario": "pending",
+        "radius_m": 40,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 6.801143,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "pending",
+        "radius_m": 40,
+        "preference": "safest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 6.176036,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "rejected",
+        "radius_m": 40,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 6.284689,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "rejected",
+        "radius_m": 40,
+        "preference": "safest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 6.434701,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "repaired",
+        "radius_m": 40,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 6.699791,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "repaired",
+        "radius_m": 40,
+        "preference": "safest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 6.169094,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "repair_active",
+        "radius_m": 40,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 80,
+        "expected_exposure_m": 80,
+        "blocking_count": 1,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 6.292756,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [
+          "REPORT_ON_ROUTE",
+          "ACTIVE_REPAIR"
+        ],
+        "candidate_raw_exposure_m": [
+          79.99994722548452,
+          0
+        ]
+      },
+      {
+        "scenario": "repair_active",
+        "radius_m": 40,
+        "preference": "safest",
+        "duration_s": 400,
+        "distance_m": 443,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 7.066634,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          79.99994722548452,
+          0
+        ]
+      },
+      {
+        "scenario": "endpoint",
+        "radius_m": 40,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 40,
+        "expected_exposure_m": 40,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 6.102892,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [
+          "REPORT_ON_ROUTE"
+        ],
+        "candidate_raw_exposure_m": [
+          39.99997361274547,
+          39.999973611924226
+        ]
+      },
+      {
+        "scenario": "endpoint",
+        "radius_m": 40,
+        "preference": "safest",
+        "duration_s": 400,
+        "distance_m": 443,
+        "exposure_m": 40,
+        "expected_exposure_m": 40,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 7.334337,
+        "checks": {
+          "expected_route": false,
+          "expected_duration": false,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": false,
+        "warnings": [
+          "REPORT_ON_ROUTE"
+        ],
+        "candidate_raw_exposure_m": [
+          39.99997361274547,
+          39.999973611924226
+        ]
+      },
+      {
+        "scenario": "unavoidable",
+        "radius_m": 40,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 80,
+        "expected_exposure_m": 80,
+        "blocking_count": 1,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 6.627192,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [
+          "REPORT_ON_ROUTE"
+        ],
+        "candidate_raw_exposure_m": [
+          79.99994722548452
+        ]
+      },
+      {
+        "scenario": "unavoidable",
+        "radius_m": 40,
+        "preference": "safest",
+        "duration_s": 200,
+        "distance_m": 220.6,
+        "exposure_m": 80,
+        "expected_exposure_m": 80,
+        "blocking_count": 1,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 6.582056,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [
+          "REPORT_ON_ROUTE",
+          "SAFEST_AVAILABLE_WITH_REPORTS"
+        ],
+        "candidate_raw_exposure_m": [
+          79.99994722548452
+        ]
+      },
+      {
+        "scenario": "duration_first",
+        "radius_m": 40,
+        "preference": "fastest",
+        "duration_s": 200,
+        "distance_m": 443,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": 0,
+        "in_process_ms": 6.430876,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      },
+      {
+        "scenario": "duration_first",
+        "radius_m": 40,
+        "preference": "safest",
+        "duration_s": 200,
+        "distance_m": 443,
+        "exposure_m": 0,
+        "expected_exposure_m": 0,
+        "blocking_count": 0,
+        "candidate_duration_gap_percent": null,
+        "in_process_ms": 6.645269,
+        "checks": {
+          "expected_route": true,
+          "expected_duration": true,
+          "analytic_exposure": true,
+          "blocking_count": true,
+          "residual_warning": true,
+          "repair_warning": true
+        },
+        "passed": true,
+        "warnings": [],
+        "candidate_raw_exposure_m": [
+          0,
+          0
+        ]
+      }
+    ],
+    "passed": 52,
+    "total": 54
+  },
+  "finished_at": "2026-11-25T11:56:40.425455+00:00"
+}

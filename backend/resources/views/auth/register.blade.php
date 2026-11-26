@@ -3,7 +3,14 @@
 @section('title', 'Daftar Akun Baru - PedestriRoute')
 
 @section('content')
-<div class="px-6 pt-6 pb-8 flex flex-col flex-1">
+<div class="w-full flex-1 lg:flex lg:min-h-screen">
+    @include('partials.auth-brand-panel', [
+        'heading' => 'Bergabung dengan komunitas pejalan kaki.',
+        'subheading' => 'Buat akun untuk menemukan rute teraman, melaporkan hambatan, dan membantu mewujudkan kota yang lebih ramah pejalan kaki.',
+    ])
+
+    <div class="flex-1 flex flex-col px-6 pt-6 pb-8 lg:px-12 xl:px-20 lg:py-16">
+    <div class="w-full max-w-md mx-auto lg:max-w-2xl">
     <!-- Top Bar with Back button -->
     <div class="flex items-center w-full mb-4">
         <a href="/login" class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition">
@@ -14,8 +21,8 @@
     </div>
 
     <!-- Header Section -->
-    <div class="flex flex-col items-center text-center mb-6">
-        <div class="w-14 h-14 bg-brand-600 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-900/20 mb-3">
+    <div class="flex flex-col items-center text-center mb-6 lg:items-start lg:text-left">
+        <div class="w-14 h-14 bg-brand-600 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-900/20 mb-3 lg:hidden">
             <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7"/>
             </svg>
@@ -27,9 +34,9 @@
     </div>
 
     <!-- Registration Form -->
-    <form id="registerForm" class="space-y-4">
+    <form id="registerForm" class="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4">
         <!-- Nama Lengkap -->
-        <div>
+        <div class="lg:col-span-2">
             <div class="flex items-center justify-between mb-1">
                 <label class="block text-xs font-semibold text-slate-700">Nama Lengkap</label>
                 <span class="text-[10px] font-bold text-teal-700">Wajib</span>
@@ -123,7 +130,7 @@
         </div>
 
         <!-- Terms Agreement Checkbox -->
-        <div class="flex items-start gap-2.5 pt-1">
+        <div class="flex items-start gap-2.5 pt-1 lg:col-span-2">
             <input type="checkbox" id="terms" required checked
                 class="w-4 h-4 mt-0.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
             <label for="terms" class="text-xs text-slate-600 leading-snug">
@@ -133,7 +140,7 @@
 
         <!-- Submit Button -->
         <button type="submit" id="submitRegisterBtn"
-            class="w-full py-3.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-teal-900/10 transition mt-2">
+            class="w-full py-3.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-teal-900/10 transition mt-2 lg:col-span-2">
             <span>Daftar Sekarang</span>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
@@ -172,6 +179,8 @@
     <div class="mt-6 text-center text-sm text-slate-500 font-medium">
         Sudah punya akun?
         <a href="/login" class="text-brand-600 hover:text-brand-700 font-bold ml-1">Masuk di sini</a>
+    </div>
+    </div>
     </div>
 </div>
 @endsection
