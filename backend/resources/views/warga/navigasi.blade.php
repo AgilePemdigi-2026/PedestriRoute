@@ -1094,6 +1094,8 @@
 
         prepareGeometry(state.route.polyline);
         drawRouteOnMap(state.route, false);
+        const startingProjection = projectOnRoute(state.origin?.lat ?? 0, state.origin?.lng ?? 0);
+        state.along = startingProjection.along;
 
         await requestCompassPermission();
         await requestWakeLock();
@@ -1112,7 +1114,7 @@
             speak(startStep.instruction);
         }
 
-        updateNavigationUI(projectOnRoute(state.origin?.lat ?? 0, state.origin?.lng ?? 0));
+        updateNavigationUI(startingProjection);
     }
 
     function onPosition(position) {
@@ -1466,7 +1468,9 @@
         }
 
         state.demoActive = true;
-        state.demoAlong = state.along || 0;
+        state.demoAlong = Number.isFinite(state.along)
+            ? state.along
+            : projectOnRoute(state.origin?.lat ?? 0, state.origin?.lng ?? 0).along;
         els.demoLabel.textContent = 'Hentikan';
         els.btnDemoReroute.classList.remove('hidden');
         setText(els.navStatus, 'Mode simulasi aktif.');
