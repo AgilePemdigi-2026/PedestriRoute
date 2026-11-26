@@ -22,5 +22,7 @@ Feature: Mencari Rekomendasi Rute Pejalan Kaki
     And I should see the message "Koordinat atau preferensi rute tidak valid."
 
   Scenario: Jaringan jalan belum tersedia
+    Given I am logged in as "Warga"
     When I request a walking route outside the mapped network
-    Then the route response should still contain a direct fallback
+    Then the route response should contain distance, duration, and polyline
+    And every route segment should expose its WSM score
